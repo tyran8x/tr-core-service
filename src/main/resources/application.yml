@@ -1,0 +1,136 @@
+spring:
+  application:
+    name: tr-core-service
+  profiles:
+    active: dev
+  freemarker:
+    suffix: .ftl
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: 'DnictPro@123'
+      timeout: 10s
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1
+          max-idle: 8
+          min-idle: 0
+      ssl:
+        enabled: false
+      repositories:
+        enabled: false
+  boot:
+    admin:
+      client:
+        enabled: true
+        url: http://localhost:9090
+        instance:
+          service-host-type: ip
+          metadata:
+            username: ${spring.boot.admin.client.username}
+            userpassword: ${spring.boot.admin.client.password}
+        username: admin
+        password: DnictPro@123
+eureka:
+  client:
+    register-with-eureka: true
+    serviceUrl:
+      defaultZone: http://localhost:8061/eureka
+app:
+  name: Tr-Pro-App
+  version: ${revision}
+  copyrightYear: 2024
+  jwtSecret: DnictPro@123
+  jwtExpirationMs: 300
+  service:
+    home: http://localhost:8989/
+    security: http://localhost:8989/login
+user:
+  password:
+    maxRetryCount: 5
+    lockTime: 10
+captcha:
+  enable: true
+  type: CHAR
+  category: CIRCLE
+  numberLength: 1
+  charLength: 4
+
+redisson:
+  keyPrefix: 'tr'
+  threads: 4
+  nettyThreads: 8
+  singleServerConfig:
+    clientName: ${app.name}
+    connectionMinimumIdleSize: 8
+    connectionPoolSize: 32
+    idleConnectionTimeout: 10000
+    timeout: 3000
+    subscriptionConnectionPoolSize: 50
+
+websocket:
+  enabled: true
+  path: /resource/websocket
+  allowedOrigins: '*'
+
+error:
+  handling:
+    http-status-in-json-response: true
+
+sa-token:
+  token-name: X-Token
+  # Whether to allow concurrent logins from the same account (if true, allow simultaneous logins, if false, new logins will replace old logins)
+  is-concurrent: true
+  # When multiple people log in to the same account, whether to share a token (if true, all logins share a token, if false, a new token is created for each login)
+  is-share: true
+  is-log: true
+  # jwt
+  jwt-secret-key: DnictPro@123
+
+security:
+  excludes:
+    - /*.html
+    - /**/*.html
+    - /**/*.css
+    - /**/*.js
+    - /favicon.ico
+    - /error
+    - /*/api-docs
+    - /*/api-docs/**
+
+api-decrypt:
+  # Whether to enable global interface encryption
+  enabled: false
+  # AES Encryption header identification
+  headerFlag: encrypt-key
+  # Response encryption public key. Public and private key of asymmetric algorithm. For example: SM2, RSA users should replace it by themselves.
+  # 对应前端解密私钥 MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAmc3CuPiGL/LcIIm7zryCEIbl1SPzBkr75E2VMtxegyZ1lYRD+7TZGAPkvIsBcaMs6Nsy0L78n2qh+lIZMpLH8wIDAQABAkEAk82Mhz0tlv6IVCyIcw/s3f0E+WLmtPFyR9/WtV3Y5aaejUkU60JpX4m5xNR2VaqOLTZAYjW8Wy0aXr3zYIhhQQIhAMfqR9oFdYw1J9SsNc+CrhugAvKTi0+BF6VoL6psWhvbAiEAxPPNTmrkmrXwdm/pQQu3UOQmc2vCZ5tiKpW10CgJi8kCIFGkL6utxw93Ncj4exE/gPLvKcT+1Emnoox+O9kRXss5AiAMtYLJDaLEzPrAWcZeeSgSIzbL+ecokmFKSDDcRske6QIgSMkHedwND1olF8vlKsJUGK3BcdtM8w4Xq7BpSBwsloE=
+  publicKey: MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAJnNwrj4hi/y3CCJu868ghCG5dUj8wZK++RNlTLcXoMmdZWEQ/u02RgD5LyLAXGjLOjbMtC+/J9qofpSGTKSx/MCAwEAAQ==
+  # 请求解密私钥 非对称算法的公私钥 如：SM2，RSA 使用者请自行更换
+  # 对应前端加密公钥 MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ==
+  privateKey: MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAqhHyZfSsYourNxaY7Nt+PrgrxkiA50efORdI5U5lsW79MmFnusUA355oaSXcLhu5xxB38SMSyP2KvuKNPuH3owIDAQABAkAfoiLyL+Z4lf4Myxk6xUDgLaWGximj20CUf+5BKKnlrK+Ed8gAkM0HqoTt2UZwA5E2MzS4EI2gjfQhz5X28uqxAiEA3wNFxfrCZlSZHb0gn2zDpWowcSxQAgiCstxGUoOqlW8CIQDDOerGKH5OmCJ4Z21v+F25WaHYPxCFMvwxpcw99EcvDQIgIdhDTIqD2jfYjPTY8Jj3EDGPbH2HHuffvflECt3Ek60CIQCFRlCkHpi7hthhYhovyloRYsM+IS9h/0BzlEAuO0ktMQIgSPT3aFAgJYwKpqRYKlLDVcflZFCKY7u3UP8iWi1Qw0Y=
+
+cas:
+  service:
+    login: https://dangnhap.danang.gov.vn/cas/login
+    logout: https://dangnhap.danang.gov.vn/cas/logout
+  url:
+    prefix: https://dangnhap.danang.gov.vn/cas
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: ALWAYS
+
+logging:
+  level:
+    vn.tr: @logging.level@
+    org.springframework: warn
+    org.mybatis.spring.mapper: error
+  config: classpath:logback.xml
