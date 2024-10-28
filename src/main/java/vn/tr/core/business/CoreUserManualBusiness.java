@@ -7,7 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import vn.tr.common.core.constant.Constants;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
-import vn.tr.common.feign.bean.FileDinhKem;
+import vn.tr.common.feign.core.bean.FileDinhKem;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreUserManual;
 import vn.tr.core.dao.service.CoreMenuService;

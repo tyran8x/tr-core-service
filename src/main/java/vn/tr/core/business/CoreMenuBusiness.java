@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.core.utils.FunctionUtils;
 import vn.tr.common.json.utils.JsonUtils;
+import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.dao.service.CoreMenuService;
@@ -108,14 +109,14 @@ public class CoreMenuBusiness {
 	}
 
 	public CoreDsMenuData getRouterDatas(String appCode) {
-		String email = "";//Objects.requireNonNull(SecurityUtils.getUser()).getUsername();
-		Set<String> roles = null;//SecurityUtils.getRoles();
+		String email = LoginHelper.getUserName();
+		Set<String> roles = Objects.requireNonNull(LoginHelper.getLoginUser()).getRolePermission();
 
 		CoreDsMenuData coreDsMenuData = new CoreDsMenuData();
 		coreDsMenuData.setEmail(email);
 		coreDsMenuData.setRoles(roles);
 		List<CoreMenu> coreMenus;
-		boolean isRoot = false;// SecurityUtils.isRoot();
+		boolean isRoot = LoginHelper.isSuperAdmin();
 		if (isRoot) {
 			coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
 		} else {

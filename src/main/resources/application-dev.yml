@@ -14,6 +14,10 @@ eureka:
     register-with-eureka: true
     serviceUrl:
       defaultZone: http://localhost:8061/eureka
+core:
+  attachment:
+    host:
+      download: 'https://api.dnict.vn/v2/core'
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/core_service
@@ -53,7 +57,7 @@ spring:
       enable-statistics: false
 
 captcha:
-  enable: false
+  enable: true
   type: CHAR
   category: CIRCLE
   numberLength: 1

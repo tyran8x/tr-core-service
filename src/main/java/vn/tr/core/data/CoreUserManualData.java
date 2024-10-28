@@ -3,7 +3,7 @@ package vn.tr.core.data;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import vn.tr.common.feign.bean.FileDinhKem;
+import vn.tr.common.feign.core.bean.FileDinhKem;
 
 import java.util.ArrayList;
 import java.util.List;

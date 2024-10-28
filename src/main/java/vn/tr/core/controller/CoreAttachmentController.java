@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
-import vn.tr.common.feign.bean.FileDinhKem;
+import vn.tr.common.feign.core.bean.FileDinhKem;
 import vn.tr.core.business.CoreAttachmentBusiness;
 import vn.tr.core.dao.model.CoreAttachment;
 import vn.tr.core.dao.service.CoreAttachmentService;

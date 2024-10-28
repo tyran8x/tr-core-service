@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import vn.tr.common.core.constant.Constants;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
-import vn.tr.common.feign.bean.FileDinhKem;
+import vn.tr.common.feign.core.bean.FileDinhKem;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreModule;
 import vn.tr.core.dao.service.CoreModuleService;

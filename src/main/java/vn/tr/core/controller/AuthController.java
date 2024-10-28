@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.core.domain.model.LoginBody;
+import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.utils.ValidatorUtils;
 import vn.tr.common.encrypt.annotation.ApiEncrypt;
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
-	
+
 	private final CoreUserService coreUserService;
 	private final ScheduledExecutorService scheduledExecutorService;
 
@@ -66,6 +67,13 @@ public class AuthController {
 		String grantType = registerBody.getGrantType();
 		IAuthStrategy.register(body, coreClientData, grantType);
 		return R.ok();
+	}
+
+	@ApiEncrypt
+	@GetMapping("/info")
+	public R<LoginUser> info() {
+		LoginUser getLoginUser = LoginHelper.getLoginUser();
+		return R.ok(getLoginUser);
 	}
 
 	@DeleteMapping("/logout")
