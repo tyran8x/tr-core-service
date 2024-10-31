@@ -148,6 +148,6 @@ logging:
   charset:
     console: UTF-8
   file:
-    name: /opt/logs/dvc-service/sys-console.log
+    name: /opt/logs/core-service/sys-console.log
   pattern:
     console: '%red(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %boldMagenta(%logger{36}%n) - %msg%n'
