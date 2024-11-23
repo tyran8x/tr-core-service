@@ -7,15 +7,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.tr.common.core.constant.Constants;
+import vn.tr.common.core.constant.GlobalConstants;
 import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.domain.model.PasswordLoginBody;
 import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.enums.LoginType;
 import vn.tr.common.core.enums.UserType;
+import vn.tr.common.core.exception.user.CaptchaException;
+import vn.tr.common.core.exception.user.CaptchaExpireException;
 import vn.tr.common.core.exception.user.UserException;
 import vn.tr.common.core.utils.MessageUtils;
+import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.core.utils.ValidatorUtils;
 import vn.tr.common.json.utils.JsonUtils;
+import vn.tr.common.redis.utils.RedisUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.config.properties.CaptchaProperties;
 import vn.tr.core.dao.model.CoreUser;
@@ -27,9 +32,9 @@ import vn.tr.core.security.service.IAuthStrategy;
 import java.util.Optional;
 
 @Slf4j
-@Service("password" + IAuthStrategy.BASE_NAME)
+@Service("password2captcha" + IAuthStrategy.BASE_NAME)
 @RequiredArgsConstructor
-public class PasswordAuthStrategy implements IAuthStrategy {
+public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 
 	private final CaptchaProperties captchaProperties;
 	private final CoreUserService coreUserService;
@@ -44,10 +49,14 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 
 		String userName = loginBody.getUserName();
 		String password = loginBody.getPassword();
-
+		String code = loginBody.getCode();
+		String uuid = loginBody.getUuid();
 		log.info("userName: {}", userName);
 		log.info("password: {}", password);
-
+		boolean captchaEnabled = captchaProperties.getEnable();
+		if (captchaEnabled) {
+			validateCaptcha(userName, code, uuid);
+		}
 		CoreUser coreUser = loadUserByUsername(userName);
 		coreUserService.checkLogin(LoginType.PASSWORD, userName, () -> !BCrypt.checkpw(password, coreUser.getPassword()));
 		LoginUser loginUser = coreUserService.buildLoginUser(coreUser);
@@ -78,9 +87,14 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 
 		String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
 
+		String code = registerBody.getCode();
+		String uuid = registerBody.getUuid();
 		log.info("userName register: {}", userName);
 		log.info("password register: {}", password);
-
+		boolean captchaEnabled = captchaProperties.getEnable();
+		if (captchaEnabled) {
+			validateCaptcha(userName, code, uuid);
+		}
 		CoreUser coreUser = new CoreUser();
 		coreUser.setUserName(userName);
 		coreUser.setNickName(userName);
@@ -100,6 +114,20 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		}
 
 		coreUserService.recordLoginInfo(userName, Constants.REGISTER, MessageUtils.message("user.register.success"));
+	}
+
+	private void validateCaptcha(String userName, String code, String uuid) {
+		String verifyKey = GlobalConstants.CAPTCHA_CODE_KEY + StringUtils.blankToDefault(uuid, "");
+		String captcha = RedisUtils.getCacheObject(verifyKey);
+		RedisUtils.deleteObject(verifyKey);
+		if (captcha == null) {
+			coreUserService.recordLoginInfo(userName, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire"));
+			throw new CaptchaExpireException();
+		}
+		if (!code.equalsIgnoreCase(captcha)) {
+			coreUserService.recordLoginInfo(userName, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error"));
+			throw new CaptchaException();
+		}
 	}
 
 	private CoreUser loadUserByUsername(String userName) {
