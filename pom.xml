@@ -189,78 +189,15 @@
     </build>
     <distributionManagement>
         <repository>
-            <id>tr-deloyment</id>
+            <id>nexus</id>
             <name>Internal Releases</name>
-            <url>https://4f03-103-101-78-45.ngrok-free.app/repository/tr-release/</url>
+            <url>http://nexus.dev.dnict.vn/repository/tr-release/</url>
         </repository>
 
         <snapshotRepository>
-            <id>tr-deloyment</id>
+            <id>nexus</id>
             <name>Internal Releases</name>
-            <url>https://4f03-103-101-78-45.ngrok-free.app/repository/tr-snapshot/</url>
+            <url>http://nexus.dev.dnict.vn/repository/tr-snapshot/</url>
         </snapshotRepository>
     </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>tr-release</id>
-            <name>Tr Repository</name>
-            <url>https://4f03-103-101-78-45.ngrok-free.app/repository/tr-release/</url>
-            <layout>default</layout>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>tr-snapshot</id>
-            <name>TR Snapshot Repository</name>
-            <url>https://4f03-103-101-78-45.ngrok-free.app/repository/tr-snapshot/</url>
-            <layout>default</layout>
-            <releases>
-                <enabled>false</enabled>
-                <updatePolicy>interval:</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>tr-public</id>
-            <name>TR Public Repository</name>
-            <url>https://4f03-103-101-78-45.ngrok-free.app/repository/tr-public/</url>
-            <layout>default</layout>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>daily</updatePolicy>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>tr-release</id>
-            <name>tr release repository</name>
-            <layout>default</layout>
-            <url>https://4f03-103-101-78-45.ngrok-free.app/repository/tr-release/</url>
-            <releases>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>warn</checksumPolicy>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
 </project>
