@@ -1,83 +1,115 @@
 package vn.tr.core.security.service.strategy;
 
+import cn.dev33.satoken.secure.BCrypt;
+import cn.dev33.satoken.stp.SaLoginModel;
+import cn.dev33.satoken.stp.StpUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import vn.tr.common.core.constant.Constants;
+import vn.tr.common.core.domain.model.EmailLoginBody;
+import vn.tr.common.core.domain.model.LoginUser;
+import vn.tr.common.core.domain.model.RegisterBody;
+import vn.tr.common.core.enums.LoginType;
+import vn.tr.common.core.enums.UserType;
+import vn.tr.common.core.exception.user.UserException;
+import vn.tr.common.core.utils.MessageUtils;
+import vn.tr.common.core.utils.ValidatorUtils;
+import vn.tr.common.json.utils.JsonUtils;
+import vn.tr.common.satoken.utils.LoginHelper;
+import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.CoreClientData;
 import vn.tr.core.data.LoginResult;
 import vn.tr.core.security.service.IAuthStrategy;
+
+import java.util.Optional;
 
 @Slf4j
 @Service("email" + IAuthStrategy.BASE_NAME)
 @RequiredArgsConstructor
 public class EmailAuthStrategy implements IAuthStrategy {
+	
+	private final CoreUserService coreUserService;
+	
 	@Override
 	public LoginResult login(String body, CoreClientData coreClientData) {
-		return null;
+		EmailLoginBody loginBody = JsonUtils.parseObject(body, EmailLoginBody.class);
+		log.info("loginBody: {}", loginBody);
+		ValidatorUtils.validate(loginBody);
+		log.info("pass loginBody");
+		assert loginBody != null;
+		
+		String userName = loginBody.getEmail();
+		
+		log.info("userName: {}", userName);
+		
+		CoreUser coreUser = loadUserByUsername(userName);
+		coreUserService.checkLogin(LoginType.EMAIL, userName, () -> false);
+		LoginUser loginUser = coreUserService.buildLoginUser(coreUser);
+		loginUser.setClientKey(coreClientData.getClientKey());
+		loginUser.setDeviceType(coreClientData.getDeviceType());
+		SaLoginModel saLoginModel = new SaLoginModel();
+		saLoginModel.setDevice(coreClientData.getDeviceType());
+		saLoginModel.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
+		saLoginModel.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
+		saLoginModel.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
+		saLoginModel.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
+		
+		// generate token
+		LoginHelper.login(loginUser, saLoginModel);
+		
+		LoginResult loginResult = new LoginResult();
+		loginResult.setAccessToken(StpUtil.getTokenValue());
+		loginResult.setExpireIn(StpUtil.getTokenTimeout());
+		loginResult.setClientId(coreClientData.getClientId());
+		return loginResult;
 	}
-
+	
 	@Override
 	public void register(String body, CoreClientData coreClientData) {
-
+		RegisterBody registerBody = JsonUtils.parseObject(body, RegisterBody.class);
+		
+		assert registerBody != null;
+		String userName = registerBody.getUserName();
+		String password = registerBody.getPassword();
+		
+		String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
+		
+		log.info("userName register: {}", userName);
+		log.info("password register: {}", password);
+		
+		CoreUser coreUser = new CoreUser();
+		coreUser.setUserName(userName);
+		coreUser.setNickName(userName);
+		coreUser.setEmail(userName);
+		coreUser.setPassword(BCrypt.hashpw(password));
+		coreUser.setUserType(userType);
+		coreUser.setIsEnabled(true);
+		
+		boolean exist = coreUserService.existsByEmailIgnoreCaseAndDaXoaFalse(userName);
+		if (exist) {
+			throw new UserException("user.register.save.error", userName);
+		}
+		try {
+			coreUserService.save(coreUser);
+		} catch (Exception e) {
+			throw new UserException("user.register.error");
+		}
+		
+		coreUserService.recordLoginInfo(userName, Constants.REGISTER, MessageUtils.message("user.register.success"));
 	}
-
-	//	private final SysLoginService loginService;
-	//	private final SysUserMapper userMapper;
-	//
-	//	@Override
-	//	public LoginVo login(String body, SysClientVo client) {
-	//		EmailLoginBody loginBody = JsonUtils.parseObject(body, EmailLoginBody.class);
-	//		ValidatorUtils.validate(loginBody);
-	//		String tenantId = loginBody.getTenantId();
-	//		String email = loginBody.getEmail();
-	//		String emailCode = loginBody.getEmailCode();
-	//		LoginUser loginUser = TenantHelper.dynamic(tenantId, () -> {
-	//			SysUserVo user = loadUserByEmail(email);
-	//			loginService.checkLogin(LoginType.EMAIL, tenantId, user.getUserName(), () -> !validateEmailCode(tenantId, email, emailCode));
-	//			// 此处可根据登录用户的数据不同 自行创建 loginUser 属性不够用继承扩展就行了
-	//			return loginService.buildLoginUser(user);
-	//		});
-	//		loginUser.setClientKey(client.getClientKey());
-	//		loginUser.setDeviceType(client.getDeviceType());
-	//		SaLoginModel model = new SaLoginModel();
-	//		model.setDevice(client.getDeviceType());
-	//		// 自定义分配 不同用户体系 不同 token 授权时间 不设置默认走全局 yml 配置
-	//		// 例如: 后台用户30分钟过期 app用户1天过期
-	//		model.setTimeout(client.getTimeout());
-	//		model.setActiveTimeout(client.getActiveTimeout());
-	//		model.setExtra(LoginHelper.CLIENT_KEY, client.getClientId());
-	//		// 生成token
-	//		LoginHelper.login(loginUser, model);
-	//
-	//		LoginVo loginVo = new LoginVo();
-	//		loginVo.setAccessToken(StpUtil.getTokenValue());
-	//		loginVo.setExpireIn(StpUtil.getTokenTimeout());
-	//		loginVo.setClientId(client.getClientId());
-	//		return loginVo;
-	//	}
-	//
-	//	/**
-	//	 * 校验邮箱验证码
-	//	 */
-	//	private boolean validateEmailCode(String tenantId, String email, String emailCode) {
-	//		String code = RedisUtils.getCacheObject(GlobalConstants.CAPTCHA_CODE_KEY + email);
-	//		if (StringUtils.isBlank(code)) {
-	//			loginService.recordLogininfor(tenantId, email, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire"));
-	//			throw new CaptchaExpireException();
-	//		}
-	//		return code.equals(emailCode);
-	//	}
-	//
-	//	private SysUserVo loadUserByEmail(String email) {
-	//		SysUserVo user = userMapper.selectVoOne(new LambdaQueryWrapper<SysUser>().eq(SysUser::getEmail, email));
-	//		if (ObjectUtil.isNull(user)) {
-	//			log.info("登录用户：{} 不存在.", email);
-	//			throw new UserException("user.not.exists", email);
-	//		} else if (UserStatus.DISABLE.getCode().equals(user.getStatus())) {
-	//			log.info("登录用户：{} 已被停用.", email);
-	//			throw new UserException("user.blocked", email);
-	//		}
-	//		return user;
-	//	}
-
+	
+	private CoreUser loadUserByUsername(String userName) {
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(userName);
+		if (optionalCoreUser.isEmpty()) {
+			log.info("Login user: {} does not exist.", userName);
+			throw new UserException("user.not.exists", userName);
+		} else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
+			log.info("Logged in user: {} has been deactivated.", userName);
+			throw new UserException("user.blocked", userName);
+		}
+		return optionalCoreUser.get();
+	}
+	
 }

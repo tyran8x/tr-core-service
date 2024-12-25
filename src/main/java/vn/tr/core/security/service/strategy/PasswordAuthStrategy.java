@@ -17,7 +17,6 @@ import vn.tr.common.core.utils.MessageUtils;
 import vn.tr.common.core.utils.ValidatorUtils;
 import vn.tr.common.json.utils.JsonUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
-import vn.tr.common.web.config.properties.CaptchaProperties;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.CoreClientData;
@@ -30,10 +29,9 @@ import java.util.Optional;
 @Service("password" + IAuthStrategy.BASE_NAME)
 @RequiredArgsConstructor
 public class PasswordAuthStrategy implements IAuthStrategy {
-
-	private final CaptchaProperties captchaProperties;
+	
 	private final CoreUserService coreUserService;
-
+	
 	@Override
 	public LoginResult login(String body, CoreClientData coreClientData) {
 		PasswordLoginBody loginBody = JsonUtils.parseObject(body, PasswordLoginBody.class);
@@ -41,13 +39,13 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		ValidatorUtils.validate(loginBody);
 		log.info("pass loginBody");
 		assert loginBody != null;
-
+		
 		String userName = loginBody.getUserName();
 		String password = loginBody.getPassword();
-
+		
 		log.info("userName: {}", userName);
 		log.info("password: {}", password);
-
+		
 		CoreUser coreUser = loadUserByUsername(userName);
 		coreUserService.checkLogin(LoginType.PASSWORD, userName, () -> !BCrypt.checkpw(password, coreUser.getPassword()));
 		LoginUser loginUser = coreUserService.buildLoginUser(coreUser);
@@ -58,29 +56,30 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		saLoginModel.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
 		saLoginModel.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
 		saLoginModel.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
+		saLoginModel.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
 		// generate token
 		LoginHelper.login(loginUser, saLoginModel);
-
+		
 		LoginResult loginResult = new LoginResult();
 		loginResult.setAccessToken(StpUtil.getTokenValue());
 		loginResult.setExpireIn(StpUtil.getTokenTimeout());
 		loginResult.setClientId(coreClientData.getClientId());
 		return loginResult;
 	}
-
+	
 	@Override
 	public void register(String body, CoreClientData coreClientData) {
 		RegisterBody registerBody = JsonUtils.parseObject(body, RegisterBody.class);
-
+		
 		assert registerBody != null;
 		String userName = registerBody.getUserName();
 		String password = registerBody.getPassword();
-
+		
 		String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
-
+		
 		log.info("userName register: {}", userName);
 		log.info("password register: {}", password);
-
+		
 		CoreUser coreUser = new CoreUser();
 		coreUser.setUserName(userName);
 		coreUser.setNickName(userName);
@@ -88,7 +87,7 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		coreUser.setPassword(BCrypt.hashpw(password));
 		coreUser.setUserType(userType);
 		coreUser.setIsEnabled(true);
-
+		
 		boolean exist = coreUserService.existsByEmailIgnoreCaseAndDaXoaFalse(userName);
 		if (exist) {
 			throw new UserException("user.register.save.error", userName);
@@ -98,10 +97,10 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		} catch (Exception e) {
 			throw new UserException("user.register.error");
 		}
-
+		
 		coreUserService.recordLoginInfo(userName, Constants.REGISTER, MessageUtils.message("user.register.success"));
 	}
-
+	
 	private CoreUser loadUserByUsername(String userName) {
 		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(userName);
 		if (optionalCoreUser.isEmpty()) {
@@ -113,5 +112,5 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		}
 		return optionalCoreUser.get();
 	}
-
+	
 }

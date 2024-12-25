@@ -17,51 +17,51 @@ import vn.tr.core.data.validator.CoreRoleValidator;
 @RequestMapping(value = "/role")
 @RequiredArgsConstructor
 public class CoreRoleController {
-
+	
 	private final CoreRoleBusiness coreRoleBusiness;
 	private final CoreRoleValidator coreRoleValidator;
-
+	
 	@PostMapping(value = {""})
 	public R<CoreRoleData> create(@Valid @RequestBody CoreRoleData coreRoleData) {
 		coreRoleData = coreRoleBusiness.create(coreRoleData);
 		return R.ok(coreRoleData);
 	}
-
+	
 	@DeleteMapping(value = {"/{id}"})
 	public R<Void> delete(@PathVariable("id") Long id) throws EntityNotFoundException {
 		coreRoleBusiness.delete(id);
 		return R.ok();
 	}
-
+	
 	@GetMapping(value = {"/", ""})
 	@Log(title = "FindAll CoreRole", businessType = BusinessType.OTHER, isSaveRequestData = false)
 	public R<Page<CoreRoleData>> findAll(
+			@RequestHeader(name = "X-App-Code", required = false) String xAppCode,
 			@RequestParam(name = "page", defaultValue = "0", required = false) int page,
 			@RequestParam(name = "size", defaultValue = "20", required = false) int size,
 			@RequestParam(name = "sortBy", defaultValue = "ngayCapNhat", required = false) String sortBy,
 			@RequestParam(name = "sortDir", defaultValue = "DESC", required = false) String sortDir,
-			@RequestParam(name = "appCode", required = false) String appCode,
 			@RequestParam(name = "search", required = false) String search,
 			@RequestParam(name = "trangThai", required = false) Boolean trangThai) {
-		Page<CoreRoleData> pageCoreRoleData = coreRoleBusiness.findAll(page, size, sortBy, sortDir, search, trangThai, appCode);
+		Page<CoreRoleData> pageCoreRoleData = coreRoleBusiness.findAll(page, size, sortBy, sortDir, search, trangThai, xAppCode);
 		return R.ok(pageCoreRoleData);
 	}
-
+	
 	@GetMapping(value = {"/{id}"})
 	public R<CoreRoleData> findById(@PathVariable("id") long id) throws EntityNotFoundException {
 		CoreRoleData coreRoleData = coreRoleBusiness.findById(id);
 		return R.ok(coreRoleData);
 	}
-
+	
 	@InitBinder
 	public void initBinder(WebDataBinder webDataBinder) {
 		webDataBinder.addValidators(coreRoleValidator);
 	}
-
+	
 	@PutMapping(value = {"/{id}"})
 	public R<CoreRoleData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreRoleData coreRoleData) throws EntityNotFoundException {
 		coreRoleData = coreRoleBusiness.update(id, coreRoleData);
 		return R.ok(coreRoleData);
 	}
-
+	
 }

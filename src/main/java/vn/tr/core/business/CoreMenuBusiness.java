@@ -23,16 +23,15 @@ import vn.tr.core.data.MetaData;
 import vn.tr.core.data.RouterData;
 
 import java.util.*;
-import java.util.concurrent.Future;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class CoreMenuBusiness {
-
+	
 	private final CoreMenuService coreMenuService;
 	private final CoreRole2MenuService coreRole2MenuService;
-
+	
 	private CoreMenuData convertToCoreMenuData(CoreMenu coreMenu) {
 		CoreMenuData coreMenuData = new CoreMenuData();
 		coreMenuData.setId(coreMenu.getId());
@@ -64,12 +63,12 @@ public class CoreMenuBusiness {
 		coreMenuData.setSapXep(coreMenu.getSapXep());
 		return coreMenuData;
 	}
-
+	
 	public CoreMenuData create(CoreMenuData coreMenuData) {
 		CoreMenu coreMenu = new CoreMenu();
 		return save(coreMenu, coreMenuData);
 	}
-
+	
 	public void delete(@PathVariable("id") Long id) throws EntityNotFoundException {
 		Optional<CoreMenu> optional = coreMenuService.findById(id);
 		if (optional.isEmpty()) {
@@ -79,19 +78,19 @@ public class CoreMenuBusiness {
 		coreMenu.setDaXoa(true);
 		coreMenuService.save(coreMenu);
 	}
-
+	
 	public void deleteByIds(List<Long> ids) {
 		if (CollUtil.isNotEmpty(ids)) {
 			coreMenuService.setFixedDaXoaForIds(true, ids);
 		}
 	}
-
+	
 	public Page<CoreMenuData> findAll(int page, int size, String sortBy, String sortDir, String search, Boolean trangThai, String appCode) {
 		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
 		Page<CoreMenu> pageCoreMenu = coreMenuService.findAll(search, trangThai, appCode, pageable);
 		return pageCoreMenu.map(this::convertToCoreMenuData);
 	}
-
+	
 	public CoreMenuData findById(Long id) throws EntityNotFoundException {
 		Optional<CoreMenu> optional = coreMenuService.findById(id);
 		if (optional.isEmpty()) {
@@ -100,27 +99,29 @@ public class CoreMenuBusiness {
 		CoreMenu coreMenu = optional.get();
 		return convertToCoreMenuData(coreMenu);
 	}
-
+	
 	public List<CoreMenuData> getAll(List<Long> ids) {
 		if (CollUtil.isNotEmpty(ids)) {
 			return coreMenuService.findByIdInAndDaXoaFalse(ids).stream().map(this::convertToCoreMenuData).toList();
 		}
 		return coreMenuService.findByDaXoaFalse().stream().map(this::convertToCoreMenuData).toList();
 	}
-
+	
 	public CoreDsMenuData getRouterDatas(String appCode) {
 		String email = LoginHelper.getUserName();
 		Set<String> roles = Objects.requireNonNull(LoginHelper.getLoginUser()).getRolePermission();
-
+		
 		CoreDsMenuData coreDsMenuData = new CoreDsMenuData();
 		coreDsMenuData.setEmail(email);
 		coreDsMenuData.setRoles(roles);
 		List<CoreMenu> coreMenus;
-		boolean isRoot = LoginHelper.isSuperAdmin();
-		if (isRoot) {
+		//boolean isRoot = LoginHelper.isSuperAdmin();
+		//log.info("isRoot: {} - roles: {}", isRoot, roles);
+		if (CollUtil.contains(roles, "ROLE_ADMIN")) {
 			coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
 		} else {
 			List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
+			log.info("appCode: {} - menuIds: {}", appCode, menuIds);
 			coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
 		}
 		if (CollUtil.isNotEmpty(coreMenus)) {
@@ -130,10 +131,10 @@ public class CoreMenuBusiness {
 					.toList();
 			coreDsMenuData.setCoreMenuDatas(setCoreMenuData(cMenus, coreMenus));
 		}
-
+		
 		return coreDsMenuData;
 	}
-
+	
 	private CoreMenuData save(CoreMenu coreMenu, CoreMenuData coreMenuData) {
 		coreMenu.setDaXoa(false);
 		coreMenu.setTen(FunctionUtils.removeXss(coreMenuData.getTen()));
@@ -165,7 +166,7 @@ public class CoreMenuBusiness {
 		coreMenu = coreMenuService.save(coreMenu);
 		return convertToCoreMenuData(coreMenu);
 	}
-
+	
 	public void saveRouterData(RouterData routerData, Long chaId, int sapXep, String appCode) {
 		log.info("Router: {}", routerData.getName());
 		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(routerData.getName(), appCode);
@@ -185,7 +186,7 @@ public class CoreMenuBusiness {
 		coreMenu.setIsAlwaysShow(Boolean.TRUE.equals(routerData.getAlwaysShow()));
 		coreMenu.setSapXep(sapXep);
 		coreMenu.setProps(JsonUtils.toJsonString(routerData.getProps()));
-
+		
 		if (Objects.nonNull(routerData.getMeta())) {
 			MetaData metaData = routerData.getMeta();
 			coreMenu.setIcon(FunctionUtils.removeXss(metaData.getIcon()));
@@ -200,7 +201,7 @@ public class CoreMenuBusiness {
 			coreMenu.setLink(FunctionUtils.removeXss(metaData.getLink()));
 		}
 		coreMenu = coreMenuService.save(coreMenu);
-
+		
 		int sapXepCon = 0;
 		if (CollUtil.isNotEmpty(routerData.getChildren())) {
 			for (RouterData children : routerData.getChildren()) {
@@ -209,7 +210,7 @@ public class CoreMenuBusiness {
 			}
 		}
 	}
-
+	
 	private List<CoreMenuData> setCoreMenuData(List<CoreMenu> cMenus, List<CoreMenu> coreMenus) {
 		List<CoreMenuData> coreMenuDatas = new ArrayList<>();
 		if (CollUtil.isNotEmpty(cMenus)) {
@@ -237,7 +238,7 @@ public class CoreMenuBusiness {
 				coreMenuData.setTrangThai(coreMenu.getTrangThai());
 				coreMenuData.setSapXep(coreMenu.getSapXep());
 				coreMenuData.setAppCode(coreMenu.getAppCode());
-
+				
 				List<CoreMenu> children = coreMenus.stream()
 						.filter(e -> Objects.nonNull(e.getChaId()))
 						.filter(e -> e.getChaId().equals(coreMenu.getId()))
@@ -249,8 +250,8 @@ public class CoreMenuBusiness {
 		}
 		return coreMenuDatas;
 	}
-
-	public Future<String> setRouterDatas(Object object, String appCode) {
+	
+	public void setRouterDatas(Object object, String appCode) {
 		log.info("Bắt đầu get dữ liệu router");
 		long start = System.currentTimeMillis();
 		if (Objects.nonNull(object)) {
@@ -264,13 +265,12 @@ public class CoreMenuBusiness {
 					sapXep++;
 					saveRouterData(routerData, null, sapXep, appCode);
 				}
-
+				
 			}
 			log.info("Đã hoàn thành get dữ liệu router, tổng thời gian save menu, {}", System.currentTimeMillis() - start);
 		}
-		return null;
 	}
-
+	
 	public CoreMenuData update(Long id, CoreMenuData coreMenuData) throws EntityNotFoundException {
 		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findById(id);
 		if (optionalCoreMenu.isEmpty()) {
@@ -279,5 +279,5 @@ public class CoreMenuBusiness {
 		CoreMenu coreMenu = optionalCoreMenu.get();
 		return save(coreMenu, coreMenuData);
 	}
-
+	
 }

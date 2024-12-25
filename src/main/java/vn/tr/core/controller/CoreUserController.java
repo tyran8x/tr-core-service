@@ -17,53 +17,53 @@ import java.util.List;
 @RequestMapping(value = "/user")
 @RequiredArgsConstructor
 public class CoreUserController {
-
+	
 	private final CoreUserBusiness coreUserBusiness;
 	private final CoreUserValidator coreUserValidator;
-
+	
 	@PostMapping(value = {""})
 	public R<CoreUserData> create(@Valid @RequestBody CoreUserData coreUserData) {
 		coreUserData = coreUserBusiness.create(coreUserData);
 		return R.ok(coreUserData);
 	}
-
+	
 	@DeleteMapping(value = {"/{id}"})
 	public R<Void> delete(@PathVariable("id") Long id) throws EntityNotFoundException {
 		coreUserBusiness.delete(id);
 		return R.ok();
 	}
-
+	
 	@GetMapping(value = {"/", ""})
 	public R<Page<CoreUserData>> findAll(
+			@RequestHeader(name = "X-App-Code", required = false) String xAppCode,
 			@RequestParam(name = "page", defaultValue = "0", required = false) int page,
 			@RequestParam(name = "size", defaultValue = "20", required = false) int size,
 			@RequestParam(name = "sortBy", defaultValue = "email", required = false) String sortBy,
 			@RequestParam(name = "sortDir", defaultValue = "ASC", required = false) String sortDir,
-			@RequestParam(name = "appCode", required = false) String appCode,
 			@RequestParam(name = "roleIds", required = false) List<Long> roleIds,
 			@RequestParam(name = "email", required = false) String email,
 			@RequestParam(name = "name", required = false) String name) {
-		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(page, size, sortBy, sortDir, email, name, roleIds, appCode);
+		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(page, size, sortBy, sortDir, email, name, roleIds, xAppCode);
 		return R.ok(pageCoreUserData);
 	}
-
+	
 	@GetMapping(value = {"/email/{email}"})
 	public R<CoreUserData> findByEmail(@PathVariable("email") String email) {
 		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
 		return R.ok(coreUserData);
 	}
-
+	
 	@GetMapping(value = {"/{id}"})
 	public R<CoreUserData> findById(@PathVariable("id") long id) throws EntityNotFoundException {
 		CoreUserData coreUserData = coreUserBusiness.findById(id);
 		return R.ok(coreUserData);
 	}
-
+	
 	@InitBinder
 	public void initBinder(WebDataBinder webDataBinder) {
 		webDataBinder.addValidators(coreUserValidator);
 	}
-
+	
 	@PutMapping(value = {"/{id}"})
 	public R<CoreUserData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreUserData coreUserData) throws EntityNotFoundException {
 		coreUserData = coreUserBusiness.update(id, coreUserData);

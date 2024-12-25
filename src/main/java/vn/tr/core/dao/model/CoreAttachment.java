@@ -17,7 +17,7 @@ import java.util.Objects;
 @ToString
 @RequiredArgsConstructor
 public class CoreAttachment extends BaseEntity {
-
+	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +28,7 @@ public class CoreAttachment extends BaseEntity {
 	private String folder;
 	@Column(name = "app_code", length = 250, nullable = false)
 	private String appCode;
-	@Column(name = "base64")
+	@Column(name = "base64", columnDefinition = "TEXT")
 	private String base64;
 	@Column(name = "month")
 	private Integer month;
@@ -46,7 +46,7 @@ public class CoreAttachment extends BaseEntity {
 	private Long objectId;
 	@Column(name = "type")
 	private Integer type;
-
+	
 	@Override
 	public final boolean equals(Object o) {
 		if (this == o) return true;
@@ -59,11 +59,11 @@ public class CoreAttachment extends BaseEntity {
 		CoreAttachment that = (CoreAttachment) o;
 		return getId() != null && Objects.equals(getId(), that.getId());
 	}
-
+	
 	@Override
 	public final int hashCode() {
 		return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() :
 				getClass().hashCode();
 	}
-
+	
 }

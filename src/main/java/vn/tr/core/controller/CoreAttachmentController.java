@@ -27,30 +27,30 @@ import java.util.Optional;
 @RequestMapping("/attachment")
 @RequiredArgsConstructor
 public class CoreAttachmentController {
-
+	
 	private final CoreAttachmentService coreAttachmentService;
 	private final CoreAttachmentBusiness coreAttachmentBusiness;
-
+	
 	@GetMapping(value = {"/copy"})
 	public R<Long> copyAttachment(
 			@RequestParam(value = "fileDinhKemId") Long fileDinhKemId,
 			@RequestParam(value = "appCode") String appCode,
 			@RequestParam(value = "objectId") Long objectId
-	) {
+	                             ) {
 		return R.ok(coreAttachmentBusiness.copyAttachment(fileDinhKemId, appCode, objectId));
 	}
-
+	
 	@DeleteMapping(value = {"/{id}"})
 	public R<Void> delete(@PathVariable("id") Long id) throws EntityNotFoundException {
 		coreAttachmentBusiness.delete(id);
 		return R.ok();
 	}
-
+	
 	@PostMapping(value = {"/doupload"})
 	public ResponseEntity<CoreAttachment> doUpload(@RequestParam("uploadfile") MultipartFile uploadfile) {
 		return ResponseEntity.ok(coreAttachmentBusiness.doUpload(uploadfile));
 	}
-
+	
 	@GetMapping(value = "/download/{code}")
 	public ResponseEntity<InputStreamResource> download(@PathVariable String code) throws IOException {
 		Optional<CoreAttachment> optionalCoreAttachment = coreAttachmentService.findFirstByCode(code);
@@ -67,41 +67,40 @@ public class CoreAttachmentController {
 		}
 		return null;
 	}
-
+	
 	@GetMapping(value = "/{id}")
 	public R<CoreAttachmentData> findById(@PathVariable("id") Long id) throws EntityNotFoundException {
 		CoreAttachmentData coreAttachmentData = coreAttachmentBusiness.findById(id);
 		return R.ok(coreAttachmentData);
 	}
-
+	
 	@GetMapping(value = {"/get"})
 	public R<FileDinhKem> getAttachments(
 			@RequestParam(value = "fileDinhKemId", required = false) Long fileDinhKemId,
 			@RequestParam(value = "appCode") String appCode,
 			@RequestParam(value = "objectId", required = false) Long objectId,
 			@RequestParam(value = "type") Integer type
-	) {
+	                                    ) {
 		return R.ok(coreAttachmentBusiness.getAttachments(fileDinhKemId, appCode, objectId, type));
 	}
-
+	
 	@GetMapping(value = {"/getBase64"})
 	public R<String> getBase64(@RequestParam(value = "urlFile") String urlFile) {
 		return R.ok(coreAttachmentBusiness.getBase64(urlFile));
 	}
-
+	
 	@GetMapping(value = "/get/id")
 	public R<CoreAttachmentData> getById(@RequestParam(name = "id") Long id) {
 		CoreAttachmentData coreAttachmentData = coreAttachmentBusiness.getById(id);
 		return R.ok(coreAttachmentData);
 	}
-
+	
 	@GetMapping(value = {"/save"})
 	public R<List<Long>> saveAttachments(
 			@RequestParam(value = "fileDinhKemIds", required = false) List<Long> fileDinhKemIds,
 			@RequestParam(value = "appCode") String appCode,
 			@RequestParam(value = "objectId") long objectId,
-			@RequestParam(value = "type") int type
-	) {
+			@RequestParam(value = "type") int type) {
 		return R.ok(coreAttachmentBusiness.saveAttachments(fileDinhKemIds, appCode, objectId, type));
 	}
 }

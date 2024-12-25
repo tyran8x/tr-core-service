@@ -35,10 +35,10 @@ import java.util.Optional;
 @Service("password2captcha" + IAuthStrategy.BASE_NAME)
 @RequiredArgsConstructor
 public class Password2CaptchaAuthStrategy implements IAuthStrategy {
-
+	
 	private final CaptchaProperties captchaProperties;
 	private final CoreUserService coreUserService;
-
+	
 	@Override
 	public LoginResult login(String body, CoreClientData coreClientData) {
 		PasswordLoginBody loginBody = JsonUtils.parseObject(body, PasswordLoginBody.class);
@@ -46,7 +46,7 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		ValidatorUtils.validate(loginBody);
 		log.info("pass loginBody");
 		assert loginBody != null;
-
+		
 		String userName = loginBody.getUserName();
 		String password = loginBody.getPassword();
 		String code = loginBody.getCode();
@@ -67,26 +67,27 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		saLoginModel.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
 		saLoginModel.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
 		saLoginModel.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
+		saLoginModel.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
 		// generate token
 		LoginHelper.login(loginUser, saLoginModel);
-
+		
 		LoginResult loginResult = new LoginResult();
 		loginResult.setAccessToken(StpUtil.getTokenValue());
 		loginResult.setExpireIn(StpUtil.getTokenTimeout());
 		loginResult.setClientId(coreClientData.getClientId());
 		return loginResult;
 	}
-
+	
 	@Override
 	public void register(String body, CoreClientData coreClientData) {
 		RegisterBody registerBody = JsonUtils.parseObject(body, RegisterBody.class);
-
+		
 		assert registerBody != null;
 		String userName = registerBody.getUserName();
 		String password = registerBody.getPassword();
-
+		
 		String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
-
+		
 		String code = registerBody.getCode();
 		String uuid = registerBody.getUuid();
 		log.info("userName register: {}", userName);
@@ -102,7 +103,7 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		coreUser.setPassword(BCrypt.hashpw(password));
 		coreUser.setUserType(userType);
 		coreUser.setIsEnabled(true);
-
+		
 		boolean exist = coreUserService.existsByEmailIgnoreCaseAndDaXoaFalse(userName);
 		if (exist) {
 			throw new UserException("user.register.save.error", userName);
@@ -112,10 +113,10 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		} catch (Exception e) {
 			throw new UserException("user.register.error");
 		}
-
+		
 		coreUserService.recordLoginInfo(userName, Constants.REGISTER, MessageUtils.message("user.register.success"));
 	}
-
+	
 	private void validateCaptcha(String userName, String code, String uuid) {
 		String verifyKey = GlobalConstants.CAPTCHA_CODE_KEY + StringUtils.blankToDefault(uuid, "");
 		String captcha = RedisUtils.getCacheObject(verifyKey);
@@ -129,7 +130,7 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 			throw new CaptchaException();
 		}
 	}
-
+	
 	private CoreUser loadUserByUsername(String userName) {
 		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(userName);
 		if (optionalCoreUser.isEmpty()) {
@@ -141,5 +142,5 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		}
 		return optionalCoreUser.get();
 	}
-
+	
 }

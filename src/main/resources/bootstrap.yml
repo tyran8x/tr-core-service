@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active: sgtvt
+  application:
+    name: tr-core-service
+#  cloud:
+#    config:
+#      uri: http://localhost:8888

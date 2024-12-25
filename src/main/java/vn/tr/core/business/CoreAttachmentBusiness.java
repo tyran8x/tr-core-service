@@ -37,7 +37,7 @@ public class CoreAttachmentBusiness {
 	private String coreAttachmentPathUpload;
 	@Value("${core.attachment.path.uploadtemp}")
 	private String coreAttachmentPathUploadTemp;
-
+	
 	private CoreAttachmentData convertToCoreAttachmentData(CoreAttachment coreAttachment) {
 		CoreAttachmentData coreAttachmentData = new CoreAttachmentData();
 		coreAttachmentData.setId(coreAttachment.getId());
@@ -55,13 +55,13 @@ public class CoreAttachmentBusiness {
 		coreAttachmentData.setYear(coreAttachment.getYear());
 		return coreAttachmentData;
 	}
-
+	
 	public Long copyAttachment(Long id, String appCode, Long objectId) {
-
+		
 		Optional<CoreAttachment> optional = coreAttachmentService.findByIdAndDaXoaFalse(id);
 		if (optional.isPresent()) {
 			CoreAttachment coreAttachment = optional.get();
-
+			
 			CoreAttachment newCoreAttachment = new CoreAttachment();
 			newCoreAttachment.setMonth(coreAttachment.getMonth());
 			newCoreAttachment.setYear(coreAttachment.getYear());
@@ -75,13 +75,13 @@ public class CoreAttachmentBusiness {
 			code = DigestUtils.md5Hex(code).toUpperCase();
 			newCoreAttachment.setCode(code);
 			coreAttachmentService.save(newCoreAttachment);
-
+			
 			coreAttachmentService.saveAndCopy(coreAttachment, newCoreAttachment);
 			return newCoreAttachment.getId();
 		}
 		return null;
 	}
-
+	
 	public void delete(Long id) throws EntityNotFoundException {
 		Optional<CoreAttachment> optional = coreAttachmentService.findById(id);
 		if (optional.isEmpty()) {
@@ -91,7 +91,7 @@ public class CoreAttachmentBusiness {
 		coreAttachment.setDaXoa(true);
 		coreAttachmentService.save(coreAttachment);
 	}
-
+	
 	public CoreAttachment doUpload(MultipartFile uploadfile) {
 		String fileName = uploadfile.getOriginalFilename();
 		CoreAttachment coreAttachment = new CoreAttachment();
@@ -104,7 +104,7 @@ public class CoreAttachmentBusiness {
 			cal.setTime(date);
 			int year = LocalDate.now().getYear();
 			month = cal.get(Calendar.MONTH) + 1;
-
+			
 			coreAttachment.setYear(year);
 			coreAttachment.setMonth(month);
 			coreAttachment.setFileName(fileName);
@@ -116,10 +116,10 @@ public class CoreAttachmentBusiness {
 			String code = coreAttachment.getId() + coreAttachment.getFileName() + coreAttachment.getNgayTao().toString();
 			code = DigestUtils.md5Hex(code).toUpperCase();
 			coreAttachment.setCode(code);
-
+			
 			String link = coreAttachmentHostDownload + "/attachment/download/" + coreAttachment.getCode();
 			coreAttachment.setLink(link);
-
+			
 			// base64
 			StringBuilder base64Image = new StringBuilder("data:").append(uploadfile.getContentType()).append(";base64,");
 			if (uploadfile.getContentType() != null && "image/jpeg".contains(uploadfile.getContentType()) ||
@@ -150,11 +150,11 @@ public class CoreAttachmentBusiness {
 					}
 				}
 			}
-
+			
 		}
 		return coreAttachment;
 	}
-
+	
 	public InputStreamResource download(String code) throws FileNotFoundException {
 		Optional<CoreAttachment> optionalCoreAttachment = coreAttachmentService.findFirstByCode(code);
 		if (optionalCoreAttachment.isPresent()) {
@@ -169,7 +169,7 @@ public class CoreAttachmentBusiness {
 		}
 		return null;
 	}
-
+	
 	public CoreAttachmentData findById(Long id) throws EntityNotFoundException {
 		Optional<CoreAttachment> optionalCoreAttachment = coreAttachmentService.findByIdAndDaXoaFalse(id);
 		if (optionalCoreAttachment.isEmpty()) {
@@ -177,7 +177,7 @@ public class CoreAttachmentBusiness {
 		}
 		return convertToCoreAttachmentData(optionalCoreAttachment.get());
 	}
-
+	
 	public FileDinhKem getAttachments(Long fileDinhKemId, String appCode, Long objectId, Integer type) {
 		FileDinhKem fileDinhKem = new FileDinhKem();
 		List<FileList> fileLists = new ArrayList<>();
@@ -209,33 +209,34 @@ public class CoreAttachmentBusiness {
 		fileDinhKem.setFileLists(fileLists);
 		return fileDinhKem;
 	}
-
+	
 	public String getBase64(String urlString) {
 		try {
 			URL url = new URI(urlString).toURL();
-
+			
 			InputStream is = url.openStream();
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 			int nRead;
 			byte[] data = new byte[4];
-
+			
 			while ((nRead = is.readNBytes(data, 0, data.length)) != 0) {
 				buffer.write(data, 0, nRead);
 			}
-
+			
 			buffer.flush();
 			byte[] bytes = buffer.toByteArray();
+			is.close();
 			return Base64.getEncoder().encodeToString(bytes);
 		} catch (Exception e) {
 			return null;
 		}
 	}
-
+	
 	public CoreAttachmentData getById(Long id) {
 		Optional<CoreAttachment> optionalCoreAttachment = coreAttachmentService.findByIdAndDaXoaFalse(id);
 		return optionalCoreAttachment.map(this::convertToCoreAttachmentData).orElseGet(CoreAttachmentData::new);
 	}
-
+	
 	public List<Long> saveAttachments(List<Long> fileDinhKemIds, String appCode, long objectId, int type) {
 		List<Long> ids = new ArrayList<>();
 		if (CollUtil.isNotEmpty(fileDinhKemIds)) {
@@ -250,7 +251,7 @@ public class CoreAttachmentBusiness {
 				coreAttachment.setObjectId(objectId);
 				coreAttachment.setType(type);
 				coreAttachment = coreAttachmentService.save(coreAttachment);
-
+				
 				coreAttachmentService.saveAndMove(coreAttachment);
 				log.info("coreAttachment id : {}", coreAttachment.getId());
 				ids.add(coreAttachment.getId());
@@ -262,5 +263,5 @@ public class CoreAttachmentBusiness {
 		}
 		return ids;
 	}
-
+	
 }
