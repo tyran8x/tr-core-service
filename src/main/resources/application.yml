@@ -3,6 +3,10 @@ spring:
     name: tr-core-service
   freemarker:
     suffix: .ftl
+  datasource:
+    url: jdbc:postgresql://localhost:5432/core_service
+    username: postgres
+    password: DnictPro@123
   data:
     redis:
       host: localhost
@@ -40,8 +44,6 @@ app:
   name: Tr-Pro-App
   version: ${revision}
   copyrightYear: 2024
-  jwtSecret: DnictPro@123
-  jwtExpirationMs: 300
   service:
     home: http://localhost:8989/
     security: http://localhost:8989/login
