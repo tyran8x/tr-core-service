@@ -43,7 +43,7 @@ eureka:
 app:
   name: Tr-Pro-App
   version: ${revision}
-  copyrightYear: 2024
+  copyrightYear: 2025
   service:
     home: http://localhost:8989/
     security: http://localhost:8989/login
