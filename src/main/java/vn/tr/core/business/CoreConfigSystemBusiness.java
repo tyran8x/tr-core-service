@@ -19,9 +19,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CoreConfigSystemBusiness {
-
+	
 	private final CoreConfigSystemService coreConfigSystemService;
-
+	
 	private CoreConfigSystemData convertToCoreConfigSystemData(CoreConfigSystem coreConfigSystem) {
 		CoreConfigSystemData coreConfigSystemData = new CoreConfigSystemData();
 		coreConfigSystemData.setId(coreConfigSystem.getId());
@@ -33,12 +33,12 @@ public class CoreConfigSystemBusiness {
 		coreConfigSystemData.setTrangThai(coreConfigSystem.getTrangThai());
 		return coreConfigSystemData;
 	}
-
+	
 	public CoreConfigSystemData create(CoreConfigSystemData coreConfigSystemData) {
 		CoreConfigSystem coreConfigSystem = new CoreConfigSystem();
 		return save(coreConfigSystem, coreConfigSystemData);
 	}
-
+	
 	public void delete(Long id) throws EntityNotFoundException {
 		Optional<CoreConfigSystem> optional = coreConfigSystemService.findById(id);
 		if (optional.isEmpty()) {
@@ -48,19 +48,19 @@ public class CoreConfigSystemBusiness {
 		coreConfigSystem.setDaXoa(true);
 		coreConfigSystemService.save(coreConfigSystem);
 	}
-
+	
 	public void deleteByIds(List<Long> ids) {
 		if (CollUtil.isNotEmpty(ids)) {
 			coreConfigSystemService.setFixedDaXoaForIds(true, ids);
 		}
 	}
-
+	
 	public Page<CoreConfigSystemData> findAll(int page, int size, String sortBy, String sortDir, String maUngDung, String code, Boolean trangThai) {
 		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
 		Page<CoreConfigSystem> pageCoreConfigSystem = coreConfigSystemService.findAll(maUngDung, code, trangThai, pageable);
 		return pageCoreConfigSystem.map(this::convertToCoreConfigSystemData);
 	}
-
+	
 	public CoreConfigSystemData findById(Long id) throws EntityNotFoundException {
 		Optional<CoreConfigSystem> optionalCoreConfigSystem = coreConfigSystemService.findById(id);
 		if (optionalCoreConfigSystem.isEmpty()) {
@@ -68,7 +68,7 @@ public class CoreConfigSystemBusiness {
 		}
 		return convertToCoreConfigSystemData(optionalCoreConfigSystem.get());
 	}
-
+	
 	public List<CoreConfigSystemData> getAll(List<Long> ids) {
 		if (CollUtil.isNotEmpty(ids)) {
 			return coreConfigSystemService.findByIdInAndDaXoaFalse(ids).stream().map(this::convertToCoreConfigSystemData)
@@ -76,11 +76,24 @@ public class CoreConfigSystemBusiness {
 		}
 		return coreConfigSystemService.findByDaXoaFalse().stream().map(this::convertToCoreConfigSystemData).collect(Collectors.toList());
 	}
-
+	
 	public String getGiaTriByCode(String code) {
 		return coreConfigSystemService.getGiaTriByCode(code);
 	}
-
+	
+	public void saveConfig(String code, String giaTri, String maUngDung) {
+		CoreConfigSystem coreConfigSystem = new CoreConfigSystem();
+		Optional<CoreConfigSystem> optionalCoreConfigSystem = coreConfigSystemService.findFirstByCodeAndDaXoaFalse(code);
+		if (optionalCoreConfigSystem.isPresent()) {
+			coreConfigSystem = optionalCoreConfigSystem.get();
+		}
+		coreConfigSystem.setDaXoa(false);
+		coreConfigSystem.setCode(code);
+		coreConfigSystem.setGiaTri(giaTri);
+		coreConfigSystem.setMaUngDung(maUngDung);
+		coreConfigSystemService.save(coreConfigSystem);
+	}
+	
 	private CoreConfigSystemData save(CoreConfigSystem coreConfigSystem, CoreConfigSystemData coreConfigSystemData) {
 		coreConfigSystem.setDaXoa(false);
 		coreConfigSystem.setMaUngDung(FunctionUtils.removeXss(coreConfigSystemData.getMaUngDung()));
@@ -91,7 +104,7 @@ public class CoreConfigSystemBusiness {
 		coreConfigSystem.setTrangThai(coreConfigSystemData.getTrangThai());
 		return convertToCoreConfigSystemData(coreConfigSystemService.save(coreConfigSystem));
 	}
-
+	
 	public CoreConfigSystemData update(Long id, CoreConfigSystemData coreConfigSystemData) throws EntityNotFoundException {
 		Optional<CoreConfigSystem> optionalCoreConfigSystem = coreConfigSystemService.findById(id);
 		if (optionalCoreConfigSystem.isEmpty()) {
@@ -100,5 +113,5 @@ public class CoreConfigSystemBusiness {
 		CoreConfigSystem coreConfigSystem = optionalCoreConfigSystem.get();
 		return save(coreConfigSystem, coreConfigSystemData);
 	}
-
+	
 }
