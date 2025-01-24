@@ -9,6 +9,7 @@ server:
     threads:
       io: 8
       worker: 256
+  shutdown: immediate
 eureka:
   client:
     register-with-eureka: true
