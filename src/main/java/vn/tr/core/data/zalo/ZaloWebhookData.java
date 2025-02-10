@@ -5,13 +5,13 @@ import lombok.Data;
 @Data
 public class ZaloWebhookData {
 	
-	private Long app_id;
+	private String app_id;
 	
-	private Long user_id_by_app;
+	private String user_id_by_app;
 	
 	private String event_name;
 	
-	private Long timestamp;
+	private String timestamp;
 	
 	private ZaloUserData sender = new ZaloUserData();
 	

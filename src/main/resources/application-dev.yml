@@ -76,3 +76,6 @@ redisson:
     timeout: 3000
     subscriptionConnectionPoolSize: 50
 
+client:
+  notification-service:
+    url: http://localhost:8000/v1/notification

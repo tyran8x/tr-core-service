@@ -64,6 +64,18 @@ captcha:
   numberLength: 1
   charLength: 4
 
+sa-token:
+  token-name: X-Token
+  # Whether to allow concurrent logins from the same account (if true, allow simultaneous logins, if false, new logins will replace old logins)
+  is-concurrent: true
+  # When multiple people log in to the same account, whether to share a token (if true, all logins share a token, if false, a new token is created for each login)
+  is-share: true
+  is-log: true
+  # jwt
+  jwt-secret-key: DnictPro@123
+  token-style: uuid
+
+
 redisson:
   keyPrefix: 'tr'
   threads: 4
@@ -76,3 +88,6 @@ redisson:
     timeout: 3000
     subscriptionConnectionPoolSize: 50
 
+client:
+  notification-service:
+    url: http://api.dev.dnict.vn/v1/notification

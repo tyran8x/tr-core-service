@@ -12,25 +12,25 @@ import java.util.Optional;
 
 @Repository
 public interface CoreConfigSystemRepo extends JpaRepository<CoreConfigSystem, Long>, JpaSpecificationExecutor<CoreConfigSystem> {
-
+	
 	List<CoreConfigSystem> findByDaXoaFalse();
-
+	
 	Optional<CoreConfigSystem> findByIdAndDaXoaFalse(Long id);
-
+	
 	List<CoreConfigSystem> findByIdInAndDaXoaFalse(List<Long> ids);
-
+	
 	Optional<CoreConfigSystem> findFirstByCodeAndDaXoaFalse(String code);
-
+	
 	@Query(
-			value = "SELECT u.giatri FROM core_config_system u WHERE u.code = ?1 AND u.daxoa = false AND u.trangthai = TRUE LIMIT 1",
+			value = "SELECT u.giatri FROM core_config_system u WHERE u.code = ?1 AND u.daxoa = false AND u.trangthai = TRUE AND u.maUngDung = ?2 LIMIT 1",
 			nativeQuery = true
 	)
-	String getGiaTriByCode(String code);
-
+	String getGiaTri(String code, String maUngDung);
+	
 	@Modifying(clearAutomatically = true)
-	@Query("update CoreConfigSystem u set u.daXoa = ?1 where code = ?2")
+	@Query("update CoreConfigSystem u set u.daXoa = ?1 where u.code = ?2")
 	int setFixedDaXoaByCode(boolean daXoa, String code);
-
+	
 	@Modifying(clearAutomatically = true)
 	@Query("update CoreConfigSystem u set u.daXoa = ?1 where u.id IN ?2")
 	int setFixedDaXoaForIds(boolean daXoa, List<Long> ids);

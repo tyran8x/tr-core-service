@@ -14,27 +14,27 @@ import java.util.List;
 @RequestMapping(value = "/config/system")
 @RequiredArgsConstructor
 public class CoreConfigSystemController {
-
+	
 	private final CoreConfigSystemBusiness coreConfigSystemBusiness;
-
+	
 	@PostMapping(value = {""})
 	public R<CoreConfigSystemData> create(@Valid @RequestBody CoreConfigSystemData coreConfigSystemData) {
 		coreConfigSystemData = coreConfigSystemBusiness.create(coreConfigSystemData);
 		return R.ok(coreConfigSystemData);
 	}
-
+	
 	@DeleteMapping(value = {"/{id}"})
 	public R<Void> delete(@PathVariable("id") Long id) {
 		coreConfigSystemBusiness.delete(id);
 		return R.ok();
 	}
-
+	
 	@DeleteMapping(value = {"/ids"})
 	public R<Void> deleteByIds(@RequestParam(name = "ids") List<Long> ids) {
 		coreConfigSystemBusiness.deleteByIds(ids);
 		return R.ok();
 	}
-
+	
 	@GetMapping(value = {"/", ""})
 	public R<Page<CoreConfigSystemData>> findAll(
 			@RequestParam(name = "page", defaultValue = "0", required = false) int page,
@@ -48,24 +48,25 @@ public class CoreConfigSystemController {
 				trangThai);
 		return R.ok(pageCoreConfigSystemData);
 	}
-
+	
 	@GetMapping(value = "/{id}")
 	public R<CoreConfigSystemData> findById(@PathVariable("id") Long id) {
 		CoreConfigSystemData coreConfigSystemData = coreConfigSystemBusiness.findById(id);
 		return R.ok(coreConfigSystemData);
 	}
-
+	
 	@GetMapping(value = "/get")
 	public R<List<CoreConfigSystemData>> getAll(@RequestParam(name = "ids", required = false) List<Long> ids) {
 		List<CoreConfigSystemData> coreConfigSystemDatas = coreConfigSystemBusiness.getAll(ids);
 		return R.ok(coreConfigSystemDatas);
 	}
-
+	
 	@GetMapping(value = "/get/giatri")
-	public R<String> getGiaTriByCode(@RequestParam(name = "code", required = false) String code) {
-		return R.ok(coreConfigSystemBusiness.getGiaTriByCode(code));
+	public R<String> getGiaTriByCode(@RequestParam(name = "code", required = false) String code,
+			@RequestParam(name = "maUngDung", required = false) String maUngDung) {
+		return R.ok(coreConfigSystemBusiness.getGiaTriByCode(code, maUngDung));
 	}
-
+	
 	@PutMapping(value = {"/{id}"})
 	public R<CoreConfigSystemData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreConfigSystemData coreConfigSystemData) {
 		coreConfigSystemData = coreConfigSystemBusiness.update(id, coreConfigSystemData);

@@ -99,6 +99,7 @@ sa-token:
   is-log: true
   # jwt
   jwt-secret-key: DnictPro@123
+  token-style: uuid
 
 security:
   excludes:
@@ -151,3 +152,7 @@ logging:
     name: /opt/logs/core-service/sys-console.log
   pattern:
     console: '%red(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %boldMagenta(%logger{36}%n) - %msg%n'
+
+client:
+  notification-service:
+    url: http://localhost:8000/v1/notification

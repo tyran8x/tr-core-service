@@ -77,8 +77,8 @@ public class CoreConfigSystemBusiness {
 		return coreConfigSystemService.findByDaXoaFalse().stream().map(this::convertToCoreConfigSystemData).collect(Collectors.toList());
 	}
 	
-	public String getGiaTriByCode(String code) {
-		return coreConfigSystemService.getGiaTriByCode(code);
+	public String getGiaTriByCode(String code, String maUngDung) {
+		return coreConfigSystemService.getGiaTri(code, maUngDung);
 	}
 	
 	public void saveConfig(String code, String giaTri, String maUngDung) {

@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class ZaloRecipientData {
 	
-	private Long id;
+	private String id;
 	
 }
