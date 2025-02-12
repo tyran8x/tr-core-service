@@ -43,7 +43,7 @@ public class CoreWebhookBussiness {
 			if (CollUtil.isNotEmpty(texts) && texts.size() == 2) {
 				String syntax = texts.getFirst().trim();
 				String userName = texts.getLast().trim();
-				String messageText = "";
+				String messageText;
 				log.info("Check info: {}  - {}", checkSyntax, userName);
 				if (StringUtils.equals(syntax, "#DKZALO")) {
 					if (StringUtils.isNotBlank(userName)) {

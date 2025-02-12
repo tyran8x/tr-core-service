@@ -21,15 +21,16 @@ import vn.tr.core.data.MenuData;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CoreRoleBusiness {
-
+	
 	private final CoreRoleService coreRoleService;
 	private final CoreRole2MenuService coreRole2MenuService;
 	private final CoreMenuService coreMenuService;
-
+	
 	private CoreRoleData convertToCoreRoleData(CoreRole coreRole) {
 		CoreRoleData coreRoleData = new CoreRoleData();
 		coreRoleData.setId(coreRole.getId());
@@ -40,11 +41,8 @@ public class CoreRoleBusiness {
 		coreRoleData.setTrangThai(Boolean.TRUE.equals(coreRole.getTrangThai()));
 		coreRoleData.setAppCode(coreRole.getAppCode());
 		List<CoreRole2Menu> coreRole2Menus = coreRole2MenuService.findByRoleIdAndDaXoaFalse(coreRole.getId());
-		List<Long> menuIds = new ArrayList<>();
-		if (CollUtil.isNotEmpty(coreRole2Menus)) {
-			coreRole2Menus.parallelStream().forEach(e -> menuIds.add(e.getMenuId()));
-		}
-		List<CoreMenu> coreMenus = coreMenuService.findByIdInAndDaXoaFalse(menuIds);
+		List<CoreMenu> coreMenus = coreMenuService.findByIdInAndDaXoaFalse(coreRole2Menus.stream().map(
+				CoreRole2Menu::getMenuId).collect(Collectors.toList()));
 		List<MenuData> menuDatas = new ArrayList<>();
 		if (CollUtil.isNotEmpty(coreMenus)) {
 			for (CoreMenu coreMenu : coreMenus) {
@@ -56,12 +54,12 @@ public class CoreRoleBusiness {
 		coreRoleData.setMenu(menuDatas);
 		return coreRoleData;
 	}
-
+	
 	public CoreRoleData create(CoreRoleData coreRoleData) {
 		CoreRole coreRole = new CoreRole();
 		return save(coreRole, coreRoleData);
 	}
-
+	
 	public void delete(Long id) throws EntityNotFoundException {
 		Optional<CoreRole> optional = coreRoleService.findById(id);
 		if (optional.isEmpty()) {
@@ -71,13 +69,13 @@ public class CoreRoleBusiness {
 		coreRole.setDaXoa(true);
 		coreRoleService.save(coreRole);
 	}
-
+	
 	public Page<CoreRoleData> findAll(int page, int size, String sortBy, String sortDir, String search, Boolean trangThai, String appCode) {
 		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
 		Page<CoreRole> pageCoreRole = coreRoleService.findAll(search, trangThai, appCode, pageable);
 		return pageCoreRole.map(this::convertToCoreRoleData);
 	}
-
+	
 	public CoreRoleData findById(Long id) throws EntityNotFoundException {
 		Optional<CoreRole> optional = coreRoleService.findById(id);
 		if (optional.isEmpty()) {
@@ -85,7 +83,7 @@ public class CoreRoleBusiness {
 		}
 		return convertToCoreRoleData(optional.get());
 	}
-
+	
 	private CoreRoleData save(CoreRole coreRole, CoreRoleData coreRoleData) {
 		coreRole.setDaXoa(false);
 		coreRole.setTen(FunctionUtils.removeXss(coreRoleData.getTen()));
@@ -118,7 +116,7 @@ public class CoreRoleBusiness {
 		}
 		return convertToCoreRoleData(coreRole);
 	}
-
+	
 	public CoreRoleData update(Long id, CoreRoleData coreRoleData) throws EntityNotFoundException {
 		Optional<CoreRole> optional = coreRoleService.findById(id);
 		if (optional.isEmpty()) {
@@ -127,5 +125,5 @@ public class CoreRoleBusiness {
 		CoreRole coreRole = optional.get();
 		return save(coreRole, coreRoleData);
 	}
-
+	
 }

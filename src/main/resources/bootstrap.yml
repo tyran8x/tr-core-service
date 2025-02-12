@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: dev
+    active: sgtvt
   application:
     name: tr-core-service
 #  cloud:
