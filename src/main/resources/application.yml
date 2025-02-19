@@ -35,6 +35,10 @@ spring:
             userpassword: ${spring.boot.admin.client.password}
         username: admin
         password: DnictPro@123
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 eureka:
   client:
     register-with-eureka: true

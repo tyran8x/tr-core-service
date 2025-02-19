@@ -3,6 +3,7 @@ package vn.tr.core.security.service.strategy;
 import cn.dev33.satoken.secure.BCrypt;
 import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.collection.CollUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,13 +18,19 @@ import vn.tr.common.core.utils.MessageUtils;
 import vn.tr.common.core.utils.ValidatorUtils;
 import vn.tr.common.json.utils.JsonUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
+import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.dao.model.CoreUser2Role;
+import vn.tr.core.dao.service.CoreRoleService;
+import vn.tr.core.dao.service.CoreUser2RoleService;
 import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.CoreClientData;
 import vn.tr.core.data.LoginResult;
 import vn.tr.core.security.service.IAuthStrategy;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service("password" + IAuthStrategy.BASE_NAME)
@@ -31,6 +38,8 @@ import java.util.Optional;
 public class PasswordAuthStrategy implements IAuthStrategy {
 	
 	private final CoreUserService coreUserService;
+	private final CoreRoleService coreRoleService;
+	private final CoreUser2RoleService coreUser2RoleService;
 	
 	@Override
 	public LoginResult login(String body, CoreClientData coreClientData) {
@@ -94,6 +103,25 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		}
 		try {
 			coreUserService.save(coreUser);
+			
+			Set<String> roles = registerBody.getRoles();
+			List<CoreRole> coreRoles = coreRoleService.findByMaIgnoreCaseInAndDaXoaFalse(roles);
+			
+			coreUser2RoleService.setFixedDaXoaForUserName(true, coreUser.getUserName());
+			if (CollUtil.isNotEmpty(coreRoles)) {
+				for (CoreRole coreRole : coreRoles) {
+					CoreUser2Role coreUser2Role = new CoreUser2Role();
+					Optional<CoreUser2Role> optionalCoreUser2Role = coreUser2RoleService.findFirstByRoleAndUserName(coreRole.getMa(),
+							coreUser.getUserName());
+					if (optionalCoreUser2Role.isPresent()) {
+						coreUser2Role = optionalCoreUser2Role.get();
+					}
+					coreUser2Role.setDaXoa(false);
+					coreUser2Role.setRole(coreRole.getMa());
+					coreUser2Role.setUserName(coreUser.getUserName());
+					coreUser2RoleService.save(coreUser2Role);
+				}
+			}
 		} catch (Exception e) {
 			throw new UserException("user.register.error");
 		}

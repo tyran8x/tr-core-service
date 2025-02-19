@@ -84,3 +84,7 @@ redisson:
 error:
   handling:
     exception-logging: WITH_STACKTRACE
+
+client:
+  notification-service:
+    url: http://localhost:8000/v1/notification
