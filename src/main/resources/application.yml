@@ -1,6 +1,8 @@
 spring:
   application:
     name: tr-core-service
+  messages:
+    basename: i18n/messages
   freemarker:
     suffix: .ftl
   datasource:
