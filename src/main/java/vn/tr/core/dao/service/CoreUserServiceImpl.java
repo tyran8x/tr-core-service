@@ -29,7 +29,7 @@ import java.util.function.Supplier;
 @Service
 @RequiredArgsConstructor
 public class CoreUserServiceImpl implements CoreUserService {
-
+	
 	private final CoreUserRepo repo;
 	private final CorePermissionService corePermissionService;
 	private final CoreUser2RoleService coreUser2RoleService;
@@ -37,47 +37,47 @@ public class CoreUserServiceImpl implements CoreUserService {
 	private Integer maxRetryCount;
 	@Value("${user.password.lockTime}")
 	private Integer lockTime;
-
+	
 	@Override
 	public Optional<CoreUser> findById(Long id) {
 		return repo.findById(id);
 	}
-
+	
 	@Override
 	public CoreUser save(CoreUser coreRole) {
 		return repo.save(coreRole);
 	}
-
+	
 	@Override
 	public void delete(Long id) {
 		repo.deleteById(id);
 	}
-
+	
 	@Override
-	public Page<CoreUser> findAll(String email, String name, List<Long> roleIds, String appCode, Pageable pageable) {
-		return repo.findAll(CoreUserSpecifications.quickSearch(email, name, roleIds, appCode), pageable);
+	public Page<CoreUser> findAll(String email, String name, List<String> roles, String appCode, Pageable pageable) {
+		return repo.findAll(CoreUserSpecifications.quickSearch(email, name, roles, appCode), pageable);
 	}
-
+	
 	@Override
 	public boolean existsByEmailIgnoreCaseAndDaXoaFalse(String email) {
 		return repo.existsByEmailIgnoreCaseAndDaXoaFalse(email);
 	}
-
+	
 	@Override
 	public boolean existsByIdNotAndEmailIgnoreCaseAndDaXoaFalse(long id, String email) {
 		return repo.existsByIdNotAndEmailIgnoreCaseAndDaXoaFalse(id, email);
 	}
-
+	
 	@Override
 	public Optional<CoreUser> findFirstByEmailAndDaXoaFalse(String email) {
 		return repo.findFirstByEmailAndDaXoaFalse(email);
 	}
-
+	
 	@Override
 	public boolean existsById(Long id) {
 		return repo.existsById(id);
 	}
-
+	
 	@Override
 	public void recordLoginInfo(String userName, String status, String message) {
 		LoginInfoEvent loginInfoEvent = new LoginInfoEvent();
@@ -87,7 +87,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 		loginInfoEvent.setRequest(ServletUtils.getRequest());
 		SpringUtils.context().publishEvent(loginInfoEvent);
 	}
-
+	
 	@Override
 	public LoginUser buildLoginUser(CoreUser coreUser) {
 		LoginUser loginUser = new LoginUser();
@@ -100,18 +100,18 @@ public class CoreUserServiceImpl implements CoreUserService {
 		loginUser.setRoles(coreUser2RoleService.getRoleByUserName(coreUser.getUserName()));
 		return loginUser;
 	}
-
+	
 	@Override
 	public void checkLogin(LoginType loginType, String userName, Supplier<Boolean> supplier) {
 		String errorKey = CacheConstants.PWD_ERR_CNT_KEY + userName;
 		String loginFail = Constants.LOGIN_FAIL;
-
+		
 		int errorNumber = ObjectUtil.defaultIfNull(RedisUtils.getCacheObject(errorKey), 0);
 		if (errorNumber >= maxRetryCount) {
 			recordLoginInfo(userName, loginFail, MessageUtils.message(loginType.getRetryLimitExceed(), maxRetryCount, lockTime));
 			throw new UserException(loginType.getRetryLimitExceed(), maxRetryCount, lockTime);
 		}
-
+		
 		if (supplier.get()) {
 			errorNumber++;
 			RedisUtils.setCacheObject(errorKey, errorNumber, Duration.ofMinutes(lockTime));
@@ -125,7 +125,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 		}
 		RedisUtils.deleteObject(errorKey);
 	}
-
+	
 	public void logout() {
 		try {
 			LoginUser loginUser = LoginHelper.getLoginUser();
@@ -141,5 +141,5 @@ public class CoreUserServiceImpl implements CoreUserService {
 			}
 		}
 	}
-
+	
 }

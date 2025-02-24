@@ -12,17 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CoreUserSpecifications {
-
+	
 	private CoreUserSpecifications() {
-
+	
 	}
-
-	public static Specification<CoreUser> quickSearch(final String email, final String name, final List<Long> roleIds, final String appCode) {
-
+	
+	public static Specification<CoreUser> quickSearch(final String email, final String name, final List<String> roles, final String appCode) {
+		
 		return (root, query, cb) -> {
 			List<Predicate> predicates = new ArrayList<>();
 			predicates.add(cb.equal(root.<String>get("daXoa"), false));
-
+			
 			if (CharSequenceUtil.isNotBlank(email)) {
 				predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase().trim() + "%"));
 			}
@@ -30,9 +30,9 @@ public class CoreUserSpecifications {
 				predicates.add(cb.like(cb.lower(cb.function(CoreUtils.UNACCENT_VN, String.class, root.get("name"))),
 						"%" + CoreUtils.removeAccent(name.toLowerCase().trim()) + "%"));
 			}
-			if (CollUtil.isNotEmpty(roleIds)) {
-				Expression<String> expression = root.join("coreRoles").get("id");
-				Predicate inList = expression.in(roleIds);
+			if (CollUtil.isNotEmpty(roles)) {
+				Expression<String> expression = root.join("coreRoles").get("role");
+				Predicate inList = expression.in(roles);
 				predicates.add(inList);
 			}
 			if (CharSequenceUtil.isNotBlank(appCode)) {

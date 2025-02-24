@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.core.business.CoreUserBusiness;
+import vn.tr.core.data.CoreUserChangeIsEnabledData;
+import vn.tr.core.data.CoreUserChangePasswordData;
 import vn.tr.core.data.CoreUserData;
 import vn.tr.core.data.validator.CoreUserValidator;
 
@@ -40,10 +42,10 @@ public class CoreUserController {
 			@RequestParam(name = "size", defaultValue = "20", required = false) int size,
 			@RequestParam(name = "sortBy", defaultValue = "email", required = false) String sortBy,
 			@RequestParam(name = "sortDir", defaultValue = "ASC", required = false) String sortDir,
-			@RequestParam(name = "roleIds", required = false) List<Long> roleIds,
+			@RequestParam(name = "roles", required = false) List<String> roles,
 			@RequestParam(name = "email", required = false) String email,
 			@RequestParam(name = "name", required = false) String name) {
-		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(page, size, sortBy, sortDir, email, name, roleIds, xAppCode);
+		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(page, size, sortBy, sortDir, email, name, roles, xAppCode);
 		return R.ok(pageCoreUserData);
 	}
 	
@@ -69,4 +71,17 @@ public class CoreUserController {
 		coreUserData = coreUserBusiness.update(id, coreUserData);
 		return R.ok(coreUserData);
 	}
+	
+	@PostMapping(value = {"/change/password"})
+	public R<CoreUserData> changePassword(@Valid @RequestBody CoreUserChangePasswordData coreUserChangePasswordData) {
+		coreUserBusiness.changePassword(coreUserChangePasswordData);
+		return R.ok();
+	}
+	
+	@PostMapping(value = {"/change/enable"})
+	public R<CoreUserData> changeIsEnabled(@Valid @RequestBody CoreUserChangeIsEnabledData coreUserChangeIsEnabledData) {
+		coreUserBusiness.changeIsEnabled(coreUserChangeIsEnabledData);
+		return R.ok();
+	}
+	
 }
