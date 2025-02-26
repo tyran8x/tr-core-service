@@ -64,7 +64,8 @@ public class CoreConfigSystemController {
 	@GetMapping(value = "/get/giatri")
 	public R<String> getGiaTriByCode(@RequestParam(name = "code", required = false) String code,
 			@RequestParam(name = "maUngDung", required = false) String maUngDung) {
-		return R.ok(coreConfigSystemBusiness.getGiaTriByCode(code, maUngDung));
+		String value = coreConfigSystemBusiness.getGiaTriByCode(code, maUngDung);
+		return R.ok("Thành công", value);
 	}
 	
 	@PutMapping(value = {"/{id}"})
