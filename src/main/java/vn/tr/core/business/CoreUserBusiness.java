@@ -20,6 +20,7 @@ import vn.tr.core.data.CoreUserChangePasswordData;
 import vn.tr.core.data.CoreUserData;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -105,6 +106,10 @@ public class CoreUserBusiness {
 		coreUser.setPhoneNumber(FunctionUtils.removeXss(coreUserData.getPhoneNumber()));
 		coreUser.setUserType(coreUserData.getUserType());
 		coreUser.setAppCode(FunctionUtils.removeXss(coreUserData.getAppCode()));
+		coreUser.setIsEnabled(Boolean.TRUE.equals(coreUserData.getIsEnabled()));
+		if (Objects.isNull(coreUser.getId())) {
+			coreUser.setPassword(BCrypt.hashpw(coreUserData.getPassword()));
+		}
 		coreUser = coreUserService.save(coreUser);
 		Set<String> roles = coreUserData.getRoles();
 		List<CoreRole> coreRoles = coreRoleService.findByMaIgnoreCaseInAndDaXoaFalse(roles);
