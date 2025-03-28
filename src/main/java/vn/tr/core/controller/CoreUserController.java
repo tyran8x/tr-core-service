@@ -7,6 +7,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
+import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.business.CoreUserBusiness;
 import vn.tr.core.data.CoreUserChangeIsEnabledData;
 import vn.tr.core.data.CoreUserChangePasswordData;
@@ -51,6 +52,13 @@ public class CoreUserController {
 	
 	@GetMapping(value = {"/email/{email}"})
 	public R<CoreUserData> findByEmail(@PathVariable("email") String email) {
+		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
+		return R.ok(coreUserData);
+	}
+	
+	@GetMapping(value = {"/info"})
+	public R<CoreUserData> getInfo() {
+		String email = LoginHelper.getUserName();
 		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
 		return R.ok(coreUserData);
 	}
