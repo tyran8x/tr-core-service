@@ -20,76 +20,76 @@ import java.util.Set;
 @Slf4j
 @AllArgsConstructor
 public class CoreRole2MenuServiceImpl implements CoreRole2MenuService {
-
+	
 	private final CoreRole2MenuRepo repo;
-
+	
 	private final CoreRoleService coreRoleService;
-
+	
 	@PostConstruct
 	public void initRolePermsCache() {
 		log.info("initRolePermsCache... ");
 		refreshRolePermsCache();
 	}
-
+	
 	@Override
 	public void deleteById(Long id) {
 		repo.deleteById(id);
 	}
-
+	
 	@Override
 	public boolean existsById(Long id) {
 		return repo.existsById(id);
 	}
-
+	
 	@Override
 	public List<CoreRole2Menu> findByDaXoaFalse() {
 		return repo.findByDaXoaFalse();
 	}
-
+	
 	@Override
 	public Optional<CoreRole2Menu> findById(Long id) {
 		return repo.findById(id);
 	}
-
+	
 	@Override
 	public List<CoreRole2Menu> findByMenuIdAndDaXoaFalse(Long menuId) {
 		return repo.findByMenuIdAndDaXoaFalse(menuId);
 	}
-
+	
 	@Override
 	public List<CoreRole2Menu> findByRoleIdAndDaXoaFalse(Long roleId) {
 		return repo.findByRoleIdAndDaXoaFalse(roleId);
 	}
-
+	
 	@Override
 	public Optional<CoreRole2Menu> findFirstByRoleIdAndMenuId(Long roleId, Long menuId) {
 		return repo.findFirstByRoleIdAndMenuId(roleId, menuId);
 	}
-
+	
 	@Override
 	public List<Long> getMenuIds(Set<String> roles) {
 		return repo.getMenuIds(roles);
 	}
-
+	
 	@Override
 	public Set<String> getMenuMas(Set<String> roles) {
 		return repo.getMenuMas(roles);
 	}
-
+	
 	@Override
 	public CoreRole2Menu save(CoreRole2Menu coreRole2Menu) {
 		return repo.save(coreRole2Menu);
 	}
-
+	
 	@Override
 	public void setFixedDaXoaForRoleId(boolean daXoa, Long roleId) {
 		repo.setFixedDaXoaForRoleId(daXoa, roleId);
 	}
-
+	
 	@Override
 	public void refreshRolePermsCache() {
 		RedisUtils.deleteKeys(CoreRole2Menu.class.getSimpleName() + "*");
-
+		
 		List<CoreRole> coreRoles = coreRoleService.findByTrangThaiTrueAndDaXoaFalse();
 		if (CollectionUtil.isNotEmpty(coreRoles)) {
 			coreRoles.forEach(item -> {
@@ -102,11 +102,11 @@ public class CoreRole2MenuServiceImpl implements CoreRole2MenuService {
 			});
 		}
 	}
-
+	
 	@Override
 	public void refreshRolePermsCache(String roleCode) {
 		RedisUtils.deleteObject(CoreRole2Menu.class.getSimpleName() + ":" + roleCode);
-
+		
 		Optional<CoreRole> optionalCoreRole = coreRoleService.findFirstByMaIgnoreCaseAndDaXoaFalse(roleCode);
 		if (optionalCoreRole.isPresent()) {
 			Set<String> perms = repo.getMenuMas(Collections.singleton(roleCode));
@@ -115,12 +115,12 @@ public class CoreRole2MenuServiceImpl implements CoreRole2MenuService {
 			}
 		}
 	}
-
+	
 	@Override
 	public void refreshRolePermsCache(String oldRoleCode, String newRoleCode) {
-
+		
 		RedisUtils.deleteObject(CoreRole2Menu.class.getSimpleName() + ":" + oldRoleCode);
-
+		
 		Optional<CoreRole> optionalCoreRole = coreRoleService.findFirstByMaIgnoreCaseAndDaXoaFalse(newRoleCode);
 		if (optionalCoreRole.isPresent()) {
 			Set<String> perms = repo.getMenuMas(Collections.singleton(newRoleCode));
@@ -129,5 +129,5 @@ public class CoreRole2MenuServiceImpl implements CoreRole2MenuService {
 			}
 		}
 	}
-
+	
 }
