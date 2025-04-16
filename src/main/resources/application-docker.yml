@@ -1,0 +1,102 @@
+server:
+  port: 8989
+  servlet:
+    context-path: /
+  undertow:
+    max-http-post-size: -1
+    buffer-size: 512
+    direct-buffers: true
+    threads:
+      io: 8
+      worker: 256
+  shutdown: immediate
+eureka:
+  client:
+    register-with-eureka: true
+    serviceUrl:
+      defaultZone: http://mcdt-eureka:8061/eureka
+core:
+  attachment:
+    host:
+      download: 'https://qcmcdt.danang.gov.vn:8080/v2/core'
+spring:
+  datasource:
+    url: jdbc:postgresql://mcdt-postgres:5432/core_sys_service
+    username: postgres
+    password: DnictPro@123
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        order_by:
+          default_null_ordering: last
+  jackson:
+    serialization:
+      FAIL_ON_EMPTY_BEANS: false
+      WRITE_DATES_AS_TIMESTAMPS: false
+  data:
+    redis:
+      host: mcdt-redis
+      port: 6379
+      password: 'DnictPro@123'
+      timeout: 10s
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1
+          max-idle: 8
+          min-idle: 0
+      ssl:
+        enabled: false
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+      cache-null-values: true
+      enable-statistics: false
+  boot:
+    admin:
+      client:
+        enabled: true
+        url: http://mcdt-monitor:9090
+        instance:
+          service-host-type: ip
+          metadata:
+            username: ${spring.boot.admin.client.username}
+            userpassword: ${spring.boot.admin.client.password}
+        username: admin
+        password: DnictPro@123
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+captcha:
+  enable: true
+  type: CHAR
+  category: CIRCLE
+  numberLength: 1
+  charLength: 4
+
+redisson:
+  keyPrefix: 'tr'
+  threads: 4
+  nettyThreads: 8
+  singleServerConfig:
+    clientName: ${app.name}
+    connectionMinimumIdleSize: 8
+    connectionPoolSize: 32
+    idleConnectionTimeout: 10000
+    timeout: 3000
+    subscriptionConnectionPoolSize: 50
+
+error:
+  handling:
+    exception-logging: WITH_STACKTRACE
+
+client:
+  notification-service:
+    url: http://localhost:8000/v1/notification
