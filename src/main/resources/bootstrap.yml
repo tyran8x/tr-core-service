@@ -1,8 +1,0 @@
-spring:
-  profiles:
-    active: docker
-  application:
-    name: tr-core-service
-#  cloud:
-#    config:
-#      uri: http://localhost:8888

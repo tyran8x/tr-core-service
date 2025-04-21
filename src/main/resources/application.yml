@@ -2,112 +2,118 @@ spring:
   application:
     name: tr-core-service
   messages:
-    basename: i18n/messages
+    basename: i18n/messages # Đường dẫn message bundles
   freemarker:
-    suffix: .ftl
+    suffix: .ftl # Hậu tố file template Freemarker
+  config:
+    import: "optional:configserver:${SPRING_CONFIG_IMPORT_URI:http://localhost:8888}"
+  cloud:
+    config:
+      username: ${SPRING_CLOUD_CONFIG_USERNAME:huydq}
+      password: ${SPRING_CLOUD_CONFIG_PASSWORD}
+      fail-fast: ${SPRING_CLOUD_CONFIG_FAIL_FAST:false}
+      retry:
+        max-attempts: ${SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS:6}
+        initial-interval: ${SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL:1000}
+        max-interval: ${SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL:2000}
+        multiplier: ${SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER:1.1}
   datasource:
-    url: jdbc:postgresql://localhost:5432/core_service
-    username: postgres
-    password: DnictPro@123
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/core_service}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123}
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: 'DnictPro@123'
-      timeout: 10s
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123}
+      timeout: ${SPRING_DATA_REDIS_TIMEOUT:10s}
       lettuce:
         pool:
-          max-active: 8
-          max-wait: -1
-          max-idle: 8
-          min-idle: 0
+          max-active: ${REDIS_POOL_MAX_ACTIVE:8}
+          max-wait: ${REDIS_POOL_MAX_WAIT:-1ms} # Chờ vô hạn
+          max-idle: ${REDIS_POOL_MAX_IDLE:8}
+          min-idle: ${REDIS_POOL_MIN_IDLE:0}
       ssl:
-        enabled: false
+        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:false}
       repositories:
-        enabled: false
+        enabled: false # Tắt Spring Data Redis repositories nếu không dùng
   boot:
     admin:
       client:
-        enabled: true
-        url: http://localhost:9090
-        instance:
-          service-host-type: ip
-          metadata:
-            username: ${spring.boot.admin.client.username}
-            userpassword: ${spring.boot.admin.client.password}
-        username: admin
-        password: DnictPro@123
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9090}
   servlet:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
 eureka:
   client:
-    register-with-eureka: true
     serviceUrl:
-      defaultZone: http://localhost:8061/eureka
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8061/eureka/}
+    registerWithEureka: ${EUREKA_CLIENT_REGISTERWITHEUREKA:true}
+    fetch-registry: ${EUREKA_CLIENT_FETCHREGISTRY:true}
 app:
   name: Tr-Pro-App
   version: ${revision}
   copyrightYear: 2025
   service:
-    home: http://localhost:8989/
-    security: http://localhost:8989/login
+    # Ưu tiên biến môi trường APP_SERVICE_HOME, mặc định localhost cho dev
+    home: ${APP_SERVICE_HOME:http://localhost:8989/}
+    # Ưu tiên biến môi trường APP_SERVICE_SECURITY, mặc định localhost cho dev
+    security: ${APP_SERVICE_SECURITY:http://localhost:8989/login}
 core:
   attachment:
     host:
-      download: 'https://api.dnict.vn/v1/core'
-      #download: 'https://csdlgtvt.danang.gov.vn:8080/v1/core'
-      #download: 'https://dost.danang.gov.vn/api/v1/core'
-      #download: 'http://103.101.76.123:8000/v1/core'
-      #download: 'http://gdnn.ldtbxh.danang.gov.vn/api/v1/core'
+      download: ${CORE_ATTACHMENT_HOST_DOWNLOAD:'https://api.dnict.vn/v1/core'}
     path:
-      upload: /opt/uploads
-      uploadtemp: /opt/uploads/temp
+      upload: ${CORE_ATTACHMENT_PATH_UPLOAD:/opt/uploads}
+      uploadtemp: ${CORE_ATTACHMENT_PATH_UPLOADTEMP:/opt/uploads/temp}
+
 user:
   password:
     maxRetryCount: 5
     lockTime: 10
+
 captcha:
-  enable: true
+  enable: ${CAPTCHA_ENABLED:true}
   type: CHAR
   category: CIRCLE
   numberLength: 1
   charLength: 4
 
 redisson:
-  keyPrefix: 'tr'
-  threads: 4
-  nettyThreads: 8
-  singleServerConfig:
-    clientName: ${app.name}
-    connectionMinimumIdleSize: 8
-    connectionPoolSize: 32
-    idleConnectionTimeout: 10000
-    timeout: 3000
-    subscriptionConnectionPoolSize: 50
+  keyPrefix: ${REDISSON_KEY_PREFIX:tr} # Tiền tố cho key trong Redis
+  threads: ${REDISSON_THREADS:4}
+  nettyThreads: ${REDISSON_NETTY_THREADS:8}
+  singleServerConfig: # Giả định đang dùng Redis đơn
+    clientName: ${spring.application.name} # Dùng tên ứng dụng làm client name
+    connectionMinimumIdleSize: ${REDISSON_POOL_MIN_IDLE:8}
+    connectionPoolSize: ${REDISSON_POOL_MAX_SIZE:32}
+    idleConnectionTimeout: ${REDISSON_IDLE_TIMEOUT:10000} # ms
+    timeout: ${REDISSON_CMD_TIMEOUT:3000} # ms
+    subscriptionConnectionPoolSize: ${REDISSON_SUB_POOL_SIZE:50}
 
 websocket:
-  enabled: true
+  enabled: ${WEBSOCKET_ENABLED:true}
   path: /resource/websocket
-  allowedOrigins: '*'
+  allowedOrigins: ${WEBSOCKET_ALLOWED_ORIGINS:} # Để trống nếu không có biến môi trường -> an toàn hơn '*'
 
 error:
   handling:
     http-status-in-json-response: true
+    handle-filter-chain-exceptions: true
+    exception-logging: WITH_STACKTRACE
 
 sa-token:
   token-name: X-Token
-  # Whether to allow concurrent logins from the same account (if true, allow simultaneous logins, if false, new logins will replace old logins)
-  is-concurrent: true
-  # When multiple people log in to the same account, whether to share a token (if true, all logins share a token, if false, a new token is created for each login)
-  is-share: true
-  is-log: true
-  # jwt
-  jwt-secret-key: DnictPro@123
-  token-style: uuid
+  is-concurrent: true # Cho phép đăng nhập đồng thời
+  is-share: true      # Chia sẻ token giữa các lần đăng nhập đồng thời
+  is-log: true        # Bật log của Sa-Token
+  # jwt: # Block này có vẻ không dùng vì token-style là uuid? Nếu dùng JWT thì cần key
+  jwt-secret-key: ${SA_TOKEN_JWT_SECRET:DnictPro@123}
+  token-style: uuid # Đang dùng UUID làm token
 
 security:
+  # Danh sách các đường dẫn không cần xác thực (thường là tài nguyên tĩnh, trang lỗi, swagger)
   excludes:
     - /*.html
     - /**/*.html
@@ -115,50 +121,54 @@ security:
     - /**/*.js
     - /favicon.ico
     - /error
-    - /*/api-docs
-    - /*/api-docs/**
+    - /*/api-docs/** # Cho phép truy cập Swagger/OpenAPI docs
+    # Thêm các endpoint công khai khác nếu cần: /public/**, /actuator/health/readiness, /actuator/health/liveness
 
+# --- API Decryption Configuration ---
 api-decrypt:
-  # Whether to enable global interface encryption
-  enabled: false
-  # AES Encryption header identification
-  headerFlag: encrypt-key
-  # Response encryption public key. Public and private key of asymmetric algorithm. For example: SM2, RSA users should replace it by themselves.
-  # 对应前端解密私钥 MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAmc3CuPiGL/LcIIm7zryCEIbl1SPzBkr75E2VMtxegyZ1lYRD+7TZGAPkvIsBcaMs6Nsy0L78n2qh+lIZMpLH8wIDAQABAkEAk82Mhz0tlv6IVCyIcw/s3f0E+WLmtPFyR9/WtV3Y5aaejUkU60JpX4m5xNR2VaqOLTZAYjW8Wy0aXr3zYIhhQQIhAMfqR9oFdYw1J9SsNc+CrhugAvKTi0+BF6VoL6psWhvbAiEAxPPNTmrkmrXwdm/pQQu3UOQmc2vCZ5tiKpW10CgJi8kCIFGkL6utxw93Ncj4exE/gPLvKcT+1Emnoox+O9kRXss5AiAMtYLJDaLEzPrAWcZeeSgSIzbL+ecokmFKSDDcRske6QIgSMkHedwND1olF8vlKsJUGK3BcdtM8w4Xq7BpSBwsloE=
-  publicKey: MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAJnNwrj4hi/y3CCJu868ghCG5dUj8wZK++RNlTLcXoMmdZWEQ/u02RgD5LyLAXGjLOjbMtC+/J9qofpSGTKSx/MCAwEAAQ==
-  # 请求解密私钥 非对称算法的公私钥 如：SM2，RSA 使用者请自行更换
-  # 对应前端加密公钥 MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ==
-  privateKey: MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAqhHyZfSsYourNxaY7Nt+PrgrxkiA50efORdI5U5lsW79MmFnusUA355oaSXcLhu5xxB38SMSyP2KvuKNPuH3owIDAQABAkAfoiLyL+Z4lf4Myxk6xUDgLaWGximj20CUf+5BKKnlrK+Ed8gAkM0HqoTt2UZwA5E2MzS4EI2gjfQhz5X28uqxAiEA3wNFxfrCZlSZHb0gn2zDpWowcSxQAgiCstxGUoOqlW8CIQDDOerGKH5OmCJ4Z21v+F25WaHYPxCFMvwxpcw99EcvDQIgIdhDTIqD2jfYjPTY8Jj3EDGPbH2HHuffvflECt3Ek60CIQCFRlCkHpi7hthhYhovyloRYsM+IS9h/0BzlEAuO0ktMQIgSPT3aFAgJYwKpqRYKlLDVcflZFCKY7u3UP8iWi1Qw0Y=
+  # Bật/tắt mã hóa API toàn cục
+  enabled: ${API_DECRYPT_ENABLED:false}
+  headerFlag: encrypt-key # Header chứa key mã hóa (nếu dùng)
+  # !!! QUAN TRỌNG: KHÔNG LƯU KEY TRONG FILE CONFIG !!!
+  # Ưu tiên biến môi trường API_DECRYPT_PUBLIC_KEY
+  publicKey: ${API_DECRYPT_PUBLIC_KEY}
+  # Ưu tiên biến môi trường API_DECRYPT_PRIVATE_KEY
+  privateKey: ${API_DECRYPT_PRIVATE_KEY}
 
+# --- CAS Configuration (Central Authentication Service) ---
 cas:
   service:
-    login: https://dangnhap.danang.gov.vn/cas/login
-    logout: https://dangnhap.danang.gov.vn/cas/logout
+    # Ưu tiên biến môi trường CAS_SERVICE_LOGIN
+    login: ${CAS_SERVICE_LOGIN:https://dangnhap.danang.gov.vn/cas/login}
+    # Ưu tiên biến môi trường CAS_SERVICE_LOGOUT
+    logout: ${CAS_SERVICE_LOGOUT:https://dangnhap.danang.gov.vn/cas/logout}
   url:
-    prefix: https://dangnhap.danang.gov.vn/cas
+    # Ưu tiên biến môi trường CAS_URL_PREFIX
+    prefix: ${CAS_URL_PREFIX:https://dangnhap.danang.gov.vn/cas}
 
+# --- Actuator Endpoints Configuration ---
 management:
   endpoints:
     web:
       exposure:
-        include: '*'
+        # !!! QUAN TRỌNG: Chỉ expose các endpoint cần thiết, không dùng '*' !!!
+        include: health, info, metrics, prometheus # Các endpoint phổ biến để giám sát
+        # Có thể thêm: loggers (cần bảo mật), logfile (nếu đã cấu hình logging.file.name)
+        # exclude: env, configprops, heapdump, threaddump # Luôn loại trừ các endpoint nhạy cảm
   endpoint:
     health:
-      show-details: ALWAYS
+      # Chỉ hiển thị chi tiết health khi được ủy quyền (kết hợp Spring Security cho /actuator)
+      show-details: when_authorized # An toàn hơn 'always'
 
 logging:
   level:
-    vn.tr: @logging.level@
-    org.springframework: warn
-    org.mybatis.spring.mapper: error
+    vn.tr: ${LOGGING_LEVEL_VN_TR:INFO}
+    org.springframework: ${LOGGING_LEVEL_SPRINGFRAMEWORK:WARN}
+    org.mybatis.spring.mapper: ${LOGGING_LEVEL_MYBATIS:ERROR} # Giảm log của MyBatis
   config: classpath:logback.xml
-  charset:
-    console: UTF-8
   file:
-    name: /opt/logs/core-service/sys-console.log
-  pattern:
-    console: '%red(%d{yyyy-MM-dd HH:mm:ss}) %green([%thread]) %highlight(%-5level) %boldMagenta(%logger{36}%n) - %msg%n'
+    name: ${LOG_PATH:/opt/logs}/${spring.application.name:tr-core-service}/sys-info.log
 
 client:
   notification-service:
-    url: http://localhost:8000/v1/notification
+    url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://localhost:8000/v1/notification}
