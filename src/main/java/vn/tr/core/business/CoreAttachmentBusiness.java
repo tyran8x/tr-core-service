@@ -1,6 +1,8 @@
 package vn.tr.core.business;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONObject;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -153,6 +155,48 @@ public class CoreAttachmentBusiness {
 			
 		}
 		return coreAttachment;
+	}
+	
+	public void sign(Long fileDinhKemId, HttpServletResponse response) {
+		JSONObject jsonObjectResult = new JSONObject();
+		try {
+			if (Objects.nonNull(fileDinhKemId)) {
+				Optional<CoreAttachment> optionalCoreAttachment = coreAttachmentService.findById(fileDinhKemId);
+				if (optionalCoreAttachment.isPresent()) {
+					CoreAttachment coreAttachment = optionalCoreAttachment.get();
+					
+					JSONObject jsonKySo = new JSONObject();
+					jsonKySo.set("tenFile", coreAttachment.getFileName());
+					
+					jsonObjectResult.set("FileName", coreAttachment.getFileName());
+					jsonObjectResult.set("FileServer", jsonKySo.toString());
+					jsonObjectResult.set("Status", true);
+					jsonObjectResult.set("Message", "Thành công!");
+					
+					String filepath = Paths.get(coreAttachmentPathUploadTemp, coreAttachment.getCode()).toString();
+					// Save the file locally
+					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filepath));
+					BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(filepath));
+					byte[] buff = new byte[32 * 1024];
+					int len = 0;
+					while ((len = in.read(buff)) > 0)
+						stream.write(buff, 0, len);
+					in.close();
+					stream.close();
+				}
+			}
+			
+			response.reset();
+			response.resetBuffer();
+			response.setContentType("application/json");
+			response.setCharacterEncoding("UTF-8");
+			response.getWriter().print(jsonObjectResult);
+			response.flushBuffer();
+			response.getWriter().close();
+		} catch (Exception e) {
+			log.error("Lỗi xử lý sign file:  {}", e.getMessage());
+		}
+		
 	}
 	
 	public InputStreamResource download(String code) throws FileNotFoundException {

@@ -1,5 +1,6 @@
 package vn.tr.core.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -49,6 +50,11 @@ public class CoreAttachmentController {
 	@PostMapping(value = {"/doupload"})
 	public ResponseEntity<CoreAttachment> doUpload(@RequestParam("uploadfile") MultipartFile uploadfile) {
 		return ResponseEntity.ok(coreAttachmentBusiness.doUpload(uploadfile));
+	}
+	
+	@PostMapping(value = {"/sign"})
+	public void sign(@RequestParam("fileDinhKemId") Long fileDinhKemId, HttpServletResponse response) {
+		coreAttachmentBusiness.sign(fileDinhKemId, response);
 	}
 	
 	@GetMapping(value = "/download/{code}")
