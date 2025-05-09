@@ -27,28 +27,27 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthController {
-
+	
 	private final CoreUserService coreUserService;
 	private final ScheduledExecutorService scheduledExecutorService;
-
+	
 	@ApiEncrypt
 	@PostMapping("/login")
 	public R<LoginResult> login(@RequestBody String body) {
 		LoginBody loginBody = JsonUtils.parseObject(body, LoginBody.class);
 		ValidatorUtils.validate(loginBody);
-
+		
 		String clientId = loginBody.getClientId();
 		String grantType = loginBody.getGrantType();
 		CoreClientData coreClientData = new CoreClientData();
-		//		// 查询不到 client 或 client 内不包含 grantType
+		//		// client grantType
 		//		if (ObjectUtil.isNull(client) || !StringUtils.contains(client.getGrantType(), grantType)) {
-		//			log.info("客户端id: {} 认证类型：{} 异常!.", clientId, grantType);
 		//			return R.fail(MessageUtils.message("auth.grant.type.error"));
 		//		} else if (!UserConstants.NORMAL.equals(client.getTrangThai())) {
 		//			return R.fail(MessageUtils.message("auth.grant.type.blocked"));
 		//		}
 		LoginResult loginResult = IAuthStrategy.login(body, coreClientData, grantType);
-
+		
 		Long userId = LoginHelper.getUserId();
 		scheduledExecutorService.schedule(() -> {
 			WebSocketMessageDto dto = new WebSocketMessageDto();
@@ -58,7 +57,7 @@ public class AuthController {
 		}, 3, TimeUnit.SECONDS);
 		return R.ok(loginResult);
 	}
-
+	
 	@ApiEncrypt
 	@PostMapping("/register")
 	public R<Void> register(@RequestBody String body) {
@@ -68,18 +67,18 @@ public class AuthController {
 		IAuthStrategy.register(body, coreClientData, grantType);
 		return R.ok();
 	}
-
+	
 	@ApiEncrypt
 	@GetMapping("/info")
 	public R<LoginUser> info() {
 		LoginUser getLoginUser = LoginHelper.getLoginUser();
 		return R.ok(getLoginUser);
 	}
-
+	
 	@DeleteMapping("/logout")
 	public R<Void> logout() {
 		coreUserService.logout();
 		return R.ok();
 	}
-
+	
 }

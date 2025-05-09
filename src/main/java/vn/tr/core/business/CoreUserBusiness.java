@@ -138,7 +138,7 @@ public class CoreUserBusiness {
 			throw new EntityNotFoundException(CoreUser.class, coreUserChangePasswordData.getUserName());
 		}
 		CoreUser coreUser = optionalCoreUser.get();
-		coreUser.setPassword(BCrypt.hashpw(coreUserChangePasswordData.getPassword()));
+		coreUser.setPassword(BCrypt.hashpw(coreUserChangePasswordData.getPassword(), "DnictPro@123"));
 		coreUserService.save(coreUser);
 	}
 	

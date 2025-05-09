@@ -52,9 +52,9 @@ public class CoreAttachmentController {
 		return ResponseEntity.ok(coreAttachmentBusiness.doUpload(uploadfile));
 	}
 	
-	@PostMapping(value = {"/sign"})
-	public void sign(@RequestParam("fileDinhKemId") Long fileDinhKemId, HttpServletResponse response) {
-		coreAttachmentBusiness.sign(fileDinhKemId, response);
+	@PostMapping(value = {"/download/sign"})
+	public void sign(@RequestParam("uploadfile") MultipartFile uploadfile, HttpServletResponse response) {
+		coreAttachmentBusiness.sign(uploadfile, response);
 	}
 	
 	@GetMapping(value = "/download/{code}")

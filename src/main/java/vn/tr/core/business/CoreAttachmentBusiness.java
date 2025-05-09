@@ -129,7 +129,7 @@ public class CoreAttachmentBusiness {
 				try {
 					base64Image.append(Base64.getEncoder().encodeToString(uploadfile.getBytes()));
 				} catch (IOException e1) {
-					e1.printStackTrace();
+					log.error("ERROR doUpload base64 file: {}", e1.getMessage());
 				}
 			}
 			coreAttachment.setBase64(base64Image.toString());
@@ -142,13 +142,13 @@ public class CoreAttachmentBusiness {
 				stream.write(uploadfile.getBytes());
 				stream.close();
 			} catch (IOException e) {
-				log.error("Lỗi xử lý file: " + e.getMessage());
+				log.error("ERROR doUpload file: {}", e.getMessage());
 			} finally {
 				if (stream != null) {
 					try {
 						stream.close();
 					} catch (IOException e) {
-						log.error("Lỗi xử lý file: " + e.getMessage());
+						log.error("ERROR doUpload close file: {}", e.getMessage());
 					}
 				}
 			}
@@ -157,42 +157,89 @@ public class CoreAttachmentBusiness {
 		return coreAttachment;
 	}
 	
-	public void sign(Long fileDinhKemId, HttpServletResponse response) {
+	public void sign(MultipartFile uploadfile, HttpServletResponse response) {
 		JSONObject jsonObjectResult = new JSONObject();
 		try {
-			if (Objects.nonNull(fileDinhKemId)) {
-				Optional<CoreAttachment> optionalCoreAttachment = coreAttachmentService.findById(fileDinhKemId);
-				if (optionalCoreAttachment.isPresent()) {
-					CoreAttachment coreAttachment = optionalCoreAttachment.get();
-					
+			String fileName = uploadfile.getOriginalFilename();
+			CoreAttachment coreAttachment = new CoreAttachment();
+			BufferedOutputStream stream = null;
+			Path path = Paths.get(coreAttachmentPathUploadTemp);
+			if (StringUtils.isNotBlank(fileName)) {
+				int month;
+				Calendar cal = Calendar.getInstance();
+				Date date = new Date();
+				cal.setTime(date);
+				int year = LocalDate.now().getYear();
+				month = cal.get(Calendar.MONTH) + 1;
+				
+				int lastDot;
+				lastDot = fileName.lastIndexOf(".pdf");
+				String fileNameSigned = fileName.substring(0, lastDot) + ".signed.pdf";
+				
+				coreAttachment.setYear(year);
+				coreAttachment.setMonth(month);
+				coreAttachment.setFileName(fileNameSigned);
+				coreAttachment.setSize(uploadfile.getSize());
+				coreAttachment.setMime(uploadfile.getContentType());
+				coreAttachment.setAppCode("");
+				coreAttachment.setFolder(coreAttachmentPathUploadTemp);
+				coreAttachment = coreAttachmentService.save(coreAttachment);
+				String code = coreAttachment.getId() + coreAttachment.getFileName() + coreAttachment.getNgayTao().toString();
+				code = DigestUtils.md5Hex(code).toUpperCase();
+				coreAttachment.setCode(code);
+				
+				String link = coreAttachmentHostDownload + "/attachment/download/" + coreAttachment.getCode();
+				coreAttachment.setLink(link);
+				
+				// base64
+				StringBuilder base64Image = new StringBuilder("data:").append(uploadfile.getContentType()).append(";base64,");
+				if (uploadfile.getContentType() != null && "image/jpeg".contains(uploadfile.getContentType()) ||
+						"image/png".contains(uploadfile.getContentType())) {
+					try {
+						base64Image.append(Base64.getEncoder().encodeToString(uploadfile.getBytes()));
+					} catch (IOException e1) {
+						log.error("ERROR base64 file: {}", e1.getMessage());
+					}
+				}
+				coreAttachment.setBase64(base64Image.toString());
+				coreAttachment = coreAttachmentService.save(coreAttachment);
+				String filepath = Paths.get(coreAttachmentPathUploadTemp, code).toString();
+				// Save the file locally
+				try {
 					JSONObject jsonKySo = new JSONObject();
-					jsonKySo.set("tenFile", coreAttachment.getFileName());
+					jsonKySo.set("fileId", coreAttachment.getId());
+					jsonKySo.set("fileName", coreAttachment.getFileName());
+					jsonKySo.set("fileUrl", coreAttachment.getLink());
 					
 					jsonObjectResult.set("FileName", coreAttachment.getFileName());
 					jsonObjectResult.set("FileServer", jsonKySo.toString());
 					jsonObjectResult.set("Status", true);
 					jsonObjectResult.set("Message", "Thành công!");
 					
-					String filepath = Paths.get(coreAttachmentPathUploadTemp, coreAttachment.getCode()).toString();
-					// Save the file locally
-					BufferedInputStream in = new BufferedInputStream(new FileInputStream(filepath));
-					BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(filepath));
-					byte[] buff = new byte[32 * 1024];
-					int len = 0;
-					while ((len = in.read(buff)) > 0)
-						stream.write(buff, 0, len);
-					in.close();
+					Files.createDirectories(path);
+					stream = new BufferedOutputStream(new FileOutputStream(filepath));
+					stream.write(uploadfile.getBytes());
 					stream.close();
+					
+					response.reset();
+					response.resetBuffer();
+					response.setContentType("application/json");
+					response.setCharacterEncoding("UTF-8");
+					response.getWriter().print(jsonObjectResult);
+					response.flushBuffer();
+					response.getWriter().close();
+				} catch (IOException e) {
+					log.error("ERROR xử lý file: {}", e.getMessage());
+				} finally {
+					if (stream != null) {
+						try {
+							stream.close();
+						} catch (IOException e) {
+							log.error("ERROR close file: {}", e.getMessage());
+						}
+					}
 				}
 			}
-			
-			response.reset();
-			response.resetBuffer();
-			response.setContentType("application/json");
-			response.setCharacterEncoding("UTF-8");
-			response.getWriter().print(jsonObjectResult);
-			response.flushBuffer();
-			response.getWriter().close();
 		} catch (Exception e) {
 			log.error("Lỗi xử lý sign file:  {}", e.getMessage());
 		}

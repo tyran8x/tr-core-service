@@ -83,7 +83,7 @@ public class EmailAuthStrategy implements IAuthStrategy {
 		coreUser.setUserName(userName);
 		coreUser.setNickName(userName);
 		coreUser.setEmail(userName);
-		coreUser.setPassword(BCrypt.hashpw(password));
+		coreUser.setPassword(BCrypt.hashpw(password, "DnictPro@123"));
 		coreUser.setUserType(userType);
 		coreUser.setIsEnabled(true);
 		
