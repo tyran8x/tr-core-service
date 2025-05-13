@@ -1,7 +1,7 @@
 core:
   attachment:
     host:
-      download: ${CORE_ATTACHMENT_HOST_DOWNLOAD:'https://mcdtqa.danang.gov.vn/api/v2/core'}
+      download: ${CORE_ATTACHMENT_HOST_DOWNLOAD:https://mcdtqa.danang.gov.vn/api/v2/core}
     path:
       upload: ${CORE_ATTACHMENT_PATH_UPLOAD:/opt/uploads}
       uploadtemp: ${CORE_ATTACHMENT_PATH_UPLOADTEMP:/opt/uploads/temp}
