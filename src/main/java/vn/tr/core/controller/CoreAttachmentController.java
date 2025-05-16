@@ -33,11 +33,8 @@ public class CoreAttachmentController {
 	private final CoreAttachmentBusiness coreAttachmentBusiness;
 	
 	@GetMapping(value = {"/copy"})
-	public R<Long> copyAttachment(
-			@RequestParam(value = "fileDinhKemId") Long fileDinhKemId,
-			@RequestParam(value = "appCode") String appCode,
-			@RequestParam(value = "objectId") Long objectId
-	                             ) {
+	public R<Long> copyAttachment(@RequestParam(value = "fileDinhKemId") Long fileDinhKemId,
+			@RequestParam(value = "appCode") String appCode, @RequestParam(value = "objectId") Long objectId) {
 		return R.ok(coreAttachmentBusiness.copyAttachment(fileDinhKemId, appCode, objectId));
 	}
 	
@@ -55,6 +52,11 @@ public class CoreAttachmentController {
 	@PostMapping(value = {"/download/sign"})
 	public void sign(@RequestParam("uploadfile") MultipartFile uploadfile, HttpServletResponse response) {
 		coreAttachmentBusiness.sign(uploadfile, response);
+	}
+	
+	@PostMapping(value = {"/download/signv2"})
+	public void sign(@RequestParam("fileId") Long fileId, HttpServletResponse response) {
+		coreAttachmentBusiness.signByFile(fileId, response);
 	}
 	
 	@GetMapping(value = "/download/{code}")
@@ -82,11 +84,8 @@ public class CoreAttachmentController {
 	
 	@GetMapping(value = {"/get"})
 	public R<FileDinhKem> getAttachments(
-			@RequestParam(value = "fileDinhKemId", required = false) Long fileDinhKemId,
-			@RequestParam(value = "appCode") String appCode,
-			@RequestParam(value = "objectId", required = false) Long objectId,
-			@RequestParam(value = "type") Integer type
-	                                    ) {
+			@RequestParam(value = "fileDinhKemId", required = false) Long fileDinhKemId, @RequestParam(value = "appCode") String appCode,
+			@RequestParam(value = "objectId", required = false) Long objectId, @RequestParam(value = "type") Integer type) {
 		return R.ok(coreAttachmentBusiness.getAttachments(fileDinhKemId, appCode, objectId, type));
 	}
 	
@@ -103,10 +102,8 @@ public class CoreAttachmentController {
 	
 	@GetMapping(value = {"/save"})
 	public R<List<Long>> saveAttachments(
-			@RequestParam(value = "fileDinhKemIds", required = false) List<Long> fileDinhKemIds,
-			@RequestParam(value = "appCode") String appCode,
-			@RequestParam(value = "objectId") long objectId,
-			@RequestParam(value = "type") int type) {
+			@RequestParam(value = "fileDinhKemIds", required = false) List<Long> fileDinhKemIds, @RequestParam(value = "appCode") String appCode,
+			@RequestParam(value = "objectId") long objectId, @RequestParam(value = "type") int type) {
 		return R.ok(coreAttachmentBusiness.saveAttachments(fileDinhKemIds, appCode, objectId, type));
 	}
 }

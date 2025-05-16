@@ -76,7 +76,7 @@ public class CoreAttachmentBusiness {
 			String code = coreAttachment.getId() + coreAttachment.getFileName() + LocalDate.now();
 			code = DigestUtils.md5Hex(code).toUpperCase();
 			newCoreAttachment.setCode(code);
-			coreAttachmentService.save(newCoreAttachment);
+			newCoreAttachment = coreAttachmentService.save(newCoreAttachment);
 			
 			coreAttachmentService.saveAndCopy(coreAttachment, newCoreAttachment);
 			return newCoreAttachment.getId();
@@ -155,6 +155,87 @@ public class CoreAttachmentBusiness {
 			
 		}
 		return coreAttachment;
+	}
+	
+	public void signByFile(Long fileId, HttpServletResponse response) {
+		JSONObject jsonObjectResult = new JSONObject();
+		try {
+			BufferedOutputStream stream = null;
+			Optional<CoreAttachment> optionalCoreAttachment = coreAttachmentService.findByIdAndDaXoaFalse(fileId);
+			if (optionalCoreAttachment.isPresent()) {
+				CoreAttachment coreAttachment = optionalCoreAttachment.get();
+				
+				int lastDot;
+				String fileName = coreAttachment.getFileName();
+				if (StringUtils.isNotBlank(fileName)) {
+					int month;
+					Calendar cal = Calendar.getInstance();
+					Date date = new Date();
+					cal.setTime(date);
+					int year = LocalDate.now().getYear();
+					month = cal.get(Calendar.MONTH) + 1;
+					
+					lastDot = fileName.lastIndexOf(".pdf");
+					String fileNameSigned = fileName.substring(0, lastDot) + ".signed.pdf";
+					
+					CoreAttachment newCoreAttachment = new CoreAttachment();
+					newCoreAttachment.setMonth(coreAttachment.getMonth());
+					newCoreAttachment.setYear(coreAttachment.getYear());
+					newCoreAttachment.setFileName(fileNameSigned);
+					newCoreAttachment.setSize(coreAttachment.getSize());
+					newCoreAttachment.setMime(coreAttachment.getMime());
+					newCoreAttachment.setFolder(coreAttachmentPathUploadTemp);
+					newCoreAttachment.setAppCode(coreAttachment.getAppCode());
+					newCoreAttachment.setObjectId(coreAttachment.getObjectId());
+					newCoreAttachment.setType(coreAttachment.getType());
+					String code = coreAttachment.getId() + coreAttachment.getFileName() + LocalDate.now();
+					code = DigestUtils.md5Hex(code).toUpperCase();
+					newCoreAttachment.setCode(code);
+					newCoreAttachment = coreAttachmentService.save(newCoreAttachment);
+					
+					newCoreAttachment = coreAttachmentService.saveAndCopy(coreAttachment, newCoreAttachment);
+					
+					String filepath = Paths.get(coreAttachmentPathUploadTemp, code).toString();
+					// Save the file locally
+					try {
+						JSONObject jsonKySo = new JSONObject();
+						jsonKySo.set("fileId", newCoreAttachment.getId());
+						jsonKySo.set("fileName", newCoreAttachment.getFileName());
+						jsonKySo.set("fileUrl", newCoreAttachment.getLink());
+						
+						jsonObjectResult.set("FileName", newCoreAttachment.getFileName());
+						jsonObjectResult.set("FileServer", jsonKySo.toString());
+						jsonObjectResult.set("Status", true);
+						jsonObjectResult.set("Message", "Thành công!");
+						
+						stream = new BufferedOutputStream(new FileOutputStream(filepath));
+						stream.write(filepath.getBytes());
+						stream.close();
+						
+						response.reset();
+						response.resetBuffer();
+						response.setContentType("application/json");
+						response.setCharacterEncoding("UTF-8");
+						response.getWriter().print(jsonObjectResult);
+						response.flushBuffer();
+						response.getWriter().close();
+					} catch (IOException e) {
+						log.error("ERROR xử lý file: {}", e.getMessage());
+					} finally {
+						if (stream != null) {
+							try {
+								stream.close();
+							} catch (IOException e) {
+								log.error("ERROR close file: {}", e.getMessage());
+							}
+						}
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			log.error("Lỗi xử lý sign file:  {}", e.getMessage());
+		}
 	}
 	
 	public void sign(MultipartFile uploadfile, HttpServletResponse response) {

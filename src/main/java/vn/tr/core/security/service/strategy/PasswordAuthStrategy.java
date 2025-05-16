@@ -73,6 +73,7 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		loginResult.setAccessToken(StpUtil.getTokenValue());
 		loginResult.setExpireIn(StpUtil.getTokenTimeout());
 		loginResult.setClientId(coreClientData.getClientId());
+		loginResult.setTokenType(StpUtil.getTokenName());
 		return loginResult;
 	}
 	
@@ -93,7 +94,7 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		coreUser.setUserName(userName);
 		coreUser.setNickName(userName);
 		coreUser.setEmail(userName);
-		coreUser.setPassword(BCrypt.hashpw(password, "DnictPro@123"));
+		coreUser.setPassword(BCrypt.hashpw(password));
 		coreUser.setUserType(userType);
 		coreUser.setIsEnabled(true);
 		
