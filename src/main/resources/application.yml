@@ -1,3 +1,15 @@
+server:
+  port: 8989
+  servlet:
+    context-path: /
+  undertow:
+    max-http-post-size: -1
+    buffer-size: 512
+    direct-buffers: true
+    threads:
+      io: 8
+      worker: 256
+  shutdown: immediate
 spring:
   application:
     name: tr-core-service
@@ -6,7 +18,7 @@ spring:
   freemarker:
     suffix: .ftl # Hậu tố file template Freemarker
   config:
-    import: "optional:configserver:${SPRING_CONFIG_IMPORT_URI:http://localhost:8888}"
+    import: "optional:configserver:${SPRING_CONFIG_IMPORT_URI:http://10.49.41.112:8888}"
   cloud:
     config:
       username: ${SPRING_CLOUD_CONFIG_USERNAME:huydq}
@@ -18,12 +30,12 @@ spring:
         max-interval: ${SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL:2000}
         multiplier: ${SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER:1.1}
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/core_service}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://10.49.41.112:5432/core_service}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123}
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      host: ${SPRING_DATA_REDIS_HOST:10.49.41.112}
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123}
       timeout: ${SPRING_DATA_REDIS_TIMEOUT:10s}
@@ -40,7 +52,7 @@ spring:
   boot:
     admin:
       client:
-        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9090}
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://10.49.41.112:9090}
   servlet:
     multipart:
       max-file-size: 100MB
@@ -48,7 +60,7 @@ spring:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8061/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://10.49.41.112:8061/eureka/}
     registerWithEureka: ${EUREKA_CLIENT_REGISTERWITHEUREKA:true}
     fetch-registry: ${EUREKA_CLIENT_FETCHREGISTRY:true}
 app:
@@ -56,14 +68,14 @@ app:
   version: ${revision}
   copyrightYear: 2025
   service:
-    # Ưu tiên biến môi trường APP_SERVICE_HOME, mặc định localhost cho dev
-    home: ${APP_SERVICE_HOME:http://localhost:8989/}
-    # Ưu tiên biến môi trường APP_SERVICE_SECURITY, mặc định localhost cho dev
-    security: ${APP_SERVICE_SECURITY:http://localhost:8989/login}
+    # Ưu tiên biến môi trường APP_SERVICE_HOME, mặc định 10.49.41.112 cho dev
+    home: ${APP_SERVICE_HOME:http://10.49.41.112:8989/}
+    # Ưu tiên biến môi trường APP_SERVICE_SECURITY, mặc định 10.49.41.112 cho dev
+    security: ${APP_SERVICE_SECURITY:http://10.49.41.112:8989/login}
 core:
   attachment:
     host:
-      download: ${CORE_ATTACHMENT_HOST_DOWNLOAD:'https://api.dnict.vn/v1/core'}
+      download: ${CORE_ATTACHMENT_HOST_DOWNLOAD:https://api.dnict.vn/v2/core}
     path:
       upload: ${CORE_ATTACHMENT_PATH_UPLOAD:/opt/uploads}
       uploadtemp: ${CORE_ATTACHMENT_PATH_UPLOADTEMP:/opt/uploads/temp}
@@ -104,10 +116,11 @@ error:
     exception-logging: WITH_STACKTRACE
 
 sa-token:
-  token-name: X-Token
+  token-name: X-Token #X-Token
   is-concurrent: true # Cho phép đăng nhập đồng thời
   is-share: true      # Chia sẻ token giữa các lần đăng nhập đồng thời
-  is-log: true        # Bật log của Sa-Token
+  is-log: false        # Bật log của Sa-Token
+
   # jwt: # Block này có vẻ không dùng vì token-style là uuid? Nếu dùng JWT thì cần key
   jwt-secret-key: ${SA_TOKEN_JWT_SECRET:DnictPro@123}
   token-style: uuid # Đang dùng UUID làm token
@@ -171,4 +184,4 @@ logging:
 
 client:
   notification-service:
-    url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://localhost:8000/v1/notification}
+    url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://10.49.41.112:8000/v1/notification}

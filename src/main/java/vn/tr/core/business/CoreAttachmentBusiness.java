@@ -188,10 +188,10 @@ public class CoreAttachmentBusiness {
 					newCoreAttachment.setAppCode(coreAttachment.getAppCode());
 					newCoreAttachment.setObjectId(coreAttachment.getObjectId());
 					newCoreAttachment.setType(coreAttachment.getType());
-					String code = coreAttachment.getId() + coreAttachment.getFileName() + LocalDate.now();
+					newCoreAttachment = coreAttachmentService.save(newCoreAttachment);
+					String code = newCoreAttachment.getId() + newCoreAttachment.getFileName() + LocalDate.now();
 					code = DigestUtils.md5Hex(code).toUpperCase();
 					newCoreAttachment.setCode(code);
-					newCoreAttachment = coreAttachmentService.save(newCoreAttachment);
 					
 					newCoreAttachment = coreAttachmentService.saveAndCopy(coreAttachment, newCoreAttachment);
 					
