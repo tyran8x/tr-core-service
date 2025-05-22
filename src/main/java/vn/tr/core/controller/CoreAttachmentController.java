@@ -49,6 +49,11 @@ public class CoreAttachmentController {
 		return ResponseEntity.ok(coreAttachmentBusiness.doUpload(uploadfile));
 	}
 	
+	@PostMapping(value = {""})
+	public ResponseEntity<CoreAttachmentData> create(@RequestBody CoreAttachmentData coreAttachmentData) {
+		return ResponseEntity.ok(coreAttachmentBusiness.create(coreAttachmentData));
+	}
+	
 	@PostMapping(value = {"/download/sign"})
 	public void sign(@RequestParam("uploadfile") MultipartFile uploadfile, HttpServletResponse response) {
 		coreAttachmentBusiness.sign(uploadfile, response);

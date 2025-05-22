@@ -342,6 +342,27 @@ public class CoreAttachmentBusiness {
 		return null;
 	}
 	
+	public CoreAttachmentData create(CoreAttachmentData coreAttachmentData) {
+		CoreAttachment coreAttachment = new CoreAttachment();
+		coreAttachment.setDaXoa(false);
+		int month;
+		Calendar cal = Calendar.getInstance();
+		Date date = new Date();
+		cal.setTime(date);
+		int year = LocalDate.now().getYear();
+		month = cal.get(Calendar.MONTH) + 1;
+		coreAttachment.setYear(year);
+		coreAttachment.setMonth(month);
+		coreAttachment.setFileName(coreAttachmentData.getFileName());
+		coreAttachment.setAppCode(coreAttachmentData.getAppCode());
+		coreAttachment.setBase64(coreAttachmentData.getBase64());
+		coreAttachment.setLink(coreAttachmentData.getLink());
+		coreAttachment.setObjectId(coreAttachmentData.getObjectId());
+		coreAttachment.setType(coreAttachmentData.getType());
+		coreAttachment = coreAttachmentService.save(coreAttachment);
+		return convertToCoreAttachmentData(coreAttachment);
+	}
+	
 	public CoreAttachmentData findById(Long id) throws EntityNotFoundException {
 		Optional<CoreAttachment> optionalCoreAttachment = coreAttachmentService.findByIdAndDaXoaFalse(id);
 		if (optionalCoreAttachment.isEmpty()) {

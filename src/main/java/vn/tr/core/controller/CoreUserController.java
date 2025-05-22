@@ -81,13 +81,13 @@ public class CoreUserController {
 	}
 	
 	@PostMapping(value = {"/change/password"})
-	public R<CoreUserData> changePassword(@Valid @RequestBody CoreUserChangePasswordData coreUserChangePasswordData) {
+	public R<CoreUserData> changePassword(@RequestBody CoreUserChangePasswordData coreUserChangePasswordData) {
 		coreUserBusiness.changePassword(coreUserChangePasswordData);
 		return R.ok();
 	}
 	
 	@PostMapping(value = {"/change/enable"})
-	public R<CoreUserData> changeIsEnabled(@Valid @RequestBody CoreUserChangeIsEnabledData coreUserChangeIsEnabledData) {
+	public R<CoreUserData> changeIsEnabled(@RequestBody CoreUserChangeIsEnabledData coreUserChangeIsEnabledData) {
 		coreUserBusiness.changeIsEnabled(coreUserChangeIsEnabledData);
 		return R.ok();
 	}
