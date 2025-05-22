@@ -69,7 +69,7 @@ public class CoreUserController {
 		return R.ok(coreUserData);
 	}
 	
-	@InitBinder
+	@InitBinder("coreUserData")
 	public void initBinder(WebDataBinder webDataBinder) {
 		webDataBinder.addValidators(coreUserValidator);
 	}
