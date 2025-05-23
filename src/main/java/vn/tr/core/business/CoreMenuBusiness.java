@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
+import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.core.utils.FunctionUtils;
 import vn.tr.common.json.utils.JsonUtils;
@@ -17,10 +18,7 @@ import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.dao.service.CoreMenuService;
 import vn.tr.core.dao.service.CoreRole2MenuService;
-import vn.tr.core.data.CoreDsMenuData;
-import vn.tr.core.data.CoreMenuData;
-import vn.tr.core.data.MetaData;
-import vn.tr.core.data.RouterData;
+import vn.tr.core.data.*;
 
 import java.util.*;
 
@@ -278,6 +276,72 @@ public class CoreMenuBusiness {
 		}
 		CoreMenu coreMenu = optionalCoreMenu.get();
 		return save(coreMenu, coreMenuData);
+	}
+	
+	public List<RouteRecordRawData> getRoutes(String appCode) {
+		LoginUser loginUser = LoginHelper.getLoginUser();
+		List<RouteRecordRawData> routeRecordRawDatas = new ArrayList<>();
+		if (Objects.nonNull(loginUser) && loginUser.getUserType().equals("sys_user")) {
+			Set<String> roles = Objects.requireNonNull(LoginHelper.getLoginUser()).getRolePermission();
+			
+			List<CoreMenu> coreMenus;
+			//boolean isRoot = LoginHelper.isSuperAdmin();
+			//log.info("isRoot: {} - roles: {}", isRoot, roles);
+			if (CollUtil.contains(roles, "ROLE_ADMIN")) {
+				coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
+			} else {
+				List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
+				log.info("getRoutes appCode: {} - menuIds: {}", appCode, menuIds);
+				coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
+			}
+			if (CollUtil.isNotEmpty(coreMenus)) {
+				List<CoreMenu> cMenus = coreMenus.stream()
+						.filter(e -> Objects.isNull(e.getChaId()))
+						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
+						.toList();
+				routeRecordRawDatas = setRouteRecordRawData(cMenus, coreMenus);
+			}
+		}
+		return routeRecordRawDatas;
+		
+	}
+	
+	private List<RouteRecordRawData> setRouteRecordRawData(List<CoreMenu> cMenus, List<CoreMenu> coreMenus) {
+		List<RouteRecordRawData> routeRecordRawDatas = new ArrayList<>();
+		if (CollUtil.isNotEmpty(cMenus)) {
+			for (CoreMenu coreMenu : cMenus) {
+				RouteRecordRawData routeRecordRawData = new RouteRecordRawData();
+				routeRecordRawData.setName(coreMenu.getTen());
+//				routeRecordRawData.setMa(coreMenu.getMa());
+//				routeRecordRawData.setChaId(coreMenu.getChaId());
+//				routeRecordRawData.setMoTa(coreMenu.getMoTa());
+//				routeRecordRawData.setPath(coreMenu.getPath());
+//				routeRecordRawData.setComponent(coreMenu.getComponent());
+//				routeRecordRawData.setRedirect(coreMenu.getRedirect());
+//				routeRecordRawData.setIsHidden(coreMenu.getIsHidden());
+//				routeRecordRawData.setIcon(coreMenu.getIcon());
+//				routeRecordRawData.setIsAlwaysShow(coreMenu.getIsAlwaysShow());
+//				routeRecordRawData.setIsNoCache(coreMenu.getIsCache());
+//				routeRecordRawData.setIsAffix(coreMenu.getIsAffix());
+//				routeRecordRawData.setIsBreadcrumb(coreMenu.getIsBreadcrumb());
+//				routeRecordRawData.setLink(coreMenu.getLink());
+//				routeRecordRawData.setIsIframe(coreMenu.getIsFrame());
+//				routeRecordRawData.setActiveMenu(coreMenu.getActiveMenu());
+//				routeRecordRawData.setProps(coreMenu.getProps());
+//				routeRecordRawData.setIsReload(coreMenu.getIsReload());
+//				routeRecordRawData.setTrangThai(coreMenu.getTrangThai());
+//				routeRecordRawData.setSapXep(coreMenu.getSapXep());
+//
+				List<CoreMenu> children = coreMenus.stream()
+						.filter(e -> Objects.nonNull(e.getChaId()))
+						.filter(e -> e.getChaId().equals(coreMenu.getId()))
+						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
+						.toList();
+				routeRecordRawData.setChildren(setRouteRecordRawData(children, coreMenus));
+				routeRecordRawDatas.add(routeRecordRawData);
+			}
+		}
+		return routeRecordRawDatas;
 	}
 	
 }

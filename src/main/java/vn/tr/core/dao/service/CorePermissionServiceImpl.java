@@ -26,7 +26,6 @@ public class CorePermissionServiceImpl implements CorePermissionService {
 	@Override
 	public Set<String> getMenuPermission(String userName) {
 		List<CoreUser2Role> coreUser2Roles = coreUser2RoleService.findByUserNameAndDaXoaFalse(userName);
-		Set<String> roles = new HashSet<>(coreUser2Roles.stream().map(CoreUser2Role::getRole).toList());
-		return coreRole2MenuService.getMenuMas(roles);
+		return new HashSet<>(coreUser2Roles.stream().map(CoreUser2Role::getRole).toList());
 	}
 }
