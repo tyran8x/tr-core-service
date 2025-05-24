@@ -311,27 +311,30 @@ public class CoreMenuBusiness {
 		if (CollUtil.isNotEmpty(cMenus)) {
 			for (CoreMenu coreMenu : cMenus) {
 				RouteRecordRawData routeRecordRawData = new RouteRecordRawData();
-				routeRecordRawData.setName(coreMenu.getTen());
-//				routeRecordRawData.setMa(coreMenu.getMa());
-//				routeRecordRawData.setChaId(coreMenu.getChaId());
-//				routeRecordRawData.setMoTa(coreMenu.getMoTa());
-//				routeRecordRawData.setPath(coreMenu.getPath());
-//				routeRecordRawData.setComponent(coreMenu.getComponent());
-//				routeRecordRawData.setRedirect(coreMenu.getRedirect());
-//				routeRecordRawData.setIsHidden(coreMenu.getIsHidden());
-//				routeRecordRawData.setIcon(coreMenu.getIcon());
-//				routeRecordRawData.setIsAlwaysShow(coreMenu.getIsAlwaysShow());
-//				routeRecordRawData.setIsNoCache(coreMenu.getIsCache());
-//				routeRecordRawData.setIsAffix(coreMenu.getIsAffix());
-//				routeRecordRawData.setIsBreadcrumb(coreMenu.getIsBreadcrumb());
-//				routeRecordRawData.setLink(coreMenu.getLink());
-//				routeRecordRawData.setIsIframe(coreMenu.getIsFrame());
-//				routeRecordRawData.setActiveMenu(coreMenu.getActiveMenu());
-//				routeRecordRawData.setProps(coreMenu.getProps());
-//				routeRecordRawData.setIsReload(coreMenu.getIsReload());
-//				routeRecordRawData.setTrangThai(coreMenu.getTrangThai());
-//				routeRecordRawData.setSapXep(coreMenu.getSapXep());
-//
+				routeRecordRawData.setName(coreMenu.getMa());
+				routeRecordRawData.setPath(coreMenu.getPath());
+				routeRecordRawData.setComponent(coreMenu.getComponent());
+				routeRecordRawData.setRedirect(coreMenu.getRedirect());
+				routeRecordRawData.setProps(coreMenu.getProps());
+				
+				RouterMetaData routerMetaData = new RouterMetaData();
+				routerMetaData.setTitle(coreMenu.getTen());
+				routerMetaData.setIcon(coreMenu.getIcon());
+				routerMetaData.setHideInMenu(coreMenu.getIsHidden());
+				routerMetaData.setLoaded(coreMenu.getIsAlwaysShow());
+				routerMetaData.setKeepAlive(coreMenu.getIsCache());
+				routerMetaData.setAffixTab(coreMenu.getIsAffix());
+				routerMetaData.setHideInBreadcrumb(coreMenu.getIsBreadcrumb());
+				routerMetaData.setLink(coreMenu.getLink());
+				routerMetaData.setHideChildrenInMenu(coreMenu.getIsFrame());
+				routerMetaData.setActiveMenu(coreMenu.getActiveMenu());
+				routerMetaData.setOrder(coreMenu.getSapXep());
+				routerMetaData.setIgnoreAccess(coreMenu.getTrangThai());
+				routerMetaData.setBadge("");
+				routerMetaData.setBadgeType("");
+				routerMetaData.setBadgeVariants("");
+				
+				routeRecordRawData.setMeta(routerMetaData);
 				List<CoreMenu> children = coreMenus.stream()
 						.filter(e -> Objects.nonNull(e.getChaId()))
 						.filter(e -> e.getChaId().equals(coreMenu.getId()))
