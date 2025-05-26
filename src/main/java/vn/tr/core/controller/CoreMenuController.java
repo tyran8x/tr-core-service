@@ -8,6 +8,7 @@ import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.core.business.CoreMenuBusiness;
 import vn.tr.core.data.CoreDsMenuData;
 import vn.tr.core.data.CoreMenuData;
+import vn.tr.core.data.RouteRecordRawData;
 
 import java.util.List;
 
@@ -75,6 +76,23 @@ public class CoreMenuController {
 		String thongBao = "Đang thực hiện get dữ liệu router, vui lòng chờ !";
 		
 		coreMenuBusiness.setRouterDatas(object, xAppCode);
+//		while (future.isDone()) {
+//			thongBao = "Đã hoàn thành get dữ liệu router";
+//		}
+		return R.ok(thongBao);
+	}
+	
+	@GetMapping(value = "/getRoutes")
+	public R<List<RouteRecordRawData>> getRoutes(@RequestHeader(name = "X-App-Code", required = false) String xAppCode) {
+		List<RouteRecordRawData> routeRecordRawDatas = coreMenuBusiness.getRoutes(xAppCode);
+		return R.ok(routeRecordRawDatas);
+	}
+	
+	@PostMapping(value = {"/setRoutes"})
+	public R<String> setRoutes(@RequestHeader(name = "X-App-Code", required = false) String xAppCode, @Valid @RequestBody Object object) {
+		String thongBao = "Đang thực hiện get dữ liệu router, vui lòng chờ !";
+		
+		coreMenuBusiness.setRoutes(object, xAppCode);
 //		while (future.isDone()) {
 //			thongBao = "Đã hoàn thành get dữ liệu router";
 //		}

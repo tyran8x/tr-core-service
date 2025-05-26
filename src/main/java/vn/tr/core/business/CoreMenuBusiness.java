@@ -347,4 +347,66 @@ public class CoreMenuBusiness {
 		return routeRecordRawDatas;
 	}
 	
+	public void setRoutes(Object object, String appCode) {
+		log.info("Bắt đầu get dữ liệu router");
+		long start = System.currentTimeMillis();
+		if (Objects.nonNull(object)) {
+			ObjectMapper mapper = new ObjectMapper();
+			List<RouteRecordRawData> routeRecordRawDatas = mapper.convertValue(object, new TypeReference<>() {
+			});
+			coreMenuService.setFixedDaXoaAndAppCode(true, appCode);
+			if (CollUtil.isNotEmpty(routeRecordRawDatas)) {
+				int sapXep = 0;
+				for (RouteRecordRawData routeRecordRawData : routeRecordRawDatas) {
+					sapXep++;
+					saveRouteRecordRawData(routeRecordRawData, null, sapXep, appCode);
+				}
+				
+			}
+			log.info("Đã hoàn thành get dữ liệu router, tổng thời gian save menu, {}", System.currentTimeMillis() - start);
+		}
+	}
+	
+	public void saveRouteRecordRawData(RouteRecordRawData routeRecordRawData, Long chaId, int sapXep, String appCode) {
+		log.info("RouteRecordRaw: {}", routeRecordRawData.getName());
+		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(routeRecordRawData.getName(), appCode);
+		CoreMenu coreMenu = new CoreMenu();
+		if (optionalCoreMenu.isPresent()) {
+			coreMenu = optionalCoreMenu.get();
+		}
+		coreMenu.setDaXoa(false);
+		coreMenu.setIsReload(true);
+		coreMenu.setTrangThai(true);
+		coreMenu.setAppCode(FunctionUtils.removeXss(appCode));
+		coreMenu.setChaId(chaId);
+		coreMenu.setMa(FunctionUtils.removeXss(routeRecordRawData.getName()));
+		coreMenu.setPath(FunctionUtils.removeXss(routeRecordRawData.getPath()));
+		coreMenu.setRedirect(FunctionUtils.removeXss(routeRecordRawData.getRedirect()));
+		coreMenu.setComponent(FunctionUtils.removeXss(routeRecordRawData.getComponent()));
+		coreMenu.setSapXep(sapXep);
+		coreMenu.setProps(JsonUtils.toJsonString(routeRecordRawData.getProps()));
+		
+		if (Objects.nonNull(routeRecordRawData.getMeta())) {
+			RouterMetaData routerMetaData = routeRecordRawData.getMeta();
+			coreMenu.setIcon(FunctionUtils.removeXss(routerMetaData.getIcon()));
+			coreMenu.setTen(FunctionUtils.removeXss(routerMetaData.getTitle()));
+			coreMenu.setMoTa(FunctionUtils.removeXss(routerMetaData.getTitle()));
+			coreMenu.setActiveMenu(FunctionUtils.removeXss(routerMetaData.getActiveMenu()));
+			coreMenu.setIsAffix(Boolean.TRUE.equals(routerMetaData.getAffixTab()));
+			
+			coreMenu.setIsCache(Boolean.TRUE.equals(routerMetaData.getNoCache()));
+			
+			coreMenu.setLink(FunctionUtils.removeXss(routerMetaData.getLink()));
+		}
+		coreMenu = coreMenuService.save(coreMenu);
+		
+		int sapXepCon = 0;
+		if (CollUtil.isNotEmpty(routeRecordRawData.getChildren())) {
+			for (RouteRecordRawData children : routeRecordRawData.getChildren()) {
+				sapXepCon++;
+				saveRouteRecordRawData(children, coreMenu.getId(), sapXepCon, appCode);
+			}
+		}
+	}
+	
 }
