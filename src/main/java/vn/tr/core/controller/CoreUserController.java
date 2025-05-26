@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
+import vn.tr.common.core.exception.ServiceException;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.business.CoreUserBusiness;
@@ -58,12 +59,18 @@ public class CoreUserController {
 	
 	@GetMapping(value = {"/info"})
 	public R<CoreUserData> getInfo() {
-		if (LoginHelper.isLogin()) {
-			String email = LoginHelper.getUserName();
-			CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
-			return R.ok(coreUserData);
+		if (!LoginHelper.isLogin()) {
+			throw new ServiceException("Chưa đăng nhập");
 		}
-		return R.fail("Chưa đăng nhập");
+		
+		String email = LoginHelper.getUserName();
+		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
+		
+		if (coreUserData == null) {
+			throw new ServiceException("Thông tin người dùng không tồn tại.");
+		}
+		
+		return R.ok(coreUserData);
 	}
 	
 	@GetMapping(value = {"/{id}"})
