@@ -58,9 +58,12 @@ public class CoreUserController {
 	
 	@GetMapping(value = {"/info"})
 	public R<CoreUserData> getInfo() {
-		String email = LoginHelper.getUserName();
-		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
-		return R.ok(coreUserData);
+		if (LoginHelper.isLogin()) {
+			String email = LoginHelper.getUserName();
+			CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
+			return R.ok(coreUserData);
+		}
+		return R.fail("Chưa đăng nhập");
 	}
 	
 	@GetMapping(value = {"/{id}"})
