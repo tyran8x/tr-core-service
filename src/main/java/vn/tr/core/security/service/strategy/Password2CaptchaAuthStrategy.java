@@ -1,8 +1,8 @@
 package vn.tr.core.security.service.strategy;
 
 import cn.dev33.satoken.secure.BCrypt;
+import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
-import cn.dev33.satoken.stp.parameter.SaLoginParameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,15 +62,15 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		LoginUser loginUser = coreUserService.buildLoginUser(coreUser);
 		loginUser.setClientKey(coreClientData.getClientKey());
 		loginUser.setDeviceType(coreClientData.getDeviceType());
-		SaLoginParameter saLoginParameter = new SaLoginParameter();
-		saLoginParameter.setDeviceType(coreClientData.getDeviceType());
-		saLoginParameter.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
-		saLoginParameter.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
-		saLoginParameter.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
-		saLoginParameter.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
+		SaLoginModel saLoginModel = new SaLoginModel();
+		saLoginModel.setDevice(coreClientData.getDeviceType());
+		saLoginModel.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
+		saLoginModel.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
+		saLoginModel.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
+		saLoginModel.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
 		
 		// generate token
-		LoginHelper.login(loginUser, saLoginParameter);
+		LoginHelper.login(loginUser, saLoginModel);
 		
 		LoginResult loginResult = new LoginResult();
 		loginResult.setAccessToken(StpUtil.getTokenValue());
