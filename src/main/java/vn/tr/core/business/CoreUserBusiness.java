@@ -12,17 +12,16 @@ import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUser2Role;
+import vn.tr.core.dao.model.CoreUserConnect;
 import vn.tr.core.dao.service.CoreRoleService;
 import vn.tr.core.dao.service.CoreUser2RoleService;
+import vn.tr.core.dao.service.CoreUserConnectService;
 import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.CoreUserChangeIsEnabledData;
 import vn.tr.core.data.CoreUserChangePasswordData;
 import vn.tr.core.data.CoreUserData;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +31,7 @@ public class CoreUserBusiness {
 	private final CoreUserService coreUserService;
 	private final CoreRoleService coreRoleService;
 	private final CoreUser2RoleService coreUser2RoleService;
+	private final CoreUserConnectService coreUserConnectService;
 	
 	private CoreUserData convertToCoreUserData(CoreUser coreUser, String email) {
 		CoreUserData coreUserData = new CoreUserData();
@@ -46,6 +46,16 @@ public class CoreUserBusiness {
 		Set<String> roles = coreUser2Roles.stream().map(CoreUser2Role::getRole).collect(Collectors.toSet());
 		coreUserData.setRoles(roles);
 		coreUserData.setAppCode(coreUser.getAppCode());
+		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUserName());
+		Map<String, String> connects = new HashMap<>();
+		if (CollUtil.isNotEmpty(coreUserConnects)) {
+			for (CoreUserConnect coreUserConnect : coreUserConnects) {
+				connects.put(coreUserConnect.getAppName(), coreUserConnect.getAppUserId());
+			}
+		}
+		connects.putIfAbsent("mail", coreUser.getEmail());
+		
+		coreUserData.setConnects(connects);
 		return coreUserData;
 	}
 	

@@ -43,4 +43,9 @@ public class CoreUserConnectServiceImpl implements CoreUserConnectService {
 	public Optional<CoreUserConnect> findByUserNameIgnoreCaseAndAppNameAndDaXoaFalse(String userName, String appName) {
 		return repo.findByUserNameIgnoreCaseAndAppNameAndDaXoaFalse(userName, appName);
 	}
+	
+	@Override
+	public List<CoreUserConnect> findByUserNameIgnoreCaseAndDaXoaFalse(String userName) {
+		return repo.findByUserNameIgnoreCaseAndDaXoaFalse(userName);
+	}
 }

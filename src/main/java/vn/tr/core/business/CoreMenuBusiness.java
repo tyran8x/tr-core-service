@@ -49,11 +49,10 @@ public class CoreMenuBusiness {
 		coreMenuData.setIsHidden(coreMenu.getIsHidden());
 		coreMenuData.setIcon(coreMenu.getIcon());
 		coreMenuData.setIsAlwaysShow(coreMenu.getIsAlwaysShow());
-		coreMenuData.setIsNoCache(coreMenu.getIsCache());
+		coreMenuData.setIsNoCache(coreMenu.getIsNoCache());
 		coreMenuData.setIsAffix(coreMenu.getIsAffix());
 		coreMenuData.setIsBreadcrumb(coreMenu.getIsBreadcrumb());
 		coreMenuData.setLink(coreMenu.getLink());
-		coreMenuData.setIsIframe(coreMenu.getIsFrame());
 		coreMenuData.setActiveMenu(coreMenu.getActiveMenu());
 		coreMenuData.setProps(coreMenu.getProps());
 		coreMenuData.setIsReload(coreMenu.getIsReload());
@@ -151,11 +150,10 @@ public class CoreMenuBusiness {
 		coreMenu.setIsHidden(Boolean.TRUE.equals(coreMenuData.getIsHidden()));
 		coreMenu.setIcon(FunctionUtils.removeXss(coreMenuData.getIcon()));
 		coreMenu.setIsAlwaysShow(Boolean.TRUE.equals(coreMenuData.getIsAlwaysShow()));
-		coreMenu.setIsCache(Boolean.TRUE.equals(coreMenuData.getIsNoCache()));
+		coreMenu.setIsNoCache(Boolean.TRUE.equals(coreMenuData.getIsNoCache()));
 		coreMenu.setIsAffix(Boolean.TRUE.equals(coreMenuData.getIsAffix()));
 		coreMenu.setIsBreadcrumb(Boolean.TRUE.equals(coreMenuData.getIsBreadcrumb()));
 		coreMenu.setLink(FunctionUtils.removeXss(coreMenuData.getLink()));
-		coreMenu.setIsFrame(Boolean.TRUE.equals(coreMenuData.getIsIframe()));
 		coreMenu.setActiveMenu(FunctionUtils.removeXss(coreMenuData.getActiveMenu()));
 		coreMenu.setProps(FunctionUtils.removeXss(coreMenuData.getProps()));
 		coreMenu.setIsReload(Boolean.TRUE.equals(coreMenuData.getIsReload()));
@@ -192,9 +190,8 @@ public class CoreMenuBusiness {
 			coreMenu.setMoTa(FunctionUtils.removeXss(metaData.getTitle()));
 			coreMenu.setActiveMenu(FunctionUtils.removeXss(metaData.getActiveMenu()));
 			coreMenu.setIsAffix(Boolean.TRUE.equals(metaData.getAffix()));
-			coreMenu.setIsFrame(Boolean.TRUE.equals(metaData.getIsIframe()));
 			coreMenu.setIsBreadcrumb(Boolean.TRUE.equals(metaData.getBreadcrumb()));
-			coreMenu.setIsCache(Boolean.TRUE.equals(metaData.getNoCache()));
+			coreMenu.setIsNoCache(Boolean.TRUE.equals(metaData.getNoCache()));
 			coreMenu.setComponent(FunctionUtils.removeXss(metaData.getComponent()));
 			coreMenu.setLink(FunctionUtils.removeXss(metaData.getLink()));
 		}
@@ -225,11 +222,10 @@ public class CoreMenuBusiness {
 				coreMenuData.setIsHidden(coreMenu.getIsHidden());
 				coreMenuData.setIcon(coreMenu.getIcon());
 				coreMenuData.setIsAlwaysShow(coreMenu.getIsAlwaysShow());
-				coreMenuData.setIsNoCache(coreMenu.getIsCache());
-				coreMenuData.setIsAffix(coreMenu.getIsAffix());
+				coreMenuData.setIsNoCache(coreMenu.getIsNoCache());
+				coreMenuData.setIsAffix(coreMenu.getIsAffixTab());
 				coreMenuData.setIsBreadcrumb(coreMenu.getIsBreadcrumb());
 				coreMenuData.setLink(coreMenu.getLink());
-				coreMenuData.setIsIframe(coreMenu.getIsFrame());
 				coreMenuData.setActiveMenu(coreMenu.getActiveMenu());
 				coreMenuData.setProps(coreMenu.getProps());
 				coreMenuData.setIsReload(coreMenu.getIsReload());
@@ -319,20 +315,37 @@ public class CoreMenuBusiness {
 				
 				RouterMetaData routerMetaData = new RouterMetaData();
 				routerMetaData.setTitle(coreMenu.getTen());
+				routerMetaData.setLayout(coreMenu.getLayout());
+				routerMetaData.setNoBasicLayout(Boolean.TRUE.equals(coreMenu.getIsNoBasicLayout()));
 				routerMetaData.setIcon(coreMenu.getIcon());
-				routerMetaData.setHideInMenu(coreMenu.getIsHidden());
-				routerMetaData.setLoaded(coreMenu.getIsAlwaysShow());
-				routerMetaData.setKeepAlive(coreMenu.getIsCache());
-				routerMetaData.setAffixTab(coreMenu.getIsAffix());
-				routerMetaData.setHideInBreadcrumb(coreMenu.getIsBreadcrumb());
-				routerMetaData.setLink(coreMenu.getLink());
-				routerMetaData.setHideChildrenInMenu(coreMenu.getIsFrame());
+				routerMetaData.setLoaded(Boolean.TRUE.equals(coreMenu.getIsLoaded()));
+				routerMetaData.setKeepAlive(Boolean.TRUE.equals(coreMenu.getIsKeepAlive()));
+				routerMetaData.setAffixTab(coreMenu.getIsAffixTab());
+				routerMetaData.setAffixTabOrder(coreMenu.getAffixTabOrder());
+				routerMetaData.setQuery(coreMenu.getQuery());
+				
+				routerMetaData.setOpenInNewWindow(Boolean.TRUE.equals(coreMenu.getIsOpenInNewWindow()));
+				routerMetaData.setMenuVisibleWithForbidden(Boolean.TRUE.equals(coreMenu.getIsMenuVisibleWithForbidden()));
+				routerMetaData.setNoCache(Boolean.TRUE.equals(coreMenu.getIsNoCache()));
+				
+				routerMetaData.setHideInMenu(Boolean.TRUE.equals(coreMenu.getIsHidden()));
+				routerMetaData.setHideInBreadcrumb(Boolean.TRUE.equals(coreMenu.getIsHideInBreadcrumb()));
+				routerMetaData.setHideChildrenInMenu(Boolean.TRUE.equals(coreMenu.getIsHideChildrenInMenu()));
+				
 				routerMetaData.setActiveMenu(coreMenu.getActiveMenu());
+				routerMetaData.setActiveIcon(coreMenu.getActiveIcon());
+				routerMetaData.setActivePath(coreMenu.getActivePath());
+				
+				routerMetaData.setLink(coreMenu.getLink());
+				routerMetaData.setIframeSrc(coreMenu.getIframeSrc());
 				routerMetaData.setOrder(coreMenu.getSapXep());
-				routerMetaData.setIgnoreAccess(coreMenu.getTrangThai());
-				routerMetaData.setBadge("");
-				routerMetaData.setBadgeType("");
-				routerMetaData.setBadgeVariants("");
+				routerMetaData.setMaxNumOfOpenTab(coreMenu.getMaxNumOfOpenTab());
+				routerMetaData.setMenuVisibleWithForbidden(Boolean.TRUE.equals(coreMenu.getIsMenuVisibleWithForbidden()));
+				routerMetaData.setIgnoreAccess(Boolean.TRUE.equals(coreMenu.getIsIgnoreAccess()));
+				
+				routerMetaData.setBadge(coreMenu.getBadge());
+				routerMetaData.setBadgeType(coreMenu.getBadgeType());
+				routerMetaData.setBadgeVariants(coreMenu.getBadgeVariants());
 				
 				routeRecordRawData.setMeta(routerMetaData);
 				List<CoreMenu> children = coreMenus.stream()
@@ -394,7 +407,7 @@ public class CoreMenuBusiness {
 			coreMenu.setActiveMenu(FunctionUtils.removeXss(routerMetaData.getActiveMenu()));
 			coreMenu.setIsAffix(Boolean.TRUE.equals(routerMetaData.getAffixTab()));
 			
-			coreMenu.setIsCache(Boolean.TRUE.equals(routerMetaData.getNoCache()));
+			coreMenu.setIsNoCache(Boolean.TRUE.equals(routerMetaData.getNoCache()));
 			
 			coreMenu.setLink(FunctionUtils.removeXss(routerMetaData.getLink()));
 		}

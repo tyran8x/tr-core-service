@@ -18,4 +18,6 @@ public interface CoreUserConnectService {
 	Page<CoreUserConnect> findAll(String search, Boolean trangThai, List<String> maUngDungs, String appCode, Pageable pageable);
 	
 	Optional<CoreUserConnect> findByUserNameIgnoreCaseAndAppNameAndDaXoaFalse(String userName, String appName);
+	
+	List<CoreUserConnect> findByUserNameIgnoreCaseAndDaXoaFalse(String userName);
 }
