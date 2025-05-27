@@ -2,6 +2,7 @@ package vn.tr.core.dao.service;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,9 +21,12 @@ import vn.tr.common.log.event.LoginInfoEvent;
 import vn.tr.common.redis.utils.RedisUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.dao.model.CoreUserConnect;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -33,6 +37,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 	private final CoreUserRepo repo;
 	private final CorePermissionService corePermissionService;
 	private final CoreUser2RoleService coreUser2RoleService;
+	private final CoreUserConnectService coreUserConnectService;
 	@Value("${user.password.maxRetryCount}")
 	private Integer maxRetryCount;
 	@Value("${user.password.lockTime}")
@@ -98,6 +103,16 @@ public class CoreUserServiceImpl implements CoreUserService {
 		loginUser.setMenuPermission(corePermissionService.getMenuPermission(coreUser.getUserName()));
 		loginUser.setRolePermission(corePermissionService.getRolePermission(coreUser.getUserName()));
 		loginUser.setRoles(coreUser2RoleService.getRoleByUserName(coreUser.getUserName()));
+		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUserName());
+		Map<String, String> connects = new HashMap<>();
+		if (CollUtil.isNotEmpty(coreUserConnects)) {
+			for (CoreUserConnect coreUserConnect : coreUserConnects) {
+				connects.put(coreUserConnect.getAppName(), coreUserConnect.getAppUserId());
+			}
+		}
+		connects.putIfAbsent("mail", coreUser.getEmail());
+		
+		loginUser.setConnects(connects);
 		return loginUser;
 	}
 	
