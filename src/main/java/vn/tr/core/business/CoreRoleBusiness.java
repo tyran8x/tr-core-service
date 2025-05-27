@@ -16,7 +16,6 @@ import vn.tr.core.dao.service.CoreMenuService;
 import vn.tr.core.dao.service.CoreRole2MenuService;
 import vn.tr.core.dao.service.CoreRoleService;
 import vn.tr.core.data.CoreRoleData;
-import vn.tr.core.data.MenuData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,15 +42,13 @@ public class CoreRoleBusiness {
 		List<CoreRole2Menu> coreRole2Menus = coreRole2MenuService.findByRoleIdAndDaXoaFalse(coreRole.getId());
 		List<CoreMenu> coreMenus = coreMenuService.findByIdInAndDaXoaFalse(coreRole2Menus.stream().map(
 				CoreRole2Menu::getMenuId).collect(Collectors.toList()));
-		List<MenuData> menuDatas = new ArrayList<>();
+		List<String> menus = new ArrayList<>();
 		if (CollUtil.isNotEmpty(coreMenus)) {
 			for (CoreMenu coreMenu : coreMenus) {
-				MenuData menuData = new MenuData();
-				menuData.setName(coreMenu.getMa());
-				menuDatas.add(menuData);
+				menus.add(coreMenu.getMa());
 			}
 		}
-		coreRoleData.setMenu(menuDatas);
+		coreRoleData.setMenus(menus);
 		return coreRoleData;
 	}
 	
@@ -94,10 +91,10 @@ public class CoreRoleBusiness {
 		coreRole.setAppCode(FunctionUtils.removeXss(coreRoleData.getAppCode()));
 		coreRole = coreRoleService.save(coreRole);
 		coreRole2MenuService.setFixedDaXoaForRoleId(true, coreRole.getId());
-		if (CollUtil.isNotEmpty(coreRoleData.getMenu())) {
-			for (MenuData menuData : coreRoleData.getMenu()) {
-				if (CharSequenceUtil.isNotBlank(menuData.getName())) {
-					Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(menuData.getName(),
+		if (CollUtil.isNotEmpty(coreRoleData.getMenus())) {
+			for (String menu : coreRoleData.getMenus()) {
+				if (CharSequenceUtil.isNotBlank(menu)) {
+					Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(menu,
 							coreRoleData.getAppCode());
 					if (optionalCoreMenu.isPresent()) {
 						CoreRole2Menu coreRole2Menu = new CoreRole2Menu();
