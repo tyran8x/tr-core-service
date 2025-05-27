@@ -74,10 +74,10 @@ public class CoreUserBusiness {
 		coreUserService.save(coreUser);
 	}
 	
-	public Page<CoreUserData> findAll(int page, int size, String sortBy, String sortDir, String email, String name, List<String> roles,
+	public Page<CoreUserData> findAll(int page, int size, String sortBy, String sortDir, String search, String email, String name, List<String> roles,
 			String appCode) {
 		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
-		Page<CoreUser> pageCoreUser = coreUserService.findAll(email, name, roles, appCode, pageable);
+		Page<CoreUser> pageCoreUser = coreUserService.findAll(search, email, name, roles, appCode, pageable);
 		return pageCoreUser.map(x -> convertToCoreUserData(x, x.getEmail()));
 	}
 	

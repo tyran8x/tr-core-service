@@ -20,7 +20,7 @@ public interface CoreUserService {
 	
 	boolean existsById(Long id);
 	
-	Page<CoreUser> findAll(String email, String name, List<String> roles, String appCode, Pageable pageable);
+	Page<CoreUser> findAll(String search, String email, String name, List<String> roles, String appCode, Pageable pageable);
 	
 	boolean existsByEmailIgnoreCaseAndDaXoaFalse(String email);
 	

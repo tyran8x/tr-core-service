@@ -45,9 +45,10 @@ public class CoreUserController {
 			@RequestParam(name = "sortBy", defaultValue = "email", required = false) String sortBy,
 			@RequestParam(name = "sortDir", defaultValue = "ASC", required = false) String sortDir,
 			@RequestParam(name = "roles", required = false) List<String> roles,
+			@RequestParam(name = "search", required = false) String search,
 			@RequestParam(name = "email", required = false) String email,
 			@RequestParam(name = "name", required = false) String name) {
-		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(page, size, sortBy, sortDir, email, name, roles, xAppCode);
+		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(page, size, sortBy, sortDir, search, email, name, roles, xAppCode);
 		return R.ok(pageCoreUserData);
 	}
 	

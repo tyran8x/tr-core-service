@@ -59,8 +59,8 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
-	public Page<CoreUser> findAll(String email, String name, List<String> roles, String appCode, Pageable pageable) {
-		return repo.findAll(CoreUserSpecifications.quickSearch(email, name, roles, appCode), pageable);
+	public Page<CoreUser> findAll(String search, String email, String name, List<String> roles, String appCode, Pageable pageable) {
+		return repo.findAll(CoreUserSpecifications.quickSearch(search, email, name, roles, appCode), pageable);
 	}
 	
 	@Override
