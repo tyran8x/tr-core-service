@@ -327,10 +327,12 @@ public class CoreMenuBusiness {
 				routerMetaData.setOpenInNewWindow(Boolean.TRUE.equals(coreMenu.getIsOpenInNewWindow()));
 				routerMetaData.setMenuVisibleWithForbidden(Boolean.TRUE.equals(coreMenu.getIsMenuVisibleWithForbidden()));
 				routerMetaData.setNoCache(Boolean.TRUE.equals(coreMenu.getIsNoCache()));
+				routerMetaData.setKeepAlive(Boolean.TRUE.equals(coreMenu.getIsKeepAlive()));
 				
-				routerMetaData.setHideInMenu(Boolean.TRUE.equals(coreMenu.getIsHidden()));
+				routerMetaData.setHideInMenu(Boolean.TRUE.equals(coreMenu.getIsHideInMenu()));
 				routerMetaData.setHideInBreadcrumb(Boolean.TRUE.equals(coreMenu.getIsHideInBreadcrumb()));
 				routerMetaData.setHideChildrenInMenu(Boolean.TRUE.equals(coreMenu.getIsHideChildrenInMenu()));
+				routerMetaData.setHideInTab(Boolean.TRUE.equals(coreMenu.getIsHideInTab()));
 				
 				routerMetaData.setActiveMenu(coreMenu.getActiveMenu());
 				routerMetaData.setActiveIcon(coreMenu.getActiveIcon());
@@ -405,11 +407,29 @@ public class CoreMenuBusiness {
 			coreMenu.setTen(FunctionUtils.removeXss(routerMetaData.getTitle()));
 			coreMenu.setMoTa(FunctionUtils.removeXss(routerMetaData.getTitle()));
 			coreMenu.setActiveMenu(FunctionUtils.removeXss(routerMetaData.getActiveMenu()));
-			coreMenu.setIsAffix(Boolean.TRUE.equals(routerMetaData.getAffixTab()));
-			
-			coreMenu.setIsNoCache(Boolean.TRUE.equals(routerMetaData.getNoCache()));
-			
+			coreMenu.setActiveIcon(FunctionUtils.removeXss(routerMetaData.getActiveIcon()));
+			coreMenu.setActivePath(FunctionUtils.removeXss(routerMetaData.getActivePath()));
+			coreMenu.setIsAffixTab(Boolean.TRUE.equals(routerMetaData.getAffixTab()));
+			coreMenu.setAffixTabOrder(routerMetaData.getAffixTabOrder());
+			coreMenu.setBadge(routerMetaData.getBadge());
+			coreMenu.setBadgeType(routerMetaData.getBadgeType());
+			coreMenu.setBadgeVariants(routerMetaData.getBadgeVariants());
+			coreMenu.setIsHideChildrenInMenu(Boolean.TRUE.equals(routerMetaData.getHideChildrenInMenu()));
+			coreMenu.setIsHideInTab(Boolean.TRUE.equals(routerMetaData.getHideInTab()));
+			coreMenu.setIsHideInBreadcrumb(Boolean.TRUE.equals(routerMetaData.getHideInBreadcrumb()));
+			coreMenu.setIsHideInMenu(Boolean.TRUE.equals(routerMetaData.getHideInMenu()));
+			coreMenu.setIframeSrc(routerMetaData.getIframeSrc());
+			coreMenu.setIsIgnoreAccess(Boolean.TRUE.equals(routerMetaData.getIgnoreAccess()));
+			coreMenu.setIsKeepAlive(Boolean.TRUE.equals(routerMetaData.getKeepAlive()));
+			coreMenu.setLayout(routerMetaData.getLayout());
 			coreMenu.setLink(FunctionUtils.removeXss(routerMetaData.getLink()));
+			coreMenu.setIsLoaded(Boolean.TRUE.equals(routerMetaData.getLoaded()));
+			coreMenu.setMaxNumOfOpenTab(routerMetaData.getMaxNumOfOpenTab());
+			coreMenu.setIsMenuVisibleWithForbidden(Boolean.TRUE.equals(routerMetaData.getMenuVisibleWithForbidden()));
+			coreMenu.setIsNoBasicLayout(Boolean.TRUE.equals(routerMetaData.getNoBasicLayout()));
+			coreMenu.setIsNoCache(Boolean.TRUE.equals(routerMetaData.getNoCache()));
+			coreMenu.setIsOpenInNewWindow(Boolean.TRUE.equals(routerMetaData.getOpenInNewWindow()));
+			coreMenu.setQuery(routerMetaData.getQuery());
 		}
 		coreMenu = coreMenuService.save(coreMenu);
 		

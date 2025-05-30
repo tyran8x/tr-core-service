@@ -121,6 +121,9 @@ public class CoreMenu extends BaseEntity {
 	@Column(name = "is_hide_children_in_menu")
 	private Boolean isHideChildrenInMenu;
 	
+	@Column(name = "is_hide_in_menu")
+	private Boolean isHideInMenu;
+	
 	@Column(name = "is_hide_breadcrumb")
 	private Boolean isHideInBreadcrumb;
 	
