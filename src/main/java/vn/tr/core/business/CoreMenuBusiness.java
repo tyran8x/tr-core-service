@@ -106,7 +106,11 @@ public class CoreMenuBusiness {
 	
 	public CoreDsMenuData getRouterDatas(String appCode) {
 		String email = LoginHelper.getUserName();
-		Set<String> roles = Objects.requireNonNull(LoginHelper.getLoginUser()).getRolePermission();
+		Set<String> roles = new HashSet<>();
+		LoginUser loginUser = LoginHelper.getLoginUser();
+		if (Objects.nonNull(loginUser)) {
+			roles = loginUser.getRolePermission();
+		}
 		
 		CoreDsMenuData coreDsMenuData = new CoreDsMenuData();
 		coreDsMenuData.setEmail(email);
@@ -278,7 +282,7 @@ public class CoreMenuBusiness {
 		LoginUser loginUser = LoginHelper.getLoginUser();
 		List<RouteRecordRawData> routeRecordRawDatas = new ArrayList<>();
 		if (Objects.nonNull(loginUser) && loginUser.getUserType().equals("sys_user")) {
-			Set<String> roles = Objects.requireNonNull(LoginHelper.getLoginUser()).getRolePermission();
+			Set<String> roles = loginUser.getRolePermission();
 			
 			List<CoreMenu> coreMenus;
 			//boolean isRoot = LoginHelper.isSuperAdmin();

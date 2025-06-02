@@ -1,7 +1,7 @@
 package vn.tr.core.business;
 
-import cn.dev33.satoken.secure.BCrypt;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
