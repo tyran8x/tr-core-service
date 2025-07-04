@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 import vn.tr.common.core.constant.Constants;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.feign.core.bean.FileDinhKem;
@@ -25,7 +24,7 @@ import java.util.Optional;
 public class CoreModuleBusiness {
 	private final CoreModuleService coreModuleService;
 	private final CoreAttachmentBusiness coreAttachmentBusiness;
-
+	
 	private CoreModuleData convertToCoreModuleData(CoreModule coreModule, boolean isFindById) {
 		CoreModuleData coreModuleData = new CoreModuleData();
 		coreModuleData.setId(coreModule.getId());
@@ -54,13 +53,13 @@ public class CoreModuleBusiness {
 		}
 		return coreModuleData;
 	}
-
+	
 	public CoreModuleData create(CoreModuleData coreModuleData) {
 		CoreModule coreModule = new CoreModule();
 		return save(coreModule, coreModuleData);
 	}
-
-	public void delete(@PathVariable("id") Long id) throws EntityNotFoundException {
+	
+	public void delete(Long id) throws EntityNotFoundException {
 		Optional<CoreModule> optional = coreModuleService.findById(id);
 		if (optional.isEmpty()) {
 			throw new EntityNotFoundException(CoreModule.class, id);
@@ -69,19 +68,19 @@ public class CoreModuleBusiness {
 		coreModule.setDaXoa(true);
 		coreModuleService.save(coreModule);
 	}
-
+	
 	public void deleteByIds(List<Long> ids) {
 		if (CollUtil.isNotEmpty(ids)) {
 			coreModuleService.setFixedDaXoaForIds(true, ids);
 		}
 	}
-
+	
 	public Page<CoreModuleData> findAll(int page, int size, String sortBy, String sortDir, String search, Boolean trangThai) {
 		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
 		Page<CoreModule> pageCoreModule = coreModuleService.findAll(search, trangThai, pageable);
 		return pageCoreModule.map(e -> convertToCoreModuleData(e, false));
 	}
-
+	
 	public CoreModuleData findById(Long id) throws EntityNotFoundException {
 		Optional<CoreModule> optional = coreModuleService.findById(id);
 		if (optional.isEmpty()) {
@@ -90,7 +89,7 @@ public class CoreModuleBusiness {
 		CoreModule coreModule = optional.get();
 		return convertToCoreModuleData(coreModule, true);
 	}
-
+	
 	public List<CoreModuleData> getAll(List<Long> ids) {
 		if (CollUtil.isNotEmpty(ids)) {
 			return coreModuleService.findByIdInAndTrangThaiTrueAndDaXoaFalse(ids).stream().map(e -> convertToCoreModuleData(e, true))
@@ -99,13 +98,13 @@ public class CoreModuleBusiness {
 		return coreModuleService.findByTrangThaiTrueAndDaXoaFalse().stream().map(e -> convertToCoreModuleData(e, true))
 				.sorted(Comparator.comparingInt(CoreModuleData::getSapXep)).toList();
 	}
-
+	
 	private CoreModuleData save(CoreModule coreModule, CoreModuleData coreModuleData) {
 		coreModule.setDaXoa(false);
 		coreModule.setTen(coreModuleData.getTen());
 		coreModule.setMa(coreModuleData.getMa());
 		coreModule.setChaId(null);
-		if (Objects.nonNull(coreModuleData.getChaId())) {
+		if (Objects.nonNull(coreModuleData.getChaId()) && !Objects.equals(coreModuleData.getChaId(), coreModule.getId())) {
 			Optional<CoreModule> optionalCoreModule = coreModuleService.findByIdAndDaXoaFalse(coreModuleData.getChaId());
 			if (optionalCoreModule.isPresent()) {
 				coreModule.setChaId(optionalCoreModule.get().getId());
@@ -114,8 +113,9 @@ public class CoreModuleBusiness {
 		coreModule.setTrangThai(coreModuleData.getTrangThai());
 		coreModule.setSapXep(coreModuleData.getSapXep());
 		coreModule = coreModuleService.save(coreModule);
+		
 		/* Begin đính kèm file *******************************************************/
-
+		
 		/*
 		 * Khởi tạo biến **************************************************************
 		 * - fileDinhKemIds: danh sách id file đã đính kèm ****************************
@@ -123,22 +123,25 @@ public class CoreModuleBusiness {
 		 * - objectId: id đối tượng đính kèm ******************************************
 		 * - appCode: tên model của đối tượng đính kèm*********************************
 		 */
-		List<Long> fileDinhKemIds = coreModuleData.getFileDinhKemIds();
-		int type = Constants.DINH_KEM_1_FILE;
-		long objectId = coreModule.getId();
-		String appCode = CoreModule.class.getSimpleName();
-		/* xử lý dữ liệu cũ */
-		coreModule.setFileDinhKemId(null);
-		/* xử lý dữ liệu mới */
-		List<Long> fileIds = coreAttachmentBusiness.saveAttachments(fileDinhKemIds, appCode, objectId, type);
-		if (CollUtil.isNotEmpty(fileIds)) {
-			coreModule.setFileDinhKemId(fileIds.getFirst());
-			coreModuleService.save(coreModule);
+		if (Objects.nonNull(coreModuleData.getFileDinhKem())) {
+			List<Long> fileDinhKemIds = coreModuleData.getFileDinhKem().getIds();
+			int type = Constants.DINH_KEM_1_FILE;
+			long objectId = coreModule.getId();
+			String appCode = CoreModule.class.getSimpleName();
+			/* xử lý dữ liệu cũ */
+			coreModule.setFileDinhKemId(null);
+			/* xử lý dữ liệu mới */
+			List<Long> fileIds = coreAttachmentBusiness.saveAttachments(fileDinhKemIds, appCode, objectId, type);
+			if (CollUtil.isNotEmpty(fileIds)) {
+				coreModule.setFileDinhKemId(fileIds.getFirst());
+				coreModuleService.save(coreModule);
+			}
+			
 		}
-
+		
 		return convertToCoreModuleData(coreModule, true);
 	}
-
+	
 	public CoreModuleData update(Long id, CoreModuleData coreModuleData) throws EntityNotFoundException {
 		Optional<CoreModule> optionalCoreModule = coreModuleService.findById(id);
 		if (optionalCoreModule.isEmpty()) {
@@ -147,5 +150,5 @@ public class CoreModuleBusiness {
 		CoreModule coreModule = optionalCoreModule.get();
 		return save(coreModule, coreModuleData);
 	}
-
+	
 }
