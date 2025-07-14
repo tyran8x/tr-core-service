@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.ColumnDefault;
 import vn.tr.common.jpa.entity.BaseEntity;
 
 @Entity
@@ -20,28 +21,20 @@ public class CoreUser extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "user_name", length = 250, nullable = false, unique = true)
-	private String userName;
+	@Column(name = "username", length = 250, nullable = false, unique = true)
+	private String username;
 	
-	@Column(name = "email", length = 250)
-	private String email;
+	@Column(name = "hashed_password", length = 250)
+	private String hashedPassword;
 	
-	@Column(name = "password", length = 250)
-	private String password;
+	@Column(name = "full_name", length = 250)
+	private String fullName;
 	
-	@Column(name = "nick_name", length = 250)
-	private String nickName;
+	@Column(name = "user_type_id")
+	private Long userTypeId;
 	
-	@Column(name = "phone_number", length = 250)
-	private String phoneNumber;
-	
-	@Column(name = "app_code", length = 50)
-	private String appCode;
-	
-	@Column(name = "user_type")
-	private String userType;
-	
-	@Column(name = "is_enabled")
-	private Boolean isEnabled;
+	@Column(name = "status", nullable = false)
+	@ColumnDefault("ACTIVE")
+	private String status = "ACTIVE";
 	
 }

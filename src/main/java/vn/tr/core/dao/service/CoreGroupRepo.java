@@ -11,19 +11,23 @@ import java.util.Set;
 
 @Repository
 public interface CoreGroupRepo extends JpaRepository<CoreGroup, Long>, JpaSpecificationExecutor<CoreGroup> {
-
-	boolean existsByIdNotAndMaIgnoreCaseAndDaXoaFalse(long id, String ma);
-
-	boolean existsByIdNotAndTenIgnoreCaseAndDaXoaFalse(long id, String ten);
-
-	boolean existsByMaIgnoreCaseAndDaXoaFalse(String ma);
-
-	boolean existsByTenIgnoreCaseAndDaXoaFalse(String ten);
-
-	Optional<CoreGroup> findFirstByMaIgnoreCaseAndDaXoaFalse(String ma);
-
-	List<CoreGroup> findByMaIgnoreCaseInAndDaXoaFalse(Set<String> mas);
-
-	List<CoreGroup> findByTrangThaiTrueAndDaXoaFalse();
-
+	
+	boolean existsByIdNotAndCodeIgnoreCaseAndAppId(long id, String code, Long appId);
+	
+	boolean existsByIdNotAndNameIgnoreCaseAndAppId(long id, String name, Long appId);
+	
+	boolean existsByCodeIgnoreCaseAndAppId(String code, Long appId);
+	
+	boolean existsByNameIgnoreCaseAndAppId(String name, Long appId);
+	
+	boolean existsByIdAndAppId(long id, Long appId);
+	
+	Optional<CoreGroup> findFirstByCodeIgnoreCase(String code);
+	
+	List<CoreGroup> findByCodeInIgnoreCase(Set<String> codes);
+	
+	List<CoreGroup> findByStatusTrue();
+	
+	List<CoreGroup> findByIdIn(Set<Long> ids);
+	
 }

@@ -21,7 +21,10 @@ import vn.tr.core.data.CoreUserChangeIsEnabledData;
 import vn.tr.core.data.CoreUserChangePasswordData;
 import vn.tr.core.data.CoreUserData;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,25 +40,21 @@ public class CoreUserBusiness {
 		CoreUserData coreUserData = new CoreUserData();
 		coreUserData.setId(coreUser.getId());
 		coreUserData.setEmail(email);
-		coreUserData.setNickName(coreUser.getNickName());
-		coreUserData.setUserName(coreUser.getUserName());
-		coreUserData.setUserType(coreUser.getUserType());
-		coreUserData.setPassword(coreUser.getPassword());
-		coreUserData.setIsEnabled(Boolean.TRUE.equals(coreUser.getIsEnabled()));
+		coreUserData.setFullName(coreUser.getFullName());
+		coreUserData.setUsername(coreUser.getUsername());
 		List<CoreUser2Role> coreUser2Roles = coreUser2RoleService.findByUserNameAndDaXoaFalse(email);
 		Set<String> roles = coreUser2Roles.stream().map(CoreUser2Role::getRole).collect(Collectors.toSet());
 		coreUserData.setRoles(roles);
-		coreUserData.setAppCode(coreUser.getAppCode());
-		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUserName());
-		Map<String, String> connects = new HashMap<>();
-		if (CollUtil.isNotEmpty(coreUserConnects)) {
-			for (CoreUserConnect coreUserConnect : coreUserConnects) {
-				connects.put(coreUserConnect.getAppName(), coreUserConnect.getAppUserId());
-			}
-		}
-		connects.putIfAbsent("mail", coreUser.getEmail());
-		
-		coreUserData.setConnects(connects);
+		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUsername());
+//		Map<String, String> connects = new HashMap<>();
+//		if (CollUtil.isNotEmpty(coreUserConnects)) {
+//			for (CoreUserConnect coreUserConnect : coreUserConnects) {
+//				connects.put(coreUserConnect.getAppName(), coreUserConnect.getAppUserId());
+//			}
+//		}
+//		connects.putIfAbsent("mail", coreUser.getEmail());
+//
+//		coreUserData.setConnects(connects);
 		return coreUserData;
 	}
 	

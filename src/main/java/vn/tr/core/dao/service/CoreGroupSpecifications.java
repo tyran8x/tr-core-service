@@ -1,38 +1,24 @@
 package vn.tr.core.dao.service;
 
-import cn.hutool.core.text.CharSequenceUtil;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import vn.tr.common.jpa.helper.CriteriaBuilderHelper;
 import vn.tr.core.dao.model.CoreGroup;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import vn.tr.core.dao.model.CoreGroup_;
+import vn.tr.core.data.criteria.CoreGroupSearchCriteria;
 
 public class CoreGroupSpecifications {
-
+	
 	private CoreGroupSpecifications() {
-
+	
 	}
-
-	public static Specification<CoreGroup> quickSearch(final String search, final Boolean trangThai, final String appCode) {
-
+	
+	public static Specification<CoreGroup> quickSearch(final CoreGroupSearchCriteria criteria) {
 		return (root, query, cb) -> {
-			List<Predicate> predicates = new ArrayList<>();
-			predicates.add(cb.equal(root.<String>get("daXoa"), false));
-
-			if (Objects.nonNull(search) && !search.isEmpty()) {
-				Predicate ten = cb.like(cb.lower(root.get("ten")), "%" + search.toLowerCase().trim() + "%");
-				Predicate ma = cb.like(cb.lower(root.get("ma")), "%" + search.toLowerCase().trim() + "%");
-				predicates.add(cb.or(ten, ma));
-			}
-			if (CharSequenceUtil.isNotBlank(appCode)) {
-				predicates.add(cb.equal(root.<String>get("appCode"), appCode));
-			}
-			if (Objects.nonNull(trangThai)) {
-				predicates.add(cb.equal(root.<String>get("trangThai"), trangThai));
-			}
-			return cb.and(predicates.toArray(new Predicate[]{}));
+			Predicate textSearchCondition = CriteriaBuilderHelper.createOrUnaccentedLike(cb, root, criteria.getSearch(),
+					CoreGroup_.name, CoreGroup_.code);
+			Predicate statusCondition = CriteriaBuilderHelper.createEquals(cb, root, CoreGroup_.status, criteria.getStatus());
+			return CriteriaBuilderHelper.and(cb, textSearchCondition, statusCondition);
 		};
 	}
 }
