@@ -2,7 +2,6 @@ package vn.tr.core.security.service.strategy;
 
 import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +19,6 @@ import vn.tr.common.json.utils.JsonUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreUser;
-import vn.tr.core.dao.model.CoreUserRole;
 import vn.tr.core.dao.service.CoreRoleService;
 import vn.tr.core.dao.service.CoreUserRoleService;
 import vn.tr.core.dao.service.CoreUserService;
@@ -99,7 +97,7 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 //		coreUser.setUserType(userType);
 //		coreUser.setIsEnabled(true);
 //
-		boolean exist = coreUserService.existsByUsernameIgnoreCaseAndDaXoaFalse(userName);
+		boolean exist = coreUserService.existsByUsernameIgnoreCase(userName);
 		if (exist) {
 			throw new UserException("user.register.save.error", userName);
 		}
@@ -108,22 +106,22 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 			
 			Set<String> roles = registerBody.getRoles();
 			List<CoreRole> coreRoles = coreRoleService.findByMaIgnoreCaseInAndDaXoaFalse(roles);
-			
-			coreUserRoleService.setFixedDaXoaForUserName(true, coreUser.getUsername());
-			if (CollUtil.isNotEmpty(coreRoles)) {
-				for (CoreRole coreRole : coreRoles) {
-					CoreUserRole coreUserRole = new CoreUserRole();
-					Optional<CoreUserRole> optionalCoreUserRole = coreUserRoleService.findFirstByRoleAndUserName(coreRole.getCode(),
-							coreUser.getUsername());
-					if (optionalCoreUserRole.isPresent()) {
-						coreUserRole = optionalCoreUserRole.get();
-					}
-					coreUserRole.setDaXoa(false);
-					coreUserRole.setRoleCode(coreRole.getCode());
-					coreUserRole.setUsername(coreUser.getUsername());
-					coreUserRoleService.save(coreUserRole);
-				}
-			}
+
+//			coreUserRoleService.setFixedDaXoaForUserName(true, coreUser.getUsername());
+//			if (CollUtil.isNotEmpty(coreRoles)) {
+//				for (CoreRole coreRole : coreRoles) {
+//					CoreUserRole coreUserRole = new CoreUserRole();
+//					Optional<CoreUserRole> optionalCoreUserRole = coreUserRoleService.findFirstByRoleAndUserName(coreRole.getCode(),
+//							coreUser.getUsername());
+//					if (optionalCoreUserRole.isPresent()) {
+//						coreUserRole = optionalCoreUserRole.get();
+//					}
+//					coreUserRole.setDaXoa(false);
+//					coreUserRole.setRoleCode(coreRole.getCode());
+//					coreUserRole.setUsername(coreUser.getUsername());
+//					coreUserRoleService.save(coreUserRole);
+//				}
+//			}
 		} catch (Exception e) {
 			throw new UserException("user.register.error");
 		}
@@ -132,7 +130,7 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 	}
 	
 	private CoreUser loadUserByUsername(String userName) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(userName);
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameIgnoreCase(userName);
 		if (optionalCoreUser.isEmpty()) {
 			log.info("Login user: {} does not exist.", userName);
 			throw new UserException("user.not.exists", userName);

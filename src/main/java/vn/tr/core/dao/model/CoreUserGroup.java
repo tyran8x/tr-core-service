@@ -1,10 +1,7 @@
 package vn.tr.core.dao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import vn.tr.common.jpa.entity.BaseEntity;
@@ -14,7 +11,9 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @SQLDelete(sql = "UPDATE core_user_group SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUserGroup extends BaseEntity {
@@ -29,5 +28,8 @@ public class CoreUserGroup extends BaseEntity {
 	
 	@Column(name = "group_code")
 	private String groupCode;
+	
+	@Column(name = "app_code", length = 50)
+	private String appCode;
 	
 }

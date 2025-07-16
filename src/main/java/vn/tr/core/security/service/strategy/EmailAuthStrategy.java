@@ -86,7 +86,7 @@ public class EmailAuthStrategy implements IAuthStrategy {
 //		coreUser.setUserType(userType);
 //		coreUser.setIsEnabled(true);
 		
-		boolean exist = coreUserService.existsByUsernameIgnoreCaseAndDaXoaFalse(userName);
+		boolean exist = coreUserService.existsByUsernameIgnoreCase(userName);
 		if (exist) {
 			throw new UserException("user.register.save.error", userName);
 		}
@@ -100,7 +100,7 @@ public class EmailAuthStrategy implements IAuthStrategy {
 	}
 	
 	private CoreUser loadUserByUsername(String userName) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(userName);
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameIgnoreCase(userName);
 		if (optionalCoreUser.isEmpty()) {
 			log.info("Login user: {} does not exist.", userName);
 			throw new UserException("user.not.exists", userName);

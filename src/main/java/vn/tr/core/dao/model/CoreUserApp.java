@@ -2,10 +2,8 @@ package vn.tr.core.dao.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import vn.tr.common.jpa.entity.BaseCommonEntity;
@@ -17,7 +15,9 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 @SQLDelete(sql = "UPDATE core_user_app SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUserApp extends BaseCommonEntity {
@@ -31,6 +31,7 @@ public class CoreUserApp extends BaseCommonEntity {
 	private String username;
 	
 	@Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
+	@Builder.Default
 	private String status = "ACTIVE";
 	
 	@Column(name = "app_code", length = 50)
@@ -38,6 +39,7 @@ public class CoreUserApp extends BaseCommonEntity {
 	
 	@Column(name = "assigned_at")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")
-	private LocalDateTime assignedAt;
+	@Builder.Default
+	private LocalDateTime assignedAt = LocalDateTime.now();
 	
 }

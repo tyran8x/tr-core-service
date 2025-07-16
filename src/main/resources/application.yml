@@ -18,17 +18,8 @@ spring:
   freemarker:
     suffix: .ftl # Hậu tố file template Freemarker
   config:
-    import: "optional:configserver:${SPRING_CONFIG_IMPORT_URI:http://10.49.41.112:8888}"
-  cloud:
-    config:
-      username: ${SPRING_CLOUD_CONFIG_USERNAME:huydq}
-      password: ${SPRING_CLOUD_CONFIG_PASSWORD}
-      fail-fast: ${SPRING_CLOUD_CONFIG_FAIL_FAST:false}
-      retry:
-        max-attempts: ${SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS:6}
-        initial-interval: ${SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL:1000}
-        max-interval: ${SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL:2000}
-        multiplier: ${SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER:1.1}
+    import: "optional:configserver:"
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://10.49.41.112:5432/core_service}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -59,10 +50,11 @@ spring:
       max-request-size: 100MB
 eureka:
   client:
-    serviceUrl:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://10.49.41.112:8061/eureka/}
-    registerWithEureka: ${EUREKA_CLIENT_REGISTERWITHEUREKA:true}
-    fetch-registry: ${EUREKA_CLIENT_FETCHREGISTRY:true}
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8061/eureka/}
+  instance:
+    prefer-ip-address: true
+
 app:
   name: Tr-Pro-App
   version: ${revision}

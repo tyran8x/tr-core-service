@@ -2,8 +2,8 @@ package vn.tr.core.dao.service;
 
 import vn.tr.core.dao.model.CoreUserGroup;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CoreUserGroupService {
 	
@@ -15,14 +15,6 @@ public interface CoreUserGroupService {
 	
 	Optional<CoreUserGroup> findById(Long id);
 	
-	List<CoreUserGroup> findByGroupIdAndDaXoaFalse(Long groupId);
-	
-	Optional<CoreUserGroup> findFirstByGroupIdAndUserName(Long groupId, String userName);
-	
-	void setFixedDaXoaForGroupId(boolean daXoa, Long groupId);
-	
-	void setFixedDaXoaForUserName(boolean daXoa, String userName);
-	
-	List<CoreUserGroup> findByUserNameAndDaXoaFalse(String userName);
+	void replaceUserGroups(String username, Set<String> newGroupCodes);
 	
 }

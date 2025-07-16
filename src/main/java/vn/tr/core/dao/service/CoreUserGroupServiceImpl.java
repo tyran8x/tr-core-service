@@ -6,6 +6,8 @@ import vn.tr.core.dao.model.CoreUserGroup;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -33,28 +35,34 @@ public class CoreUserGroupServiceImpl implements CoreUserGroupService {
 	}
 	
 	@Override
-	public List<CoreUserGroup> findByGroupIdAndDaXoaFalse(Long groupId) {
-		return repo.findByGroupIdAndDaXoaFalse(groupId);
-	}
-	
-	@Override
-	public Optional<CoreUserGroup> findFirstByGroupIdAndUserName(Long groupId, String userName) {
-		return repo.findFirstByGroupIdAndUserName(groupId, userName);
-	}
-	
-	@Override
-	public void setFixedDaXoaForGroupId(boolean daXoa, Long groupId) {
-		repo.setFixedDaXoaForGroupId(daXoa, groupId);
-	}
-	
-	@Override
-	public void setFixedDaXoaForUserName(boolean daXoa, String userName) {
-		repo.setFixedDaXoaForUserName(daXoa, userName);
-	}
-	
-	@Override
-	public List<CoreUserGroup> findByUserNameAndDaXoaFalse(String userName) {
-		return repo.findByUserNameAndDaXoaFalse(userName);
+	public void replaceUserGroups(String username, Set<String> newGroupCodes) {
+		
+		List<CoreUserGroup> existingAssignments = repo.findByUsernameIgnoreCase(username);
+		
+		if (newGroupCodes.isEmpty() && existingAssignments.isEmpty()) {
+			return;
+		}
+		
+		Set<String> existingGroupCodes = existingAssignments.stream().map(CoreUserGroup::getGroupCode).collect(Collectors.toSet());
+		
+		if (existingGroupCodes.equals(newGroupCodes)) {
+			return;
+		}
+		
+		List<CoreUserGroup> toDelete = existingAssignments.stream().filter(ua -> !newGroupCodes.contains(ua.getGroupCode())).toList();
+		if (!toDelete.isEmpty()) {
+			repo.deleteAllInBatch(toDelete);
+		}
+		
+		Set<String> toAdd = newGroupCodes.stream().filter(code -> !existingGroupCodes.contains(code)).collect(Collectors.toSet());
+		
+		if (!toAdd.isEmpty()) {
+			List<CoreUserGroup> newAssignments = toAdd.stream().map(groupCode -> CoreUserGroup.builder()
+					.username(username)
+					.groupCode(groupCode)
+					.build()).toList();
+			repo.saveAll(newAssignments);
+		}
 	}
 	
 	@Override

@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreMenu;
 
@@ -37,8 +38,8 @@ public interface CoreMenuRepo extends JpaRepository<CoreMenu, Long>, JpaSpecific
 	void setFixedDaXoaAndAppCode(boolean daXoa, String appCode);
 	
 	@Modifying(clearAutomatically = true)
-	@Query("update CoreMenu u set u.daXoa = ?1 where u.id IN ?2")
-	void setFixedDaXoaForIds(boolean daXoa, List<Long> ids);
+	@Query("UPDATE CoreModule g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
+	void softDeleteByIds(@Param("ids") Set<Long> ids);
 	
 	@Query(
 			value = "SELECT DISTINCT m.ma FROM core_menu m " +

@@ -25,11 +25,9 @@ public class CoreAppController {
 	private final CoreAppBusiness coreAppBusiness;
 	private final CoreAppValidator coreAppValidator;
 	
-	@InitBinder
-	protected void initBinder(WebDataBinder binder) {
-		if (binder.getTarget() != null && CoreAppData.class.equals(binder.getTarget().getClass())) {
-			binder.addValidators(coreAppValidator);
-		}
+	@InitBinder("coreAppData")
+	public void initBinder(WebDataBinder binder) {
+		binder.addValidators(coreAppValidator);
 	}
 	
 	@PostMapping(value = {""})

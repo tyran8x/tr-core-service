@@ -10,10 +10,10 @@ import java.util.Optional;
 @Repository
 public interface CoreUserRepo extends JpaRepository<CoreUser, Long>, JpaSpecificationExecutor<CoreUser> {
 	
-	boolean existsByUsernameIgnoreCaseAndDaXoaFalse(String username);
+	boolean existsByUsernameIgnoreCase(String username);
 	
-	boolean existsByIdNotAndUsernameIgnoreCaseAndDaXoaFalse(long id, String username);
+	boolean existsByIdNotAndUsernameIgnoreCase(long id, String username);
 	
-	Optional<CoreUser> findFirstByUsernameAndDaXoaFalse(String username);
+	Optional<CoreUser> findFirstByUsernameIgnoreCase(String username);
 	
 }

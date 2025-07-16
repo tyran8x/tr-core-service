@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.enums.LoginType;
 import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,13 +21,15 @@ public interface CoreUserService {
 	
 	boolean existsById(Long id);
 	
-	Page<CoreUser> findAll(String search, String email, String name, List<String> roles, String appCode, Pageable pageable);
+	Page<CoreUser> findAll(CoreUserSearchCriteria coreUserSearchCriteria, Pageable pageable);
 	
-	boolean existsByUsernameIgnoreCaseAndDaXoaFalse(String username);
+	List<CoreUser> findAll(CoreUserSearchCriteria coreUserSearchCriteria);
 	
-	boolean existsByIdNotAndUsernameIgnoreCaseAndDaXoaFalse(long id, String username);
+	boolean existsByUsernameIgnoreCase(String username);
 	
-	Optional<CoreUser> findFirstByUsernameAndDaXoaFalse(String username);
+	boolean existsByIdNotAndUsernameIgnoreCase(long id, String username);
+	
+	Optional<CoreUser> findFirstByUsernameIgnoreCase(String username);
 	
 	void recordLoginInfo(String userName, String status, String message);
 	

@@ -25,11 +25,9 @@ public class CoreModuleController {
 	private final CoreModuleBusiness coreModuleBusiness;
 	private final CoreModuleValidator coreModuleValidator;
 	
-	@InitBinder
-	protected void initBinder(WebDataBinder binder) {
-		if (binder.getTarget() != null && CoreModuleData.class.equals(binder.getTarget().getClass())) {
-			binder.addValidators(coreModuleValidator);
-		}
+	@InitBinder("coreModuleData")
+	public void initBinder(WebDataBinder binder) {
+		binder.addValidators(coreModuleValidator);
 	}
 	
 	@PostMapping(value = {""})

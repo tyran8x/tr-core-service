@@ -20,9 +20,9 @@ import vn.tr.common.log.event.LoginInfoEvent;
 import vn.tr.common.redis.utils.RedisUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -54,23 +54,23 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
-	public Page<CoreUser> findAll(String search, String email, String name, List<String> roles, String appCode, Pageable pageable) {
-		return repo.findAll(CoreUserSpecifications.quickSearch(search, email, name, roles, appCode), pageable);
+	public Page<CoreUser> findAll(CoreUserSearchCriteria coreUserSearchCriteria, Pageable pageable) {
+		return repo.findAll(CoreUserSpecifications.quickSearch(coreUserSearchCriteria), pageable);
 	}
 	
 	@Override
-	public boolean existsByUsernameIgnoreCaseAndDaXoaFalse(String username) {
-		return repo.existsByUsernameIgnoreCaseAndDaXoaFalse(username);
+	public boolean existsByUsernameIgnoreCase(String username) {
+		return repo.existsByUsernameIgnoreCase(username);
 	}
 	
 	@Override
-	public boolean existsByIdNotAndUsernameIgnoreCaseAndDaXoaFalse(long id, String username) {
-		return repo.existsByIdNotAndUsernameIgnoreCaseAndDaXoaFalse(id, username);
+	public boolean existsByIdNotAndUsernameIgnoreCase(long id, String username) {
+		return repo.existsByIdNotAndUsernameIgnoreCase(id, username);
 	}
 	
 	@Override
-	public Optional<CoreUser> findFirstByUsernameAndDaXoaFalse(String username) {
-		return repo.findFirstByUsernameAndDaXoaFalse(username);
+	public Optional<CoreUser> findFirstByUsernameIgnoreCase(String username) {
+		return repo.findFirstByUsernameIgnoreCase(username);
 	}
 	
 	@Override
@@ -98,7 +98,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 //		loginUser.setMenuPermission(corePermissionService.getMenuPermission(coreUser.getUsername()));
 //		loginUser.setRolePermission(corePermissionService.getRolePermission(coreUser.getUsername()));
 //		loginUser.setRoles(coreUserRoleService.getRoleByUserName(coreUser.getUsername()));
-//		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUsername());
+//		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCase(coreUser.getUsername());
 //		Map<String, String> connects = new HashMap<>();
 //		if (CollUtil.isNotEmpty(coreUserConnects)) {
 //			for (CoreUserConnect coreUserConnect : coreUserConnects) {

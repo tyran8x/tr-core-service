@@ -3,11 +3,12 @@ package vn.tr.core.dao.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.tr.common.core.enums.CatalogStatus;
 import vn.tr.core.dao.model.CoreUserApp;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,40 +39,50 @@ public class CoreUserAppServiceImpl implements CoreUserAppService {
 	
 	@Transactional
 	public void replaceUserApps(String username, Set<String> newAppCodes) {
-		List<CoreUserApp> existingAssignments = repo.findByUsername(username);
+		List<CoreUserApp> allCurrentAssignments = repo.findAllByUsernameIncludingDeleted(username);
+		Map<String, CoreUserApp> existingAssignmentsMap = allCurrentAssignments.stream()
+				.collect(Collectors.toMap(CoreUserApp::getAppCode, Function.identity()));
 		
-		// Nếu không có gì thay đổi, thoát sớm để tối ưu
-		if (newAppCodes.isEmpty() && existingAssignments.isEmpty()) {
-			return;
-		}
-		
-		Set<String> existingAppCodes = existingAssignments.stream()
+		Set<String> currentlyActiveAppCodes = allCurrentAssignments.stream()
+				.filter(a -> a.getDeletedAt() == null)
 				.map(CoreUserApp::getAppCode)
 				.collect(Collectors.toSet());
-		
-		// Nếu danh sách mới và cũ giống hệt nhau, không cần làm gì cả
-		if (existingAppCodes.equals(newAppCodes)) {
+		if (currentlyActiveAppCodes.equals(newAppCodes)) {
 			return;
 		}
 		
-		// Xóa các liên kết không còn trong danh sách mới
-		List<CoreUserApp> toDelete = existingAssignments.stream()
-				.filter(ua -> !newAppCodes.contains(ua.getAppCode()))
-				.toList();
-		if (!toDelete.isEmpty()) {
-			repo.deleteAllInBatch(toDelete);
+		List<CoreUserApp> toSaveOrUpdate = new ArrayList<>();
+		List<CoreUserApp> toSoftDelete = new ArrayList<>();
+		
+		existingAssignmentsMap.forEach((existingAppCode, assignment) -> {
+			boolean isInNewList = newAppCodes.contains(existingAppCode);
+			boolean isCurrentlyDeleted = assignment.getDeletedAt() != null;
+			
+			if (isInNewList && isCurrentlyDeleted) {
+				assignment.setDeletedAt(null);
+				assignment.setStatus(CatalogStatus.ACTIVE.getValue());
+				assignment.setAssignedAt(LocalDateTime.now());
+				toSaveOrUpdate.add(assignment);
+			} else if (!isInNewList && !isCurrentlyDeleted) {
+				toSoftDelete.add(assignment);
+			}
+		});
+		
+		newAppCodes.forEach(newAppCode -> {
+			if (!existingAssignmentsMap.containsKey(newAppCode)) {
+				CoreUserApp newAssignment = CoreUserApp.builder()
+						.username(username)
+						.appCode(newAppCode)
+						.build();
+				toSaveOrUpdate.add(newAssignment);
+			}
+		});
+		
+		if (!toSaveOrUpdate.isEmpty()) {
+			repo.saveAll(toSaveOrUpdate);
 		}
-		
-		// Thêm các liên kết mới
-		Set<String> toAdd = newAppCodes.stream()
-				.filter(code -> !existingAppCodes.contains(code))
-				.collect(Collectors.toSet());
-		
-		if (!toAdd.isEmpty()) {
-			List<CoreUserApp> newAssignments = toAdd.stream()
-					.map(appCode -> new CoreUserApp(username, appCode))
-					.toList();
-			repo.saveAll(newAssignments);
+		if (!toSoftDelete.isEmpty()) {
+			repo.deleteAll(toSoftDelete);
 		}
 	}
 	

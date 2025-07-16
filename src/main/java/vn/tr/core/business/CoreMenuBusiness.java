@@ -283,7 +283,8 @@ public class CoreMenuBusiness {
 		List<RouteRecordRawData> routeRecordRawDatas = new ArrayList<>();
 		if (Objects.nonNull(loginUser) && loginUser.getUserType().equals("sys_user")) {
 			Set<String> roles = loginUser.getRoleCodes();
-			
+			String defaultRole = "ROLE_" + appCode + "_USER";
+			roles.add(defaultRole.toUpperCase());
 			List<CoreMenu> coreMenus;
 			//boolean isRoot = LoginHelper.isSuperAdmin();
 			//log.info("isRoot: {} - roles: {}", isRoot, roles);

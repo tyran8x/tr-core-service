@@ -25,11 +25,9 @@ public class CoreWorkSpaceItemController {
 	private final CoreWorkSpaceItemBusiness coreWorkSpaceItemBusiness;
 	private final CoreWorkSpaceItemValidator coreWorkSpaceItemValidator;
 	
-	@InitBinder
-	protected void initBinder(WebDataBinder binder) {
-		if (binder.getTarget() != null && CoreWorkSpaceItemData.class.equals(binder.getTarget().getClass())) {
-			binder.addValidators(coreWorkSpaceItemValidator);
-		}
+	@InitBinder("coreWorkSpaceItemData")
+	public void initBinder(WebDataBinder binder) {
+		binder.addValidators(coreWorkSpaceItemValidator);
 	}
 	
 	@PostMapping(value = {""})

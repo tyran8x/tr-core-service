@@ -25,11 +25,9 @@ public class CoreGroupController {
 	private final CoreGroupBusiness coreGroupBusiness;
 	private final CoreGroupValidator coreGroupValidator;
 	
-	@InitBinder
-	protected void initBinder(WebDataBinder binder) {
-		if (binder.getTarget() != null && CoreGroupData.class.equals(binder.getTarget().getClass())) {
-			binder.addValidators(coreGroupValidator);
-		}
+	@InitBinder("coreGroupData")
+	public void initBinder(WebDataBinder binder) {
+		binder.addValidators(coreGroupValidator);
 	}
 	
 	@PostMapping(value = {""})

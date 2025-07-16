@@ -12,10 +12,9 @@ import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.business.CoreUserBusiness;
 import vn.tr.core.data.CoreUserChangeIsEnabledData;
 import vn.tr.core.data.CoreUserChangePasswordData;
+import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 import vn.tr.core.data.dto.CoreUserData;
 import vn.tr.core.data.validator.CoreUserValidator;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(value = "/user")
@@ -38,17 +37,8 @@ public class CoreUserController {
 	}
 	
 	@GetMapping(value = {"/", ""})
-	public R<Page<CoreUserData>> findAll(
-			@RequestHeader(name = "X-App-Code", required = false) String xAppCode,
-			@RequestParam(name = "page", defaultValue = "0", required = false) int page,
-			@RequestParam(name = "size", defaultValue = "20", required = false) int size,
-			@RequestParam(name = "sortBy", defaultValue = "email", required = false) String sortBy,
-			@RequestParam(name = "sortDir", defaultValue = "ASC", required = false) String sortDir,
-			@RequestParam(name = "roles", required = false) List<String> roles,
-			@RequestParam(name = "search", required = false) String search,
-			@RequestParam(name = "email", required = false) String email,
-			@RequestParam(name = "name", required = false) String name) {
-		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(page, size, sortBy, sortDir, search, email, name, roles, xAppCode);
+	public R<Page<CoreUserData>> findAll(CoreUserSearchCriteria criteria) {
+		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(criteria);
 		return R.ok(pageCoreUserData);
 	}
 	
