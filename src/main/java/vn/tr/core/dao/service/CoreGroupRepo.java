@@ -1,33 +1,35 @@
 package vn.tr.core.dao.service;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreGroup;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @Repository
 public interface CoreGroupRepo extends JpaRepository<CoreGroup, Long>, JpaSpecificationExecutor<CoreGroup> {
 	
-	boolean existsByIdNotAndCodeIgnoreCaseAndAppId(long id, String code, Long appId);
+	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, @Nullable String appCode);
 	
-	boolean existsByIdNotAndNameIgnoreCaseAndAppId(long id, String name, Long appId);
+	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, @Nullable String appCode);
 	
-	boolean existsByCodeIgnoreCaseAndAppId(String code, Long appId);
+	boolean existsByCodeIgnoreCaseAndAppCode(String code, @Nullable String appCode);
 	
-	boolean existsByNameIgnoreCaseAndAppId(String name, Long appId);
+	boolean existsByNameIgnoreCaseAndAppCode(String name, @Nullable String appCode);
 	
-	boolean existsByIdAndAppId(long id, Long appId);
+	boolean existsByIdAndAppCode(long id, @Nullable String appCode);
 	
-	Optional<CoreGroup> findFirstByCodeIgnoreCase(String code);
+	@Override
+	@EntityGraph(attributePaths = {"parent"})
+	Page<CoreGroup> findAll(@Nullable Specification<CoreGroup> spec, Pageable pageable);
 	
-	List<CoreGroup> findByCodeInIgnoreCase(Set<String> codes);
-	
-	List<CoreGroup> findByStatusTrue();
-	
-	List<CoreGroup> findByIdIn(Set<Long> ids);
+	@Modifying(clearAutomatically = true)
+	@Query("UPDATE CoreGroup g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
+	void softDeleteByIds(@Param("ids") Set<Long> ids);
 	
 }

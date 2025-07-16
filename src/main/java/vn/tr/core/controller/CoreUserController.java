@@ -12,7 +12,7 @@ import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.business.CoreUserBusiness;
 import vn.tr.core.data.CoreUserChangeIsEnabledData;
 import vn.tr.core.data.CoreUserChangePasswordData;
-import vn.tr.core.data.CoreUserData;
+import vn.tr.core.data.dto.CoreUserData;
 import vn.tr.core.data.validator.CoreUserValidator;
 
 import java.util.List;
@@ -64,7 +64,7 @@ public class CoreUserController {
 			throw new ServiceException("Chưa đăng nhập");
 		}
 		
-		String email = LoginHelper.getUserName();
+		String email = LoginHelper.getUsername();
 		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
 		
 		if (coreUserData == null) {

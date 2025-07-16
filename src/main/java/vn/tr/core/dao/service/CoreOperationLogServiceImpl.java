@@ -13,14 +13,14 @@ import java.util.Optional;
 
 @Service
 public class CoreOperationLogServiceImpl implements CoreOperationLogService {
-
+	
 	private final CoreOperationLogRepo repo;
-
+	
 	public CoreOperationLogServiceImpl(CoreOperationLogRepo repo) {
 		this.repo = repo;
 	}
-
-	@Async
+	
+	@Async("scheduledExecutorService")
 	@EventListener
 	public void recordOperationLog(OperationLogEvent operationLogEvent) {
 		CoreOperationLog coreOperationLog = new CoreOperationLog();
@@ -43,30 +43,30 @@ public class CoreOperationLogServiceImpl implements CoreOperationLogService {
 		coreOperationLog.setLocation(AddressUtils.getRealAddressByIP(operationLogEvent.getIp()));
 		save(coreOperationLog);
 	}
-
+	
 	@Override
 	public Optional<CoreOperationLog> findById(Long id) {
 		return repo.findById(id);
 	}
-
+	
 	@Override
 	public CoreOperationLog save(CoreOperationLog coreOperationLog) {
 		return repo.save(coreOperationLog);
 	}
-
+	
 	@Override
 	public void delete(Long id) {
 		repo.deleteById(id);
 	}
-
+	
 	@Override
 	public Page<CoreOperationLog> findAll(String search, Boolean trangThai, String appCode, Pageable pageable) {
 		return repo.findAll(CoreOperationLogSpecifications.quickSearch(search, trangThai, appCode), pageable);
 	}
-
+	
 	@Override
 	public boolean existsById(Long id) {
 		return repo.existsById(id);
 	}
-
+	
 }

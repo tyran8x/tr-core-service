@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class CoreUserChangeIsEnabledData {
 	
-	private String userName;
+	private String username;
 	
 	private Boolean isEnabled;
 	

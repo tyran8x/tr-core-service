@@ -11,9 +11,8 @@ import vn.tr.common.core.utils.FunctionUtils;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.dao.model.CoreRole;
-import vn.tr.core.dao.model.CoreRole2Menu;
 import vn.tr.core.dao.service.CoreMenuService;
-import vn.tr.core.dao.service.CoreRole2MenuService;
+import vn.tr.core.dao.service.CoreRolePermissionService;
 import vn.tr.core.dao.service.CoreRoleService;
 import vn.tr.core.data.CoreRoleData;
 
@@ -27,7 +26,7 @@ import java.util.stream.Collectors;
 public class CoreRoleBusiness {
 	
 	private final CoreRoleService coreRoleService;
-	private final CoreRole2MenuService coreRole2MenuService;
+	private final CoreRolePermissionService coreRole2MenuService;
 	private final CoreMenuService coreMenuService;
 	
 	private CoreRoleData convertToCoreRoleData(CoreRole coreRole) {

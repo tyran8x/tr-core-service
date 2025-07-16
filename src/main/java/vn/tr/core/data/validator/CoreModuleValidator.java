@@ -1,44 +1,67 @@
 package vn.tr.core.data.validator;
 
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
+import cn.hutool.core.util.StrUtil;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
+import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.service.CoreModuleService;
-import vn.tr.core.data.CoreModuleData;
-
-import java.util.Objects;
+import vn.tr.core.data.dto.CoreModuleData;
 
 @Component
+@RequiredArgsConstructor
 public class CoreModuleValidator implements Validator {
-	@Autowired
-	protected MessageSource messageSource;
-	@Autowired
-	protected CoreModuleService coreModuleService;
-
-	private boolean checkTenExits(Long id, String ten) {
-		if (StringUtils.isNotEmpty(ten)) {
-			if (Objects.nonNull(id)) {
-				return coreModuleService.existsByIdNotAndTenIgnoreCaseAndDaXoaFalse(id, ten);
-			}
-			return coreModuleService.existsByTenIgnoreCaseAndDaXoaFalse(ten);
-		}
-		return false;
-	}
-
+	
+	private static final String ERROR_APP_ID_NOT_FOUND = "error.app.id.notfound";
+	private static final String ERROR_CODE_DUPLICATE = "error.code.duplicate";
+	private static final String ERROR_NAME_DUPLICATE = "error.name.duplicate";
+	private static final String ERROR_TARGET_NULL = "error.target.null";
+	private final CoreModuleService coreModuleService;
+	
 	@Override
-	public boolean supports(Class<?> clazz) {
+	public boolean supports(@NonNull Class<?> clazz) {
 		return CoreModuleData.class.isAssignableFrom(clazz);
 	}
-
+	
 	@Override
-	public void validate(Object target, Errors errors) {
-		CoreModuleData object = (CoreModuleData) target;
-
-		if (checkTenExits(object.getId(), object.getTen())) {
-			errors.rejectValue("ten", "error.ten", new Object[]{"ten"}, "Tên đã tồn tại");
+	public void validate(@Nullable Object target, @Nullable Errors errors) {
+		if (errors == null) {
+			throw new IllegalArgumentException("Errors object cannot be null.");
 		}
+		if (target == null) {
+			errors.reject(ERROR_TARGET_NULL, "Đối tượng CoreModuleData không được null.");
+			return;
+		}
+		
+		CoreModuleData data = (CoreModuleData) target;
+		
+		String appCode = LoginHelper.getAppCode();
+//		if (appCode == null) {
+//			errors.reject(ERROR_APP_ID_NOT_FOUND, "Không thể xác định ứng dụng hiện tại.");
+//			return;
+//		}
+		
+		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), appCode, true)) {
+			errors.rejectValue("code", ERROR_CODE_DUPLICATE, "Mã nhóm đã tồn tại.");
+		}
+		
+		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), appCode, false)) {
+			errors.rejectValue("name", ERROR_NAME_DUPLICATE, "Tên nhóm đã tồn tại.");
+		}
+		
+	}
+	
+	private boolean isDuplicate(Long id, String value, String appCode, boolean isCode) {
+		if (id != null) {
+			return isCode
+					? coreModuleService.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, value, appCode)
+					: coreModuleService.existsByIdNotAndNameIgnoreCaseAndAppCode(id, value, appCode);
+		}
+		return isCode
+				? coreModuleService.existsByCodeIgnoreCaseAndAppCode(value, appCode)
+				: coreModuleService.existsByNameIgnoreCaseAndAppCode(value, appCode);
 	}
 }

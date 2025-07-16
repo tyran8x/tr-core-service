@@ -3,12 +3,13 @@ package vn.tr.core.dao.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreGroup;
 import vn.tr.core.data.criteria.CoreGroupSearchCriteria;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class CoreGroupServiceImpl implements CoreGroupService {
@@ -35,53 +36,38 @@ public class CoreGroupServiceImpl implements CoreGroupService {
 	}
 	
 	@Override
-	public Page<CoreGroup> findAll(CoreGroupSearchCriteria criteria, Pageable pageable) {
-		return repo.findAll(CoreGroupSpecifications.quickSearch(criteria), pageable);
+	public Page<CoreGroup> findAll(CoreGroupSearchCriteria coreGroupSearchCriteria, Pageable pageable) {
+		return repo.findAll(CoreGroupSpecifications.quickSearch(coreGroupSearchCriteria), pageable);
 	}
 	
 	@Override
-	public boolean existsByIdNotAndCodeIgnoreCaseAndAppId(long id, String code, Long appId) {
-		return repo.existsByIdNotAndCodeIgnoreCaseAndAppId(id, code, appId);
+	public List<CoreGroup> findAll(CoreGroupSearchCriteria coreGroupSearchCriteria) {
+		return repo.findAll(CoreGroupSpecifications.quickSearch(coreGroupSearchCriteria));
 	}
 	
 	@Override
-	public boolean existsByIdNotAndNameIgnoreCaseAndAppId(long id, String name, Long appId) {
-		return repo.existsByIdNotAndNameIgnoreCaseAndAppId(id, name, appId);
+	public boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode) {
+		return repo.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, code, appCode);
 	}
 	
 	@Override
-	public boolean existsByCodeIgnoreCaseAndAppId(String code, Long appId) {
-		return repo.existsByCodeIgnoreCaseAndAppId(code, appId);
+	public boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode) {
+		return repo.existsByIdNotAndNameIgnoreCaseAndAppCode(id, name, appCode);
 	}
 	
 	@Override
-	public boolean existsByNameIgnoreCaseAndAppId(String name, Long appId) {
-		return repo.existsByNameIgnoreCaseAndAppId(name, appId);
+	public boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode) {
+		return repo.existsByCodeIgnoreCaseAndAppCode(code, appCode);
 	}
 	
 	@Override
-	public Optional<CoreGroup> findFirstByCodeIgnoreCase(String code) {
-		return repo.findFirstByCodeIgnoreCase(code);
+	public boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode) {
+		return repo.existsByNameIgnoreCaseAndAppCode(name, appCode);
 	}
 	
 	@Override
-	public List<CoreGroup> findByCodeInIgnoreCase(Set<String> codes) {
-		return repo.findByCodeInIgnoreCase(codes);
-	}
-	
-	@Override
-	public List<CoreGroup> findByStatusTrue() {
-		return repo.findByStatusTrue();
-	}
-	
-	@Override
-	public boolean existsByIdAndAppId(long id, Long appId) {
-		return repo.existsByIdAndAppId(id, appId);
-	}
-	
-	@Override
-	public List<CoreGroup> findByIdIn(Set<Long> ids) {
-		return repo.findByIdIn(ids);
+	public boolean existsByIdAndAppCode(long id, String appCode) {
+		return repo.existsByIdAndAppCode(id, appCode);
 	}
 	
 	@Override
@@ -90,12 +76,12 @@ public class CoreGroupServiceImpl implements CoreGroupService {
 	}
 	
 	@Override
-	public Map<Long, CoreGroup> findMapByIds(Set<Long> ids) {
-		if (ids == null || ids.isEmpty()) {
-			return Collections.emptyMap();
+	@Transactional
+	public void deleteByIds(Set<Long> ids) {
+		if (ids.isEmpty()) {
+			return;
 		}
-		return repo.findByIdIn(ids).stream()
-				.collect(Collectors.toMap(CoreGroup::getId, Function.identity()));
+		repo.softDeleteByIds(ids);
 	}
 	
 }

@@ -2,7 +2,6 @@ package vn.tr.core.security.service.strategy;
 
 import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -71,7 +70,7 @@ public class EmailAuthStrategy implements IAuthStrategy {
 		RegisterBody registerBody = JsonUtils.parseObject(body, RegisterBody.class);
 		
 		assert registerBody != null;
-		String userName = registerBody.getUserName();
+		String userName = registerBody.getUsername();
 		String password = registerBody.getPassword();
 		
 		String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
@@ -80,14 +79,14 @@ public class EmailAuthStrategy implements IAuthStrategy {
 		log.info("password register: {}", password);
 		
 		CoreUser coreUser = new CoreUser();
-		coreUser.setUserName(userName);
-		coreUser.setNickName(userName);
-		coreUser.setEmail(userName);
-		coreUser.setPassword(BCrypt.hashpw(password));
-		coreUser.setUserType(userType);
-		coreUser.setIsEnabled(true);
+//		coreUser.setUserName(userName);
+//		coreUser.setNickName(userName);
+//		coreUser.setEmail(userName);
+//		coreUser.setPassword(BCrypt.hashpw(password));
+//		coreUser.setUserType(userType);
+//		coreUser.setIsEnabled(true);
 		
-		boolean exist = coreUserService.existsByEmailIgnoreCaseAndDaXoaFalse(userName);
+		boolean exist = coreUserService.existsByUsernameIgnoreCaseAndDaXoaFalse(userName);
 		if (exist) {
 			throw new UserException("user.register.save.error", userName);
 		}
@@ -101,14 +100,15 @@ public class EmailAuthStrategy implements IAuthStrategy {
 	}
 	
 	private CoreUser loadUserByUsername(String userName) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(userName);
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(userName);
 		if (optionalCoreUser.isEmpty()) {
 			log.info("Login user: {} does not exist.", userName);
 			throw new UserException("user.not.exists", userName);
-		} else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
-			log.info("Logged in user: {} has been deactivated.", userName);
-			throw new UserException("user.blocked", userName);
 		}
+//		else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
+//			log.info("Logged in user: {} has been deactivated.", userName);
+//			throw new UserException("user.blocked", userName);
+//		}
 		return optionalCoreUser.get();
 	}
 	

@@ -9,11 +9,11 @@ import java.util.Optional;
 
 @Repository
 public interface CoreUserRepo extends JpaRepository<CoreUser, Long>, JpaSpecificationExecutor<CoreUser> {
-
-	boolean existsByEmailIgnoreCaseAndDaXoaFalse(String email);
-
-	boolean existsByIdNotAndEmailIgnoreCaseAndDaXoaFalse(long id, String email);
-
-	Optional<CoreUser> findFirstByEmailAndDaXoaFalse(String email);
-
+	
+	boolean existsByUsernameIgnoreCaseAndDaXoaFalse(String username);
+	
+	boolean existsByIdNotAndUsernameIgnoreCaseAndDaXoaFalse(long id, String username);
+	
+	Optional<CoreUser> findFirstByUsernameAndDaXoaFalse(String username);
+	
 }

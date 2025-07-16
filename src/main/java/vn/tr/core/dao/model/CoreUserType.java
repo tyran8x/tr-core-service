@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import vn.tr.common.jpa.entity.BaseEntity;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import vn.tr.common.jpa.entity.BaseCommonEntity;
 
 @Entity
 @Table(name = "core_user_type")
@@ -13,26 +15,16 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class CoreUserType extends BaseEntity {
+@SQLDelete(sql = "UPDATE core_user_type SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
+public class CoreUserType extends BaseCommonEntity {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "name", length = 250, nullable = false)
-	private String name;
-	
-	@Column(name = "code", length = 50, nullable = false, unique = true)
-	private String code;
-	
-	@Column(name = "description", columnDefinition = "TEXT")
-	private String description;
-	
 	@Column(name = "icon", length = 50)
 	private String icon;
-	
-	@Column(name = "status")
-	private Boolean status;
 	
 }

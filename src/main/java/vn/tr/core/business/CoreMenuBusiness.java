@@ -17,7 +17,7 @@ import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.dao.service.CoreMenuService;
-import vn.tr.core.dao.service.CoreRole2MenuService;
+import vn.tr.core.dao.service.CoreRolePermissionService;
 import vn.tr.core.data.*;
 
 import java.util.*;
@@ -28,7 +28,7 @@ import java.util.*;
 public class CoreMenuBusiness {
 	
 	private final CoreMenuService coreMenuService;
-	private final CoreRole2MenuService coreRole2MenuService;
+	private final CoreRolePermissionService coreRole2MenuService;
 	
 	private CoreMenuData convertToCoreMenuData(CoreMenu coreMenu) {
 		CoreMenuData coreMenuData = new CoreMenuData();
@@ -105,11 +105,11 @@ public class CoreMenuBusiness {
 	}
 	
 	public CoreDsMenuData getRouterDatas(String appCode) {
-		String email = LoginHelper.getUserName();
+		String email = LoginHelper.getUsername();
 		Set<String> roles = new HashSet<>();
 		LoginUser loginUser = LoginHelper.getLoginUser();
 		if (Objects.nonNull(loginUser)) {
-			roles = loginUser.getRolePermission();
+			roles = loginUser.getRoleCodes();
 		}
 		
 		CoreDsMenuData coreDsMenuData = new CoreDsMenuData();
@@ -282,7 +282,7 @@ public class CoreMenuBusiness {
 		LoginUser loginUser = LoginHelper.getLoginUser();
 		List<RouteRecordRawData> routeRecordRawDatas = new ArrayList<>();
 		if (Objects.nonNull(loginUser) && loginUser.getUserType().equals("sys_user")) {
-			Set<String> roles = loginUser.getRolePermission();
+			Set<String> roles = loginUser.getRoleCodes();
 			
 			List<CoreMenu> coreMenus;
 			//boolean isRoot = LoginHelper.isSuperAdmin();

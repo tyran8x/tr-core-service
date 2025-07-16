@@ -12,7 +12,7 @@ server:
   shutdown: immediate
 eureka:
   client:
-    register-with-eureka: true
+    register-with-eureka: false
     serviceUrl:
       defaultZone: http://10.49.41.112:8061/eureka
 core:
@@ -21,7 +21,7 @@ core:
       download: 'https://api.dnict.vn/v2/core'
 spring:
   datasource:
-    url: jdbc:postgresql://10.49.41.112:5432/core_service
+    url: jdbc:postgresql://10.49.41.112:5432/dev_core_service
     username: postgres
     password: DnictPro@123
   jpa:

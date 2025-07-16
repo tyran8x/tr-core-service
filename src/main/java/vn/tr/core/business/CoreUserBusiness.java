@@ -11,15 +11,13 @@ import vn.tr.common.core.utils.FunctionUtils;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreUser;
-import vn.tr.core.dao.model.CoreUser2Role;
-import vn.tr.core.dao.model.CoreUserConnect;
+import vn.tr.core.dao.model.CoreUserRole;
 import vn.tr.core.dao.service.CoreRoleService;
-import vn.tr.core.dao.service.CoreUser2RoleService;
-import vn.tr.core.dao.service.CoreUserConnectService;
+import vn.tr.core.dao.service.CoreUserRoleService;
 import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.CoreUserChangeIsEnabledData;
 import vn.tr.core.data.CoreUserChangePasswordData;
-import vn.tr.core.data.CoreUserData;
+import vn.tr.core.data.dto.CoreUserData;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,19 +31,18 @@ public class CoreUserBusiness {
 	
 	private final CoreUserService coreUserService;
 	private final CoreRoleService coreRoleService;
-	private final CoreUser2RoleService coreUser2RoleService;
-	private final CoreUserConnectService coreUserConnectService;
+	private final CoreUserRoleService coreUserRoleService;
 	
-	private CoreUserData convertToCoreUserData(CoreUser coreUser, String email) {
+	private CoreUserData convertToCoreUserData(CoreUser coreUser) {
 		CoreUserData coreUserData = new CoreUserData();
 		coreUserData.setId(coreUser.getId());
-		coreUserData.setEmail(email);
+		//	coreUserData.setEmail(email);
 		coreUserData.setFullName(coreUser.getFullName());
 		coreUserData.setUsername(coreUser.getUsername());
-		List<CoreUser2Role> coreUser2Roles = coreUser2RoleService.findByUserNameAndDaXoaFalse(email);
-		Set<String> roles = coreUser2Roles.stream().map(CoreUser2Role::getRole).collect(Collectors.toSet());
+		List<CoreUserRole> coreUserRoles = coreUserRoleService.findByUserNameAndDaXoaFalse(coreUser.getUsername());
+		Set<String> roles = coreUserRoles.stream().map(CoreUserRole::getRoleCode).collect(Collectors.toSet());
 		coreUserData.setRoles(roles);
-		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUsername());
+		//	List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUsername());
 //		Map<String, String> connects = new HashMap<>();
 //		if (CollUtil.isNotEmpty(coreUserConnects)) {
 //			for (CoreUserConnect coreUserConnect : coreUserConnects) {
@@ -77,16 +74,16 @@ public class CoreUserBusiness {
 			String appCode) {
 		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
 		Page<CoreUser> pageCoreUser = coreUserService.findAll(search, email, name, roles, appCode, pageable);
-		return pageCoreUser.map(x -> convertToCoreUserData(x, x.getEmail()));
+		return pageCoreUser.map(this::convertToCoreUserData);
 	}
 	
 	public CoreUserData findByEmail(String email) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(email);
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(email);
 		CoreUser coreUser = new CoreUser();
 		if (optionalCoreUser.isPresent()) {
 			coreUser = optionalCoreUser.get();
 		}
-		return convertToCoreUserData(coreUser, email);
+		return convertToCoreUserData(coreUser);
 	}
 	
 	public CoreUserData findById(Long id) {
@@ -95,7 +92,7 @@ public class CoreUserBusiness {
 			throw new EntityNotFoundException(CoreUser.class, id);
 		}
 		CoreUser coreUser = optionalCoreUser.get();
-		return convertToCoreUserData(coreUser, coreUser.getEmail());
+		return convertToCoreUserData(coreUser);
 	}
 	
 	public CoreUserData update(Long id, CoreUserData coreUserData) {
@@ -109,55 +106,52 @@ public class CoreUserBusiness {
 	
 	private CoreUserData save(CoreUser coreUser, CoreUserData coreUserData) {
 		coreUser.setDaXoa(false);
-		coreUser.setUserName(FunctionUtils.removeXss(coreUserData.getUserName()));
-		coreUser.setEmail(FunctionUtils.removeXss(coreUserData.getEmail()));
-		coreUser.setNickName(FunctionUtils.removeXss(coreUserData.getNickName()));
-		coreUser.setPhoneNumber(FunctionUtils.removeXss(coreUserData.getPhoneNumber()));
-		coreUser.setUserType(coreUserData.getUserType());
-		coreUser.setAppCode(FunctionUtils.removeXss(coreUserData.getAppCode()));
-		coreUser.setIsEnabled(Boolean.TRUE.equals(coreUserData.getIsEnabled()));
+		coreUser.setUsername(FunctionUtils.removeXss(coreUserData.getUsername()));
+		coreUser.setFullName(FunctionUtils.removeXss(coreUserData.getFullName()));
+//		coreUser.setUserTypeId(coreUserData.getUserType());
+//		coreUser.setIsEnabled(Boolean.TRUE.equals(coreUserData.getIsEnabled()));
 		if (Objects.isNull(coreUser.getId())) {
-			coreUser.setPassword(BCrypt.hashpw(coreUserData.getPassword()));
+			coreUser.setHashedPassword(BCrypt.hashpw(coreUserData.getPassword()));
 		}
 		coreUser = coreUserService.save(coreUser);
 		Set<String> roles = coreUserData.getRoles();
 		List<CoreRole> coreRoles = coreRoleService.findByMaIgnoreCaseInAndDaXoaFalse(roles);
 		
-		coreUser2RoleService.setFixedDaXoaForUserName(true, coreUser.getUserName());
+		coreUserRoleService.setFixedDaXoaForUserName(true, coreUser.getUsername());
 		if (CollUtil.isNotEmpty(coreRoles)) {
 			for (CoreRole coreRole : coreRoles) {
-				CoreUser2Role coreUser2Role = new CoreUser2Role();
-				Optional<CoreUser2Role> optionalCoreUser2Role = coreUser2RoleService.findFirstByRoleAndUserName(coreRole.getMa(),
-						coreUser.getUserName());
-				if (optionalCoreUser2Role.isPresent()) {
-					coreUser2Role = optionalCoreUser2Role.get();
+				CoreUserRole coreUserRole = new CoreUserRole();
+				Optional<CoreUserRole> optionalCoreUserRole = coreUserRoleService.findFirstByRoleAndUserName(coreRole.getCode(),
+						coreUser.getUsername());
+				if (optionalCoreUserRole.isPresent()) {
+					coreUserRole = optionalCoreUserRole.get();
 				}
-				coreUser2Role.setDaXoa(false);
-				coreUser2Role.setRole(coreRole.getMa());
-				coreUser2Role.setUserName(coreUser.getUserName());
-				coreUser2RoleService.save(coreUser2Role);
+				coreUserRole.setDaXoa(false);
+				coreUserRole.setRoleCode(coreRole.getCode());
+				coreUserRole.setUsername(coreUser.getUsername());
+				coreUserRoleService.save(coreUserRole);
 			}
 		}
-		return convertToCoreUserData(coreUser, coreUser.getEmail());
+		return convertToCoreUserData(coreUser);
 	}
 	
 	public void changePassword(CoreUserChangePasswordData coreUserChangePasswordData) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(coreUserChangePasswordData.getUserName());
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(coreUserChangePasswordData.getUsername());
 		if (optionalCoreUser.isEmpty()) {
-			throw new EntityNotFoundException(CoreUser.class, coreUserChangePasswordData.getUserName());
+			throw new EntityNotFoundException(CoreUser.class, coreUserChangePasswordData.getUsername());
 		}
 		CoreUser coreUser = optionalCoreUser.get();
-		coreUser.setPassword(BCrypt.hashpw(coreUserChangePasswordData.getPassword()));
+		coreUser.setHashedPassword(BCrypt.hashpw(coreUserChangePasswordData.getPassword()));
 		coreUserService.save(coreUser);
 	}
 	
 	public void changeIsEnabled(CoreUserChangeIsEnabledData coreUserChangeIsEnabledData) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(coreUserChangeIsEnabledData.getUserName());
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(coreUserChangeIsEnabledData.getUsername());
 		if (optionalCoreUser.isEmpty()) {
-			throw new EntityNotFoundException(CoreUser.class, coreUserChangeIsEnabledData.getUserName());
+			throw new EntityNotFoundException(CoreUser.class, coreUserChangeIsEnabledData.getUsername());
 		}
 		CoreUser coreUser = optionalCoreUser.get();
-		coreUser.setIsEnabled(Boolean.TRUE.equals(coreUserChangeIsEnabledData.getIsEnabled()));
+		//coreUser.setStatus(Boolean.TRUE.equals(coreUserChangeIsEnabledData.getIsEnabled()));
 		coreUserService.save(coreUser);
 	}
 	

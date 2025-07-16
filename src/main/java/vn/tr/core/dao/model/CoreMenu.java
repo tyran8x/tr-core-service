@@ -6,7 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.ColumnDefault;
-import vn.tr.common.jpa.entity.BaseEntity;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import vn.tr.common.jpa.entity.BaseCommonEntity;
 
 @Entity
 @Table(name = "core_menu")
@@ -14,21 +16,17 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class CoreMenu extends BaseEntity {
+@SQLDelete(sql = "UPDATE core_menu SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
+public class CoreMenu extends BaseCommonEntity {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "ten", length = 1000, nullable = false)
-	private String ten;
-	
-	@Column(name = "ma", length = 250, nullable = false)
-	private String ma;
-	
-	@Column(name = "cha_id")
-	private Long chaId;
+	@Column(name = "parent_id")
+	private Long parentId;
 	
 	@Column(name = "path")
 	private String path;
@@ -156,14 +154,10 @@ public class CoreMenu extends BaseEntity {
 	@ColumnDefault(value = "'true'")
 	private Boolean isReload;
 	
-	@Column(name = "mota", columnDefinition = "TEXT")
-	private String moTa;
-	
 	@Column(name = "app_code", length = 50)
 	private String appCode;
 	
-	@Column(name = "trangthai")
-	@ColumnDefault(value = "'true'")
-	private Boolean trangThai;
+	@Column(name = "extra_meta", columnDefinition = "JSONB")
+	private String extraMeta;
 	
 }

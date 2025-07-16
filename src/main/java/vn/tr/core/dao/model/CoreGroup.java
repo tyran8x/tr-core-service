@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import vn.tr.common.jpa.entity.BaseCatalogEntity;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import vn.tr.common.jpa.entity.BaseCommonEntity;
 
 @Entity
 @Table(name = "core_group")
@@ -13,7 +15,9 @@ import vn.tr.common.jpa.entity.BaseCatalogEntity;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class CoreGroup extends BaseCatalogEntity {
+@SQLDelete(sql = "UPDATE core_group SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
+public class CoreGroup extends BaseCommonEntity {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
@@ -23,7 +27,12 @@ public class CoreGroup extends BaseCatalogEntity {
 	@Column(name = "parent_id")
 	private Long parentId;
 	
-	@Column(name = "app_id")
-	private Long appId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "parent_id", insertable = false, updatable = false)
+	@ToString.Exclude
+	private CoreGroup parent;
+	
+	@Column(name = "app_code", length = 50)
+	private String appCode;
 	
 }

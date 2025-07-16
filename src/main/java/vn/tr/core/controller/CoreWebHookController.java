@@ -20,7 +20,7 @@ public class CoreWebHookController {
 	
 	@PostMapping("/zalo")
 	public R<Void> zalo(@RequestBody ZaloWebhookData zaloWebhookData) {
-		coreWebhookBussiness.getMessageZaloOa(zaloWebhookData);
+		//coreWebhookBussiness.getMessageZaloOa(zaloWebhookData);
 		return R.ok();
 	}
 	

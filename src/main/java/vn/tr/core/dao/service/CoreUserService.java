@@ -22,11 +22,11 @@ public interface CoreUserService {
 	
 	Page<CoreUser> findAll(String search, String email, String name, List<String> roles, String appCode, Pageable pageable);
 	
-	boolean existsByEmailIgnoreCaseAndDaXoaFalse(String email);
+	boolean existsByUsernameIgnoreCaseAndDaXoaFalse(String username);
 	
-	boolean existsByIdNotAndEmailIgnoreCaseAndDaXoaFalse(long id, String email);
+	boolean existsByIdNotAndUsernameIgnoreCaseAndDaXoaFalse(long id, String username);
 	
-	Optional<CoreUser> findFirstByEmailAndDaXoaFalse(String email);
+	Optional<CoreUser> findFirstByUsernameAndDaXoaFalse(String username);
 	
 	void recordLoginInfo(String userName, String status, String message);
 	

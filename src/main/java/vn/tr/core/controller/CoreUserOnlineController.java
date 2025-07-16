@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/monitor/online")
 public class CoreUserOnlineController extends BaseController {
-
+	
 	@SaCheckPermission("monitor:online:list")
 	@GetMapping("/list")
 	public R<List<UserOnlineData>> list(String ipaddr, String userName) {
@@ -43,24 +43,24 @@ public class CoreUserOnlineController extends BaseController {
 		}
 		if (StringUtils.isNotEmpty(ipaddr) && StringUtils.isNotEmpty(userName)) {
 			userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
-					StringUtils.equals(ipaddr, userOnline.getIpaddr()) &&
-							StringUtils.equals(userName, userOnline.getUserName())
-			);
+							StringUtils.equals(ipaddr, userOnline.getIpaddr()) &&
+									StringUtils.equals(userName, userOnline.getUsername())
+			                                      );
 		} else if (StringUtils.isNotEmpty(ipaddr)) {
 			userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
-					StringUtils.equals(ipaddr, userOnline.getIpaddr())
-			);
+							StringUtils.equals(ipaddr, userOnline.getIpaddr())
+			                                      );
 		} else if (StringUtils.isNotEmpty(userName)) {
 			userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
-					StringUtils.equals(userName, userOnline.getUserName())
-			);
+							StringUtils.equals(userName, userOnline.getUsername())
+			                                      );
 		}
 		Collections.reverse(userOnlineDTOList);
 		userOnlineDTOList.removeAll(Collections.singleton(null));
 		List<UserOnlineData> userOnlineList = BeanUtil.copyToList(userOnlineDTOList, UserOnlineData.class);
 		return R.ok(userOnlineList);
 	}
-
+	
 	@SaCheckPermission("monitor:online:forceLogout")
 	@Log(title = "Online users", businessType = BusinessType.FORCE)
 	@DeleteMapping("/{tokenId}")
@@ -71,7 +71,7 @@ public class CoreUserOnlineController extends BaseController {
 		}
 		return R.ok();
 	}
-
+	
 	@GetMapping()
 	public R<List<UserOnlineData>> getInfo() {
 		List<String> tokenIds = StpUtil.getTokenValueListByLoginId(StpUtil.getLoginIdAsString());
@@ -84,7 +84,7 @@ public class CoreUserOnlineController extends BaseController {
 		List<UserOnlineData> userOnlineList = BeanUtil.copyToList(userOnlineDTOList, UserOnlineData.class);
 		return R.ok(userOnlineList);
 	}
-
+	
 	@Log(title = "Online Device", businessType = BusinessType.FORCE)
 	@PostMapping("/{tokenId}")
 	public R<Void> remove(@PathVariable("tokenId") String tokenId) {
@@ -99,5 +99,5 @@ public class CoreUserOnlineController extends BaseController {
 		}
 		return R.ok();
 	}
-
+	
 }

@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.ColumnDefault;
 import vn.tr.common.jpa.entity.BaseEntity;
 
 @Entity
@@ -21,8 +20,8 @@ public class CoreContact extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "owner_id")
-	private Long ownerId;
+	@Column(name = "owner_value", length = 100)
+	private String ownerValue;
 	
 	@Column(name = "owner_type", length = 100)
 	private String ownerType;
@@ -42,12 +41,10 @@ public class CoreContact extends BaseEntity {
 	@Column(name = "is_verified")
 	private Boolean isVerified;
 	
-	@Column(name = "status", nullable = false)
-	@ColumnDefault("ACTIVE")
+	@Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
 	private String status = "ACTIVE";
 	
-	@Column(name = "sort_order")
-	@ColumnDefault("0")
-	private Integer sortOrder;
+	@Column(name = "sort_order", columnDefinition = "INTEGER DEFAULT 0")
+	private Integer sortOrder = 0;
 	
 }

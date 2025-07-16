@@ -47,7 +47,7 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		log.info("pass loginBody");
 		assert loginBody != null;
 		
-		String userName = loginBody.getUserName();
+		String userName = loginBody.getUsername();
 		String password = loginBody.getPassword();
 		String code = loginBody.getCode();
 		String uuid = loginBody.getUuid();
@@ -58,7 +58,7 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 			validateCaptcha(userName, code, uuid);
 		}
 		CoreUser coreUser = loadUserByUsername(userName);
-		coreUserService.checkLogin(LoginType.PASSWORD, userName, () -> !BCrypt.checkpw(password, coreUser.getPassword()));
+		coreUserService.checkLogin(LoginType.PASSWORD, userName, () -> !BCrypt.checkpw(password, coreUser.getHashedPassword()));
 		LoginUser loginUser = coreUserService.buildLoginUser(coreUser);
 		loginUser.setClientKey(coreClientData.getClientKey());
 		loginUser.setDeviceType(coreClientData.getDeviceType());
@@ -85,7 +85,7 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		RegisterBody registerBody = JsonUtils.parseObject(body, RegisterBody.class);
 		
 		assert registerBody != null;
-		String userName = registerBody.getUserName();
+		String userName = registerBody.getUsername();
 		String password = registerBody.getPassword();
 		
 		String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
@@ -99,14 +99,14 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 			validateCaptcha(userName, code, uuid);
 		}
 		CoreUser coreUser = new CoreUser();
-		coreUser.setUserName(userName);
-		coreUser.setNickName(userName);
-		coreUser.setEmail(userName);
-		coreUser.setPassword(BCrypt.hashpw(password));
-		coreUser.setUserType(userType);
-		coreUser.setIsEnabled(true);
+//		coreUser.setUserName(userName);
+//		coreUser.setNickName(userName);
+//		coreUser.setEmail(userName);
+//		coreUser.setPassword(BCrypt.hashpw(password));
+//		coreUser.setUserType(userType);
+//		coreUser.setIsEnabled(true);
 		
-		boolean exist = coreUserService.existsByEmailIgnoreCaseAndDaXoaFalse(userName);
+		boolean exist = coreUserService.existsByUsernameIgnoreCaseAndDaXoaFalse(userName);
 		if (exist) {
 			throw new UserException("user.register.save.error", userName);
 		}
@@ -134,14 +134,15 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 	}
 	
 	private CoreUser loadUserByUsername(String userName) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(userName);
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(userName);
 		if (optionalCoreUser.isEmpty()) {
 			log.info("Login user: {} does not exist.", userName);
 			throw new UserException("user.not.exists", userName);
-		} else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
-			log.info("Logged in user: {} has been deactivated.", userName);
-			throw new UserException("user.blocked", userName);
 		}
+//		else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
+//			log.info("Logged in user: {} has been deactivated.", userName);
+//			throw new UserException("user.blocked", userName);
+//		}
 		return optionalCoreUser.get();
 	}
 	

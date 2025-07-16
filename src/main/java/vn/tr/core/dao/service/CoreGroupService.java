@@ -6,7 +6,6 @@ import vn.tr.core.dao.model.CoreGroup;
 import vn.tr.core.data.criteria.CoreGroupSearchCriteria;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,24 +21,18 @@ public interface CoreGroupService {
 	
 	Page<CoreGroup> findAll(CoreGroupSearchCriteria coreGroupSearchCriteria, Pageable pageable);
 	
-	boolean existsByIdNotAndCodeIgnoreCaseAndAppId(long id, String code, Long appId);
+	List<CoreGroup> findAll(CoreGroupSearchCriteria coreGroupSearchCriteria);
 	
-	boolean existsByIdNotAndNameIgnoreCaseAndAppId(long id, String name, Long appId);
+	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode);
 	
-	boolean existsByCodeIgnoreCaseAndAppId(String code, Long appId);
+	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode);
 	
-	boolean existsByNameIgnoreCaseAndAppId(String name, Long appId);
+	boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode);
 	
-	Optional<CoreGroup> findFirstByCodeIgnoreCase(String code);
+	boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode);
 	
-	List<CoreGroup> findByCodeInIgnoreCase(Set<String> codes);
+	boolean existsByIdAndAppCode(long id, String appCode);
 	
-	List<CoreGroup> findByStatusTrue();
-	
-	boolean existsByIdAndAppId(long id, Long appId);
-	
-	List<CoreGroup> findByIdIn(Set<Long> ids);
-	
-	Map<Long, CoreGroup> findMapByIds(Set<Long> ids);
+	void deleteByIds(Set<Long> ids);
 	
 }

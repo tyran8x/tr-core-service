@@ -9,7 +9,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.service.CoreGroupService;
-import vn.tr.core.data.CoreGroupData;
+import vn.tr.core.data.dto.CoreGroupData;
 
 @Component
 @RequiredArgsConstructor
@@ -40,37 +40,37 @@ public class CoreGroupValidator implements Validator {
 		
 		CoreGroupData data = (CoreGroupData) target;
 		
-		Long appId = LoginHelper.getAppId();
-		if (appId == null) {
-			errors.reject(ERROR_APP_ID_NOT_FOUND, "Không thể xác định ứng dụng hiện tại.");
-			return;
-		}
+		String appCode = LoginHelper.getAppCode();
+//		if (appCode == null) {
+//			errors.reject(ERROR_APP_ID_NOT_FOUND, "Không thể xác định ứng dụng hiện tại.");
+//			return;
+//		}
 		
-		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), appId, true)) {
+		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), appCode, true)) {
 			errors.rejectValue("code", ERROR_CODE_DUPLICATE, "Mã nhóm đã tồn tại.");
 		}
 		
-		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), appId, false)) {
+		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), appCode, false)) {
 			errors.rejectValue("name", ERROR_NAME_DUPLICATE, "Tên nhóm đã tồn tại.");
 		}
 		
 		if (data.getParentId() != null) {
 			if (data.getId() != null && data.getId().equals(data.getParentId())) {
 				errors.rejectValue("parentId", ERROR_PARENT_SELF, "Không thể chọn chính nó làm nhóm cha.");
-			} else if (!coreGroupService.existsByIdAndAppId(data.getParentId(), appId)) {
+			} else if (!coreGroupService.existsByIdAndAppCode(data.getParentId(), appCode)) {
 				errors.rejectValue("parentId", ERROR_PARENT_NOT_FOUND, "Nhóm cha không tồn tại hoặc không hợp lệ.");
 			}
 		}
 	}
 	
-	private boolean isDuplicate(Long id, String value, Long appId, boolean isCode) {
+	private boolean isDuplicate(Long id, String value, String appCode, boolean isCode) {
 		if (id != null) {
 			return isCode
-					? coreGroupService.existsByIdNotAndCodeIgnoreCaseAndAppId(id, value, appId)
-					: coreGroupService.existsByIdNotAndNameIgnoreCaseAndAppId(id, value, appId);
+					? coreGroupService.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, value, appCode)
+					: coreGroupService.existsByIdNotAndNameIgnoreCaseAndAppCode(id, value, appCode);
 		}
 		return isCode
-				? coreGroupService.existsByCodeIgnoreCaseAndAppId(value, appId)
-				: coreGroupService.existsByNameIgnoreCaseAndAppId(value, appId);
+				? coreGroupService.existsByCodeIgnoreCaseAndAppCode(value, appCode)
+				: coreGroupService.existsByNameIgnoreCaseAndAppCode(value, appCode);
 	}
 }

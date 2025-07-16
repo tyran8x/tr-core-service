@@ -18,7 +18,8 @@ public class CoreGroupSpecifications {
 			Predicate textSearchCondition = CriteriaBuilderHelper.createOrUnaccentedLike(cb, root, criteria.getSearch(),
 					CoreGroup_.name, CoreGroup_.code);
 			Predicate statusCondition = CriteriaBuilderHelper.createEquals(cb, root, CoreGroup_.status, criteria.getStatus());
-			return CriteriaBuilderHelper.and(cb, textSearchCondition, statusCondition);
+			Predicate idsCondition = CriteriaBuilderHelper.createIn(cb, root, CoreGroup_.id, criteria.getIds());
+			return CriteriaBuilderHelper.and(cb, textSearchCondition, statusCondition, idsCondition);
 		};
 	}
 }

@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import vn.tr.common.jpa.entity.BaseEntity;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import vn.tr.common.jpa.entity.BaseCommonEntity;
 
 @Entity
 @Table(name = "core_module")
@@ -13,32 +15,16 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class CoreModule extends BaseEntity {
+@SQLDelete(sql = "UPDATE core_module SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
+public class CoreModule extends BaseCommonEntity {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "ten", length = 250, nullable = false)
-	private String ten;
-	
-	@Column(name = "ma", length = 150, nullable = false)
-	private String ma;
-	
-	@Column(name = "cha_id")
-	private Long chaId;
-	
-	@Column(name = "filedinhkem_id")
-	private Long fileDinhKemId;
-	
 	@Column(name = "app_code", length = 50)
 	private String appCode;
-	
-	@Column(name = "sapxep")
-	private Integer sapXep;
-	
-	@Column(name = "trangthai", columnDefinition = "boolean default 'true'")
-	private Boolean trangThai;
 	
 }

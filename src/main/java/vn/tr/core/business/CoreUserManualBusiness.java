@@ -11,7 +11,7 @@ import vn.tr.common.feign.core.bean.FileDinhKem;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreUserManual;
 import vn.tr.core.dao.service.CoreMenuService;
-import vn.tr.core.dao.service.CoreRole2MenuService;
+import vn.tr.core.dao.service.CoreRolePermissionService;
 import vn.tr.core.dao.service.CoreUserManualService;
 import vn.tr.core.data.CoreUserManualData;
 
@@ -22,12 +22,12 @@ import java.util.Optional;
 @Service
 @AllArgsConstructor
 public class CoreUserManualBusiness {
-
+	
 	private final CoreUserManualService coreUserManualService;
 	private final CoreAttachmentBusiness coreAttachmentBusiness;
 	private final CoreMenuService coreMenuService;
-	private final CoreRole2MenuService coreRole2MenuService;
-
+	private final CoreRolePermissionService coreRole2MenuService;
+	
 	public Page<CoreUserManualData> findAll(int page, int size, String sortBy, String sortDir, String search, Boolean trangThai, String appCode) {
 		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
 		List<String> maUngDungs = new ArrayList<>();
@@ -46,7 +46,7 @@ public class CoreUserManualBusiness {
 		Page<CoreUserManual> pageCoreUserManual = coreUserManualService.findAll(search, trangThai, maUngDungs, appCode, pageable);
 		return pageCoreUserManual.map(this::convertToCoreUserManualData);
 	}
-
+	
 	private CoreUserManualData convertToCoreUserManualData(CoreUserManual coreUserManual) {
 		CoreUserManualData coreUserManualData = new CoreUserManualData();
 		coreUserManualData.setId(coreUserManual.getId());
@@ -55,7 +55,7 @@ public class CoreUserManualBusiness {
 		coreUserManualData.setTrangThai(coreUserManual.getTrangThai());
 		coreUserManualData.setSapXep(coreUserManual.getSapXep());
 		coreUserManualData.setAppCode(coreUserManual.getAppCode());
-
+		
 		int type = Constants.DINH_KEM_1_FILE;
 		Long objectId = coreUserManual.getId();
 		String appCode = CoreUserManual.class.getSimpleName();
@@ -64,7 +64,7 @@ public class CoreUserManualBusiness {
 		coreUserManualData.setFileDinhKemIds(fileDinhKem.getIds());
 		return coreUserManualData;
 	}
-
+	
 	public CoreUserManualData findById(Long id) throws EntityNotFoundException {
 		Optional<CoreUserManual> optional = coreUserManualService.findById(id);
 		if (optional.isEmpty()) {
@@ -73,12 +73,12 @@ public class CoreUserManualBusiness {
 		CoreUserManual coreUserManual = optional.get();
 		return convertToCoreUserManualData(coreUserManual);
 	}
-
+	
 	public CoreUserManualData create(CoreUserManualData coreUserManualData) {
 		CoreUserManual coreUserManual = new CoreUserManual();
 		return save(coreUserManual, coreUserManualData);
 	}
-
+	
 	private CoreUserManualData save(CoreUserManual coreUserManual, CoreUserManualData coreUserManualData) {
 		coreUserManual.setDaXoa(false);
 		coreUserManual.setMaUngDung(coreUserManualData.getMaUngDung());
@@ -90,7 +90,7 @@ public class CoreUserManualBusiness {
 		/*
 		 * Begin đính kèm file
 		 *******************************************************/
-
+		
 		/*
 		 * Khởi tạo biến
 		 * ************************************************************** -
@@ -104,7 +104,7 @@ public class CoreUserManualBusiness {
 		int type = Constants.DINH_KEM_1_FILE;
 		long objectId = coreUserManual.getId();
 		String appCode = CoreUserManual.class.getSimpleName();
-
+		
 		coreUserManual.setFileDinhKemId(null);
 		List<Long> fileIds = coreAttachmentBusiness.saveAttachments(fileDinhKemIds, appCode, objectId, type);
 		if (CollUtil.isNotEmpty(fileIds)) {
@@ -113,7 +113,7 @@ public class CoreUserManualBusiness {
 		}
 		return convertToCoreUserManualData(coreUserManual);
 	}
-
+	
 	public CoreUserManualData update(Long id, CoreUserManualData coreUserManualData) throws EntityNotFoundException {
 		Optional<CoreUserManual> optionalCoreUserManual = coreUserManualService.findById(id);
 		if (optionalCoreUserManual.isEmpty()) {
@@ -122,7 +122,7 @@ public class CoreUserManualBusiness {
 		CoreUserManual coreUserManual = optionalCoreUserManual.get();
 		return save(coreUserManual, coreUserManualData);
 	}
-
+	
 	public void delete(Long id) throws EntityNotFoundException {
 		Optional<CoreUserManual> optional = coreUserManualService.findById(id);
 		if (optional.isEmpty()) {
@@ -132,5 +132,5 @@ public class CoreUserManualBusiness {
 		coreUserManual.setDaXoa(true);
 		coreUserManualService.save(coreUserManual);
 	}
-
+	
 }

@@ -20,9 +20,9 @@ import vn.tr.common.json.utils.JsonUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreUser;
-import vn.tr.core.dao.model.CoreUser2Role;
+import vn.tr.core.dao.model.CoreUserRole;
 import vn.tr.core.dao.service.CoreRoleService;
-import vn.tr.core.dao.service.CoreUser2RoleService;
+import vn.tr.core.dao.service.CoreUserRoleService;
 import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.CoreClientData;
 import vn.tr.core.data.LoginResult;
@@ -39,7 +39,7 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 	
 	private final CoreUserService coreUserService;
 	private final CoreRoleService coreRoleService;
-	private final CoreUser2RoleService coreUser2RoleService;
+	private final CoreUserRoleService coreUserRoleService;
 	
 	@Override
 	public LoginResult login(String body, CoreClientData coreClientData) {
@@ -49,14 +49,14 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		log.info("pass loginBody");
 		assert loginBody != null;
 		
-		String userName = loginBody.getUserName();
+		String userName = loginBody.getUsername();
 		String password = loginBody.getPassword();
 		
 		log.info("userName: {}", userName);
 		log.info("password: {}", password);
 		
 		CoreUser coreUser = loadUserByUsername(userName);
-		coreUserService.checkLogin(LoginType.PASSWORD, userName, () -> !BCrypt.checkpw(password, coreUser.getPassword()));
+		coreUserService.checkLogin(LoginType.PASSWORD, userName, () -> !BCrypt.checkpw(password, coreUser.getHashedPassword()));
 		LoginUser loginUser = coreUserService.buildLoginUser(coreUser);
 		loginUser.setClientKey(coreClientData.getClientKey());
 		loginUser.setDeviceType(coreClientData.getDeviceType());
@@ -83,7 +83,7 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		RegisterBody registerBody = JsonUtils.parseObject(body, RegisterBody.class);
 		
 		assert registerBody != null;
-		String userName = registerBody.getUserName();
+		String userName = registerBody.getUsername();
 		String password = registerBody.getPassword();
 		
 		String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
@@ -92,14 +92,14 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 		log.info("password register: {}", password);
 		
 		CoreUser coreUser = new CoreUser();
-		coreUser.setUserName(userName);
-		coreUser.setNickName(userName);
-		coreUser.setEmail(userName);
-		coreUser.setPassword(BCrypt.hashpw(password));
-		coreUser.setUserType(userType);
-		coreUser.setIsEnabled(true);
-		
-		boolean exist = coreUserService.existsByEmailIgnoreCaseAndDaXoaFalse(userName);
+//		coreUser.setUserName(userName);
+//		coreUser.setNickName(userName);
+//		coreUser.setEmail(userName);
+//		coreUser.setPassword(BCrypt.hashpw(password));
+//		coreUser.setUserType(userType);
+//		coreUser.setIsEnabled(true);
+//
+		boolean exist = coreUserService.existsByUsernameIgnoreCaseAndDaXoaFalse(userName);
 		if (exist) {
 			throw new UserException("user.register.save.error", userName);
 		}
@@ -109,19 +109,19 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 			Set<String> roles = registerBody.getRoles();
 			List<CoreRole> coreRoles = coreRoleService.findByMaIgnoreCaseInAndDaXoaFalse(roles);
 			
-			coreUser2RoleService.setFixedDaXoaForUserName(true, coreUser.getUserName());
+			coreUserRoleService.setFixedDaXoaForUserName(true, coreUser.getUsername());
 			if (CollUtil.isNotEmpty(coreRoles)) {
 				for (CoreRole coreRole : coreRoles) {
-					CoreUser2Role coreUser2Role = new CoreUser2Role();
-					Optional<CoreUser2Role> optionalCoreUser2Role = coreUser2RoleService.findFirstByRoleAndUserName(coreRole.getMa(),
-							coreUser.getUserName());
-					if (optionalCoreUser2Role.isPresent()) {
-						coreUser2Role = optionalCoreUser2Role.get();
+					CoreUserRole coreUserRole = new CoreUserRole();
+					Optional<CoreUserRole> optionalCoreUserRole = coreUserRoleService.findFirstByRoleAndUserName(coreRole.getCode(),
+							coreUser.getUsername());
+					if (optionalCoreUserRole.isPresent()) {
+						coreUserRole = optionalCoreUserRole.get();
 					}
-					coreUser2Role.setDaXoa(false);
-					coreUser2Role.setRole(coreRole.getMa());
-					coreUser2Role.setUserName(coreUser.getUserName());
-					coreUser2RoleService.save(coreUser2Role);
+					coreUserRole.setDaXoa(false);
+					coreUserRole.setRoleCode(coreRole.getCode());
+					coreUserRole.setUsername(coreUser.getUsername());
+					coreUserRoleService.save(coreUserRole);
 				}
 			}
 		} catch (Exception e) {
@@ -132,14 +132,15 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 	}
 	
 	private CoreUser loadUserByUsername(String userName) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailAndDaXoaFalse(userName);
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(userName);
 		if (optionalCoreUser.isEmpty()) {
 			log.info("Login user: {} does not exist.", userName);
 			throw new UserException("user.not.exists", userName);
-		} else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
-			log.info("Logged in user: {} has been deactivated.", userName);
-			throw new UserException("user.blocked", userName);
 		}
+//		else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
+//			log.info("Logged in user: {} has been deactivated.", userName);
+//			throw new UserException("user.blocked", userName);
+//		}
 		return optionalCoreUser.get();
 	}
 	

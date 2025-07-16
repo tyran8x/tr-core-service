@@ -2,7 +2,6 @@ package vn.tr.core.dao.service;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,12 +20,9 @@ import vn.tr.common.log.event.LoginInfoEvent;
 import vn.tr.common.redis.utils.RedisUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
-import vn.tr.core.dao.model.CoreUserConnect;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -36,8 +32,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 	
 	private final CoreUserRepo repo;
 	private final CorePermissionService corePermissionService;
-	private final CoreUser2RoleService coreUser2RoleService;
-	private final CoreUserConnectService coreUserConnectService;
+	private final CoreUserRoleService coreUserRoleService;
 	@Value("${user.password.maxRetryCount}")
 	private Integer maxRetryCount;
 	@Value("${user.password.lockTime}")
@@ -64,18 +59,18 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
-	public boolean existsByEmailIgnoreCaseAndDaXoaFalse(String email) {
-		return repo.existsByEmailIgnoreCaseAndDaXoaFalse(email);
+	public boolean existsByUsernameIgnoreCaseAndDaXoaFalse(String username) {
+		return repo.existsByUsernameIgnoreCaseAndDaXoaFalse(username);
 	}
 	
 	@Override
-	public boolean existsByIdNotAndEmailIgnoreCaseAndDaXoaFalse(long id, String email) {
-		return repo.existsByIdNotAndEmailIgnoreCaseAndDaXoaFalse(id, email);
+	public boolean existsByIdNotAndUsernameIgnoreCaseAndDaXoaFalse(long id, String username) {
+		return repo.existsByIdNotAndUsernameIgnoreCaseAndDaXoaFalse(id, username);
 	}
 	
 	@Override
-	public Optional<CoreUser> findFirstByEmailAndDaXoaFalse(String email) {
-		return repo.findFirstByEmailAndDaXoaFalse(email);
+	public Optional<CoreUser> findFirstByUsernameAndDaXoaFalse(String username) {
+		return repo.findFirstByUsernameAndDaXoaFalse(username);
 	}
 	
 	@Override
@@ -97,22 +92,22 @@ public class CoreUserServiceImpl implements CoreUserService {
 	public LoginUser buildLoginUser(CoreUser coreUser) {
 		LoginUser loginUser = new LoginUser();
 		loginUser.setUserId(coreUser.getId());
-		loginUser.setUserName(coreUser.getUserName());
-		loginUser.setNickName(coreUser.getNickName());
-		loginUser.setUserType(coreUser.getUserType());
-		loginUser.setMenuPermission(corePermissionService.getMenuPermission(coreUser.getUserName()));
-		loginUser.setRolePermission(corePermissionService.getRolePermission(coreUser.getUserName()));
-		loginUser.setRoles(coreUser2RoleService.getRoleByUserName(coreUser.getUserName()));
-		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUserName());
-		Map<String, String> connects = new HashMap<>();
-		if (CollUtil.isNotEmpty(coreUserConnects)) {
-			for (CoreUserConnect coreUserConnect : coreUserConnects) {
-				connects.put(coreUserConnect.getAppName(), coreUserConnect.getAppUserId());
-			}
-		}
-		connects.putIfAbsent("mail", coreUser.getEmail());
+		loginUser.setUsername(coreUser.getUsername());
+		loginUser.setFullName(coreUser.getFullName());
+//		loginUser.setUserType(coreUser.getUserType());
+//		loginUser.setMenuPermission(corePermissionService.getMenuPermission(coreUser.getUsername()));
+//		loginUser.setRolePermission(corePermissionService.getRolePermission(coreUser.getUsername()));
+//		loginUser.setRoles(coreUserRoleService.getRoleByUserName(coreUser.getUsername()));
+//		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUsername());
+//		Map<String, String> connects = new HashMap<>();
+//		if (CollUtil.isNotEmpty(coreUserConnects)) {
+//			for (CoreUserConnect coreUserConnect : coreUserConnects) {
+//				connects.put(coreUserConnect.getAppName(), coreUserConnect.getAppUserId());
+//			}
+//		}
+		//	connects.putIfAbsent("mail", coreUser.getUsername());
 		
-		loginUser.setConnects(connects);
+		//	loginUser.setConnects(connects);
 		return loginUser;
 	}
 	
@@ -147,7 +142,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 			if (ObjectUtil.isNull(loginUser)) {
 				return;
 			}
-			recordLoginInfo(loginUser.getUserName(), Constants.LOGOUT, MessageUtils.message("user.logout.success"));
+			recordLoginInfo(loginUser.getUsername(), Constants.LOGOUT, MessageUtils.message("user.logout.success"));
 		} catch (NotLoginException ignored) {
 		} finally {
 			try {

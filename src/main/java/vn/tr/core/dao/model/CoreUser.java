@@ -5,7 +5,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import vn.tr.common.jpa.entity.BaseEntity;
 
 @Entity
@@ -14,6 +15,8 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Setter
 @ToString
 @RequiredArgsConstructor
+@SQLDelete(sql = "UPDATE core_user SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUser extends BaseEntity {
 	
 	@Id
@@ -24,17 +27,25 @@ public class CoreUser extends BaseEntity {
 	@Column(name = "username", length = 250, nullable = false, unique = true)
 	private String username;
 	
+	@Column(name = "email", length = 250, unique = true)
+	private String email;
+	
 	@Column(name = "hashed_password", length = 250)
 	private String hashedPassword;
 	
 	@Column(name = "full_name", length = 250)
 	private String fullName;
 	
+	@Column(name = "avatar_url", columnDefinition = "TEXT")
+	private String avatarUrl;
+	
 	@Column(name = "user_type_id")
 	private Long userTypeId;
 	
-	@Column(name = "status", nullable = false)
-	@ColumnDefault("ACTIVE")
+	@Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
 	private String status = "ACTIVE";
+	
+	@Column(name = "sort_order", columnDefinition = "INTEGER DEFAULT 0")
+	private Integer sortOrder = 0;
 	
 }

@@ -4,30 +4,27 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreModule;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface CoreModuleRepo extends JpaRepository<CoreModule, Long>, JpaSpecificationExecutor<CoreModule> {
-
-	boolean existsByIdNotAndTenIgnoreCaseAndDaXoaFalse(long id, String ten);
-
-	boolean existsByTenIgnoreCaseAndDaXoaFalse(String ten);
-
-	List<CoreModule> findByDaXoaFalse();
-
-	Optional<CoreModule> findByIdAndDaXoaFalse(Long id);
-
-	List<CoreModule> findByIdInAndDaXoaFalse(List<Long> ids);
-
-	List<CoreModule> findByTrangThaiTrueAndDaXoaFalse();
-
-	List<CoreModule> findByIdInAndTrangThaiTrueAndDaXoaFalse(List<Long> ids);
-
+	
+	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, @Nullable String appCode);
+	
+	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, @Nullable String appCode);
+	
+	boolean existsByCodeIgnoreCaseAndAppCode(String code, @Nullable String appCode);
+	
+	boolean existsByNameIgnoreCaseAndAppCode(String name, @Nullable String appCode);
+	
+	boolean existsByIdAndAppCode(long id, @Nullable String appCode);
+	
 	@Modifying(clearAutomatically = true)
-	@Query("update CoreModule u set u.daXoa = ?1 where u.id IN ?2")
-	int setFixedDaXoaForIds(boolean daXoa, List<Long> ids);
+	@Query("UPDATE CoreModule g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
+	void softDeleteByIds(@Param("ids") Set<Long> ids);
 }

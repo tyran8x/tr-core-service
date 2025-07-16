@@ -1,83 +1,87 @@
 package vn.tr.core.dao.service;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreModule;
+import vn.tr.core.data.criteria.CoreModuleSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
 public class CoreModuleServiceImpl implements CoreModuleService {
-
+	
 	private final CoreModuleRepo repo;
-
-	@Override
-	public void delete(Long id) {
-		repo.deleteById(id);
+	
+	public CoreModuleServiceImpl(CoreModuleRepo repo) {
+		this.repo = repo;
 	}
-
-	@Override
-	public boolean existsById(Long id) {
-		return repo.existsById(id);
-	}
-
-	@Override
-	public boolean existsByIdNotAndTenIgnoreCaseAndDaXoaFalse(long id, String ten) {
-		return repo.existsByIdNotAndTenIgnoreCaseAndDaXoaFalse(id, ten);
-	}
-
-	@Override
-	public boolean existsByTenIgnoreCaseAndDaXoaFalse(String ten) {
-		return repo.existsByTenIgnoreCaseAndDaXoaFalse(ten);
-	}
-
-	@Override
-	public Page<CoreModule> findAll(String search, Boolean trangThai, Pageable pageable) {
-		return repo.findAll(CoreModuleSpecifications.quickSearch(search, trangThai), pageable);
-	}
-
-	@Override
-	public List<CoreModule> findByDaXoaFalse() {
-		return repo.findByDaXoaFalse();
-	}
-
+	
 	@Override
 	public Optional<CoreModule> findById(Long id) {
 		return repo.findById(id);
 	}
-
-	@Override
-	public Optional<CoreModule> findByIdAndDaXoaFalse(Long id) {
-		return repo.findByIdAndDaXoaFalse(id);
-	}
-
-	@Override
-	public List<CoreModule> findByIdInAndDaXoaFalse(List<Long> ids) {
-		return repo.findByIdInAndDaXoaFalse(ids);
-	}
-
-	@Override
-	public List<CoreModule> findByTrangThaiTrueAndDaXoaFalse() {
-		return repo.findByTrangThaiTrueAndDaXoaFalse();
-	}
-
-	@Override
-	public List<CoreModule> findByIdInAndTrangThaiTrueAndDaXoaFalse(List<Long> ids) {
-		return repo.findByIdInAndTrangThaiTrueAndDaXoaFalse(ids);
-	}
-
+	
 	@Override
 	public CoreModule save(CoreModule coreModule) {
 		return repo.save(coreModule);
 	}
-
+	
 	@Override
-	public int setFixedDaXoaForIds(boolean daXoa, List<Long> ids) {
-		return repo.setFixedDaXoaForIds(daXoa, ids);
+	public void delete(Long id) {
+		repo.deleteById(id);
 	}
-
+	
+	@Override
+	public Page<CoreModule> findAll(CoreModuleSearchCriteria coreModuleSearchCriteria, Pageable pageable) {
+		return repo.findAll(CoreModuleSpecifications.quickSearch(coreModuleSearchCriteria), pageable);
+	}
+	
+	@Override
+	public List<CoreModule> findAll(CoreModuleSearchCriteria coreModuleSearchCriteria) {
+		return repo.findAll(CoreModuleSpecifications.quickSearch(coreModuleSearchCriteria));
+	}
+	
+	@Override
+	public boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode) {
+		return repo.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, code, appCode);
+	}
+	
+	@Override
+	public boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode) {
+		return repo.existsByIdNotAndNameIgnoreCaseAndAppCode(id, name, appCode);
+	}
+	
+	@Override
+	public boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode) {
+		return repo.existsByCodeIgnoreCaseAndAppCode(code, appCode);
+	}
+	
+	@Override
+	public boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode) {
+		return repo.existsByNameIgnoreCaseAndAppCode(name, appCode);
+	}
+	
+	@Override
+	public boolean existsByIdAndAppCode(long id, String appCode) {
+		return repo.existsByIdAndAppCode(id, appCode);
+	}
+	
+	@Override
+	public boolean existsById(Long id) {
+		return repo.existsById(id);
+	}
+	
+	@Override
+	@Transactional
+	public void deleteByIds(Set<Long> ids) {
+		if (ids.isEmpty()) {
+			return;
+		}
+		repo.softDeleteByIds(ids);
+	}
+	
 }

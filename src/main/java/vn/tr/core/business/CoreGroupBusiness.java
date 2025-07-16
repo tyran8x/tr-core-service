@@ -5,17 +5,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.tr.common.core.enums.CatalogStatus;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
+import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreGroup;
 import vn.tr.core.dao.service.CoreGroupService;
-import vn.tr.core.data.CoreGroupData;
 import vn.tr.core.data.criteria.CoreGroupSearchCriteria;
-import vn.tr.core.mapper.CoreGroupMapper;
+import vn.tr.core.data.dto.CoreGroupData;
+import vn.tr.core.data.mapper.CoreGroupMapper;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Objects;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,39 +29,33 @@ public class CoreGroupBusiness {
 	private final CoreGroupMapper coreGroupMapper;
 	
 	public CoreGroupData create(CoreGroupData coreGroupData) {
-		CoreGroup coreGroup = new CoreGroup();
+		CoreGroup coreGroup = coreGroupMapper.toEntity(coreGroupData);
+		coreGroup.setAppCode(LoginHelper.getAppCode());
 		return save(coreGroup, coreGroupData);
 	}
 	
 	public void delete(Long id) {
-		CoreGroup coreGroup = coreGroupService.findById(id).orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, id));
-		coreGroup.setDeletedAt(LocalDateTime.now());
-		coreGroupService.save(coreGroup);
+		if (!coreGroupService.existsById(id)) {
+			throw new EntityNotFoundException(CoreGroup.class, id);
+		}
+		coreGroupService.delete(id);
+	}
+	
+	public void bulkDelete(Set<Long> ids) {
+		coreGroupService.deleteByIds(ids);
 	}
 	
 	@Transactional(readOnly = true)
 	public Page<CoreGroupData> findAll(CoreGroupSearchCriteria criteria) {
 		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
 		Page<CoreGroup> pageCoreGroup = coreGroupService.findAll(criteria, pageable);
-		
-		Set<Long> parentIds = pageCoreGroup.getContent().stream()
-				.map(CoreGroup::getParentId)
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
-		
-		Map<Long, CoreGroup> parentGroupMap = coreGroupService.findMapByIds(parentIds);
-		
-		return pageCoreGroup.map(entity -> {
-			CoreGroupData data = coreGroupMapper.toData(entity);
-			
-			if (entity.getParentId() != null) {
-				CoreGroup parentEntity = parentGroupMap.get(entity.getParentId());
-				if (parentEntity != null) {
-					data.setParent(coreGroupMapper.toBaseData(parentEntity));
-				}
-			}
-			return data;
-		});
+		return pageCoreGroup.map(coreGroupMapper::toData);
+	}
+	
+	@Transactional(readOnly = true)
+	public List<CoreGroupData> getAll(CoreGroupSearchCriteria criteria) {
+		List<CoreGroup> pageCoreGroup = coreGroupService.findAll(criteria);
+		return pageCoreGroup.stream().map(coreGroupMapper::toData).collect(Collectors.toList());
 	}
 	
 	@Transactional(readOnly = true)
@@ -70,11 +65,29 @@ public class CoreGroupBusiness {
 				.orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, id));
 	}
 	
+	@Transactional(readOnly = true)
+	public Optional<CoreGroupData> getById(Long id) {
+		if (id == null) {
+			return Optional.empty();
+		}
+		return coreGroupService.findById(id).map(coreGroupMapper::toData);
+	}
+	
 	private CoreGroupData save(CoreGroup coreGroup, CoreGroupData coreGroupData) {
-		coreGroupMapper.updateEntityFromData(coreGroupData, coreGroup);
-		coreGroup.setDeletedAt(null);
-		coreGroup = coreGroupService.save(coreGroup);
-		return coreGroupMapper.toData(coreGroup);
+		coreGroupMapper.save(coreGroupData, coreGroup);
+		if (coreGroupData.getParentId() != null) {
+			CoreGroup parentEntity = coreGroupService.findById(coreGroupData.getParentId())
+					.orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, coreGroupData.getParentId()));
+			
+			if (CatalogStatus.INACTIVE.getValue().equals(parentEntity.getStatus())) {
+				throw new IllegalStateException("Không thể gán vào nhóm cha đã bị vô hiệu hóa.");
+			}
+			coreGroup.setParentId(coreGroupData.getParentId());
+		} else {
+			coreGroup.setParentId(null);
+		}
+		CoreGroup savedGroup = coreGroupService.save(coreGroup);
+		return findById(savedGroup.getId());
 	}
 	
 	public CoreGroupData update(Long id, CoreGroupData coreGroupData) {
