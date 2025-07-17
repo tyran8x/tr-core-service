@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.constant.CacheConstants;
 import vn.tr.common.core.constant.Constants;
 import vn.tr.common.core.domain.model.LoginUser;
@@ -23,7 +24,9 @@ import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 @Service
@@ -37,6 +40,11 @@ public class CoreUserServiceImpl implements CoreUserService {
 	private Integer maxRetryCount;
 	@Value("${user.password.lockTime}")
 	private Integer lockTime;
+	
+	@Override
+	public void deleteById(Long id) {
+		repo.deleteById(id);
+	}
 	
 	@Override
 	public Optional<CoreUser> findById(Long id) {
@@ -59,6 +67,11 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
+	public List<CoreUser> findAll(CoreUserSearchCriteria coreUserSearchCriteria) {
+		return repo.findAll(CoreUserSpecifications.quickSearch(coreUserSearchCriteria));
+	}
+	
+	@Override
 	public boolean existsByUsernameIgnoreCase(String username) {
 		return repo.existsByUsernameIgnoreCase(username);
 	}
@@ -74,8 +87,22 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
+	public Optional<CoreUser> findFirstByEmailIgnoreCase(String email) {
+		return repo.findFirstByEmailIgnoreCase(email);
+	}
+	
+	@Override
 	public boolean existsById(Long id) {
 		return repo.existsById(id);
+	}
+	
+	@Override
+	@Transactional
+	public void deleteByIds(Set<Long> ids) {
+		if (ids.isEmpty()) {
+			return;
+		}
+		repo.softDeleteByIds(ids);
 	}
 	
 	@Override

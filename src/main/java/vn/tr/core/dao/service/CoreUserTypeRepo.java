@@ -6,24 +6,24 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.dao.model.CoreUserType;
 
-import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface CoreUserRepo extends JpaRepository<CoreUser, Long>, JpaSpecificationExecutor<CoreUser> {
+public interface CoreUserTypeRepo extends JpaRepository<CoreUserType, Long>, JpaSpecificationExecutor<CoreUserType> {
 	
-	boolean existsByUsernameIgnoreCase(String username);
+	boolean existsByIdNotAndCodeIgnoreCase(long id, String code);
 	
-	boolean existsByIdNotAndUsernameIgnoreCase(long id, String username);
+	boolean existsByIdNotAndNameIgnoreCase(long id, String name);
 	
-	Optional<CoreUser> findFirstByUsernameIgnoreCase(String username);
+	boolean existsByCodeIgnoreCase(String code);
 	
-	Optional<CoreUser> findFirstByEmailIgnoreCase(String email);
+	boolean existsByNameIgnoreCase(String name);
+	
+	boolean existsById(long id);
 	
 	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CoreWorkSpaceItem g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
+	@Query("UPDATE CoreUserType g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
 	void softDeleteByIds(@Param("ids") Set<Long> ids);
-	
 }

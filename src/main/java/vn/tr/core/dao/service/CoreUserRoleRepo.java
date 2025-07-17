@@ -14,7 +14,7 @@ public interface CoreUserRoleRepo extends JpaRepository<CoreUserRole, Long>, Jpa
 	
 	List<CoreUserRole> findByUsernameIgnoreCase(String username);
 	
-	@Query("SELECT cur FROM CoreUserRole cur WHERE cur.username = :username")
-	List<CoreUserRole> findAllByUsernameIncludingDeleted(@Param("username") String username);
+	@Query("SELECT cur FROM CoreUserRole cur WHERE cur.username = :username AND cur.appCode = :appCode")
+	List<CoreUserRole> findAllByUsernameAndAppCodeIncludingDeleted(@Param("username") String username, @Param("appCode") String appCode);
 	
 }

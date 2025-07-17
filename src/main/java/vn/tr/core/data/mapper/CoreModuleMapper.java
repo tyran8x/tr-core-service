@@ -1,7 +1,7 @@
 package vn.tr.core.data.mapper;
 
 import org.mapstruct.*;
-import vn.tr.common.core.enums.CatalogStatus;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.core.dao.model.CoreModule;
 import vn.tr.core.data.dto.CoreModuleData;
 
@@ -17,7 +17,7 @@ public interface CoreModuleMapper {
 		_updateEntityFromData(data, entity);
 		
 		if (entity.getStatus() == null) {
-			entity.setStatus(CatalogStatus.ACTIVE.getValue());
+			entity.setStatus(LifecycleStatus.ACTIVE);
 		}
 		
 		if (entity.getAppCode() == null && data.getAppCode() != null) {

@@ -9,9 +9,12 @@ import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public interface CoreUserService {
+	
+	void deleteById(Long id);
 	
 	Optional<CoreUser> findById(Long id);
 	
@@ -20,6 +23,8 @@ public interface CoreUserService {
 	void delete(Long id);
 	
 	boolean existsById(Long id);
+	
+	void deleteByIds(Set<Long> ids);
 	
 	Page<CoreUser> findAll(CoreUserSearchCriteria coreUserSearchCriteria, Pageable pageable);
 	
@@ -30,6 +35,8 @@ public interface CoreUserService {
 	boolean existsByIdNotAndUsernameIgnoreCase(long id, String username);
 	
 	Optional<CoreUser> findFirstByUsernameIgnoreCase(String username);
+	
+	Optional<CoreUser> findFirstByEmailIgnoreCase(String email);
 	
 	void recordLoginInfo(String userName, String status, String message);
 	

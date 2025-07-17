@@ -2,18 +2,18 @@ package vn.tr.core.data.mapper;
 
 import org.mapstruct.*;
 import vn.tr.common.core.enums.LifecycleStatus;
-import vn.tr.core.dao.model.CoreApp;
-import vn.tr.core.data.dto.CoreAppData;
+import vn.tr.core.dao.model.CoreContact;
+import vn.tr.core.data.dto.CoreContactData;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface CoreAppMapper {
+public interface CoreContactMapper {
 	
-	CoreAppData toData(CoreApp entity);
+	CoreContactData toData(CoreContact entity);
 	
 	@Mapping(target = "id", ignore = true)
-	CoreApp toEntity(CoreAppData data);
+	CoreContact toEntity(CoreContactData data);
 	
-	default void save(CoreAppData data, CoreApp entity) {
+	default void save(CoreContactData data, CoreContact entity) {
 		_updateEntityFromData(data, entity);
 		
 		if (entity.getStatus() == null) {
@@ -29,6 +29,6 @@ public interface CoreAppMapper {
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void _updateEntityFromData(CoreAppData data, @MappingTarget CoreApp entity);
+	void _updateEntityFromData(CoreContactData data, @MappingTarget CoreContact entity);
 	
 }

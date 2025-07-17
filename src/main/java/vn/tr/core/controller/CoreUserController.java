@@ -6,91 +6,109 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
-import vn.tr.common.core.exception.ServiceException;
-import vn.tr.common.core.exception.base.EntityNotFoundException;
+import vn.tr.common.log.annotation.Log;
+import vn.tr.common.log.enums.BusinessType;
 import vn.tr.common.satoken.utils.LoginHelper;
+import vn.tr.common.web.data.dto.DeleteData;
 import vn.tr.core.business.CoreUserBusiness;
-import vn.tr.core.data.CoreUserChangeIsEnabledData;
 import vn.tr.core.data.CoreUserChangePasswordData;
+import vn.tr.core.data.CoreUserChangeStatusData;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 import vn.tr.core.data.dto.CoreUserData;
 import vn.tr.core.data.validator.CoreUserValidator;
 
+import java.util.List;
+
 @RestController
-@RequestMapping(value = "/user")
+@RequestMapping(value = "/users") // Đổi thành plural "users" theo chuẩn REST
 @RequiredArgsConstructor
 public class CoreUserController {
 	
 	private final CoreUserBusiness coreUserBusiness;
 	private final CoreUserValidator coreUserValidator;
 	
-	@PostMapping(value = {""})
+	@InitBinder("coreUserData")
+	public void initBinder(WebDataBinder binder) {
+		binder.addValidators(coreUserValidator);
+	}
+	
+	@PostMapping
+	@Log(title = "Tạo mới Người dùng", businessType = BusinessType.INSERT)
 	public R<CoreUserData> create(@Valid @RequestBody CoreUserData coreUserData) {
-		coreUserData = coreUserBusiness.create(coreUserData);
-		return R.ok(coreUserData);
+		CoreUserData createdUser = coreUserBusiness.create(coreUserData);
+		return R.ok(createdUser, "Tạo người dùng thành công");
 	}
 	
-	@DeleteMapping(value = {"/{id}"})
-	public R<Void> delete(@PathVariable("id") Long id) throws EntityNotFoundException {
+	@PutMapping("/{id}")
+	@Log(title = "Cập nhật Người dùng", businessType = BusinessType.UPDATE)
+	public R<CoreUserData> update(@PathVariable Long id, @Valid @RequestBody CoreUserData coreUserData) {
+		CoreUserData updatedUser = coreUserBusiness.update(id, coreUserData);
+		return R.ok(updatedUser, "Cập nhật người dùng thành công");
+	}
+	
+	@DeleteMapping("/{id}")
+	@Log(title = "Xóa Người dùng", businessType = BusinessType.DELETE)
+	public R<Void> delete(@PathVariable Long id) {
 		coreUserBusiness.delete(id);
-		return R.ok();
+		return R.ok("Xóa người dùng thành công");
 	}
 	
-	@GetMapping(value = {"/", ""})
-	public R<Page<CoreUserData>> findAll(CoreUserSearchCriteria criteria) {
-		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(criteria);
+	@DeleteMapping
+	@Log(title = "Xóa hàng loạt Người dùng", businessType = BusinessType.DELETE)
+	public R<Void> bulkDelete(@Valid @RequestBody DeleteData deleteData) {
+		if (deleteData.getIds() == null || deleteData.getIds().isEmpty()) {
+			return R.fail("Danh sách ID không được để trống.");
+		}
+		coreUserBusiness.bulkDelete(deleteData.getIds());
+		return R.ok("Xóa hàng loạt người dùng thành công");
+	}
+	
+	@GetMapping
+	@Log(title = "Tìm kiếm Người dùng (Phân trang)", businessType = BusinessType.LIST, isSaveRequestData = false)
+	public R<Page<CoreUserData>> search(CoreUserSearchCriteria criteria) {
+		Page<CoreUserData> pageCoreUserData = coreUserBusiness.search(criteria);
 		return R.ok(pageCoreUserData);
 	}
 	
-	@GetMapping(value = {"/email/{email}"})
-	public R<CoreUserData> findByEmail(@PathVariable("email") String email) {
-		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
-		return R.ok(coreUserData);
+	// Giữ lại endpoint này nếu cần lấy danh sách không phân trang
+	@GetMapping("/list")
+	@Log(title = "Lấy danh sách Người dùng", businessType = BusinessType.LIST, isSaveRequestData = false)
+	public R<List<CoreUserData>> getAll(CoreUserSearchCriteria criteria) {
+		// Cần thêm hàm getAll vào CoreUserBusiness nếu cần
+		List<CoreUserData> coreUserDatas = coreUserBusiness.getAll(criteria);
+		return R.ok(coreUserDatas);
 	}
 	
-	@GetMapping(value = {"/info"})
-	public R<CoreUserData> getInfo() {
-		if (!LoginHelper.isLogin()) {
-			throw new ServiceException("Chưa đăng nhập");
-		}
-		
-		String email = LoginHelper.getUsername();
-		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
-		
-		if (coreUserData == null) {
-			throw new ServiceException("Thông tin người dùng không tồn tại.");
-		}
-		
-		return R.ok(coreUserData);
-	}
-	
-	@GetMapping(value = {"/{id}"})
-	public R<CoreUserData> findById(@PathVariable("id") long id) throws EntityNotFoundException {
+	@GetMapping("/{id}")
+	@Log(title = "Lấy chi tiết Người dùng", businessType = BusinessType.DETAIL, isSaveRequestData = false)
+	public R<CoreUserData> findById(@PathVariable long id) {
 		CoreUserData coreUserData = coreUserBusiness.findById(id);
 		return R.ok(coreUserData);
 	}
 	
-	@InitBinder("coreUserData")
-	public void initBinder(WebDataBinder webDataBinder) {
-		webDataBinder.addValidators(coreUserValidator);
-	}
-	
-	@PutMapping(value = {"/{id}"})
-	public R<CoreUserData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreUserData coreUserData) throws EntityNotFoundException {
-		coreUserData = coreUserBusiness.update(id, coreUserData);
+	// Endpoint để lấy thông tin của chính người dùng đang đăng nhập
+	@GetMapping("/me")
+	@Log(title = "Lấy thông tin cá nhân", businessType = BusinessType.DETAIL, isSaveRequestData = false)
+	public R<CoreUserData> getMyInfo() {
+		String username = LoginHelper.getUsername(); // Lấy username từ token
+		CoreUserData coreUserData = coreUserBusiness.findByUsername(username);
 		return R.ok(coreUserData);
 	}
 	
-	@PostMapping(value = {"/change/password"})
-	public R<CoreUserData> changePassword(@RequestBody CoreUserChangePasswordData coreUserChangePasswordData) {
-		coreUserBusiness.changePassword(coreUserChangePasswordData);
-		return R.ok();
+	// --- Các Endpoint Hành động (Action) ---
+	
+	@PatchMapping("/{username}/change-password")
+	@Log(title = "Đổi mật khẩu Người dùng", businessType = BusinessType.UPDATE)
+	public R<Void> changePassword(@PathVariable String username, @Valid @RequestBody CoreUserChangePasswordData request) {
+		// Truyền cả username từ path vào để đảm bảo đúng đối tượng
+		coreUserBusiness.changePassword(username, request.getPassword());
+		return R.ok("Đổi mật khẩu thành công");
 	}
 	
-	@PostMapping(value = {"/change/enable"})
-	public R<CoreUserData> changeIsEnabled(@RequestBody CoreUserChangeIsEnabledData coreUserChangeIsEnabledData) {
-		coreUserBusiness.changeIsEnabled(coreUserChangeIsEnabledData);
-		return R.ok();
+	@PatchMapping("/{username}/update-status")
+	@Log(title = "Cập nhật trạng thái Người dùng", businessType = BusinessType.UPDATE)
+	public R<Void> updateStatus(@PathVariable String username, @Valid @RequestBody CoreUserChangeStatusData request) {
+		coreUserBusiness.updateStatus(username, request.getNewStatus());
+		return R.ok("Cập nhật trạng thái thành công");
 	}
-	
 }

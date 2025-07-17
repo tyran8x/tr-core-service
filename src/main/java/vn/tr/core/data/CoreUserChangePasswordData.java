@@ -1,12 +1,12 @@
 package vn.tr.core.data;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
 @Data
 public class CoreUserChangePasswordData {
 	
-	private String username;
-	
+	@NotEmpty
 	private String password;
 	
 }

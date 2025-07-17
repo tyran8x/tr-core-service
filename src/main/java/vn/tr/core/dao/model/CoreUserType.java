@@ -1,10 +1,8 @@
 package vn.tr.core.dao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import vn.tr.common.jpa.entity.BaseCommonEntity;
@@ -13,8 +11,10 @@ import vn.tr.common.jpa.entity.BaseCommonEntity;
 @Table(name = "core_user_type")
 @Getter
 @Setter
-@ToString
-@RequiredArgsConstructor
+@ToString(callSuper = true)
+@SuperBuilder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 @SQLDelete(sql = "UPDATE core_user_type SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUserType extends BaseCommonEntity {

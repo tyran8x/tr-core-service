@@ -5,7 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.tr.common.core.enums.CatalogStatus;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
@@ -79,7 +79,7 @@ public class CoreGroupBusiness {
 			CoreGroup parentEntity = coreGroupService.findById(coreGroupData.getParentId())
 					.orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, coreGroupData.getParentId()));
 			
-			if (CatalogStatus.INACTIVE.getValue().equals(parentEntity.getStatus())) {
+			if (LifecycleStatus.INACTIVE.getValue().equals(parentEntity.getStatus())) {
 				throw new IllegalStateException("Không thể gán vào nhóm cha đã bị vô hiệu hóa.");
 			}
 			coreGroup.setParentId(coreGroupData.getParentId());

@@ -1,225 +1,226 @@
 package vn.tr.core.business;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.crypto.digest.BCrypt;
+import cn.dev33.satoken.secure.BCrypt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
-import vn.tr.common.core.utils.FunctionUtils;
+import vn.tr.common.core.exception.user.UserException;
+import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreContact;
-import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreUser;
-import vn.tr.core.dao.model.CoreUserRole;
+import vn.tr.core.dao.model.CoreUserType;
 import vn.tr.core.dao.service.*;
-import vn.tr.core.data.CoreUserChangeIsEnabledData;
-import vn.tr.core.data.CoreUserChangePasswordData;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 import vn.tr.core.data.dto.CoreContactData;
 import vn.tr.core.data.dto.CoreUserData;
+import vn.tr.core.data.mapper.CoreContactMapper;
 import vn.tr.core.data.mapper.CoreUserMapper;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CoreUserBusiness {
 	
+	// --- Dependencies ---
 	private final CoreUserService coreUserService;
-	private final CoreRoleService coreRoleService;
+	private final CoreUserTypeService coreUserTypeService;
+	private final CoreContactService coreContactService;
 	private final CoreUserRoleService coreUserRoleService;
-	private final CoreUserAppService coreUserAppService;
 	private final CoreUserGroupService coreUserGroupService;
+	private final CoreUserAppService coreUserAppService;
 	private final CoreUserMapper coreUserMapper;
+	private final CoreContactMapper coreContactMapper;
 	
-	private CoreUserData convertToCoreUserData(CoreUser coreUser) {
-		CoreUserData coreUserData = new CoreUserData();
-		coreUserData.setId(coreUser.getId());
-		//	coreUserData.setEmail(email);
-		coreUserData.setFullName(coreUser.getFullName());
-		coreUserData.setUsername(coreUser.getUsername());
-//		List<CoreUser2Role> coreUser2Roles = coreUser2RoleService.findByUserNameAndDaXoaFalse(email);
-//		Set<String> roles = coreUser2Roles.stream().map(CoreUser2Role::getRole).collect(Collectors.toSet());
-//		String defaultRole = "ROLE_" + coreUser.getAppCode() + "_USER";
-//		roles.add(defaultRole.toUpperCase());
-//		List<CoreUserRole> coreUserRoles = coreUserRoleService.findByUserNameAndDaXoaFalse(coreUser.getUsername());
-//		Set<String> roles = coreUserRoles.stream().map(CoreUserRole::getRoleCode).collect(Collectors.toSet());
-//		coreUserData.setRoles(roles);
-		//	List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCaseAndDaXoaFalse(coreUser.getUsername());
-//		Map<String, String> connects = new HashMap<>();
-//		if (CollUtil.isNotEmpty(coreUserConnects)) {
-//			for (CoreUserConnect coreUserConnect : coreUserConnects) {
-//				connects.put(coreUserConnect.getAppName(), coreUserConnect.getAppUserId());
-//			}
-//		}
-//		connects.putIfAbsent("mail", coreUser.getEmail());
-//
-//		coreUserData.setConnects(connects);
-		return coreUserData;
+	// =================================================================
+	// ========= KỊCH BẢN QUẢN LÝ CRUD CƠ BẢN =========
+	// =================================================================
+	
+	/**
+	 * Tạo người dùng mới. Logic validation đã được xử lý ở tầng Controller.
+	 */
+	public CoreUserData create(CoreUserData userData) {
+		// Chuẩn hóa username về chữ thường
+		String normalizedUsername = userData.getUsername().toLowerCase();
+		userData.setUsername(normalizedUsername);
+		
+		CoreUser user = coreUserMapper.toEntity(userData);
+		user.setHashedPassword(BCrypt.hashpw(userData.getPassword()));
+		
+		CoreUserType userType = coreUserTypeService.findByCode(userData.getUserTypeCode())
+				.orElseThrow(() -> new UserException("Loại người dùng không hợp lệ: " + userData.getUserTypeCode()));
+		user.setUserTypeId(userType.getId());
+		
+		CoreUser savedUser = coreUserService.save(user);
+		
+		syncUserRelations(savedUser.getUsername(), userData);
+		syncUserContacts(savedUser.getUsername(), savedUser.getEmail(), userData.getContacts());
+		
+		return findByUsername(savedUser.getUsername());
 	}
 	
-	public CoreUserData create(CoreUserData coreUserData) {
-		CoreUser coreUser = new CoreUser();
-		return save(coreUser, coreUserData);
+	/**
+	 * Cập nhật thông tin người dùng.
+	 */
+	public CoreUserData update(Long id, CoreUserData userData) {
+		CoreUser user = coreUserService.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, id));
+		
+		// Mapper sẽ không cập nhật username và password
+		coreUserMapper.updateEntity(userData, user);
+		
+		if (userData.getUserTypeCode() != null) {
+			CoreUserType userType = coreUserTypeService.findByCode(userData.getUserTypeCode())
+					.orElseThrow(() -> new UserException("Loại người dùng không hợp lệ: " + userData.getUserTypeCode()));
+			user.setUserType(userType);
+		}
+		
+		CoreUser savedUser = coreUserService.save(user);
+		
+		syncUserRelations(savedUser.getUsername(), userData);
+		syncUserContacts(savedUser.getUsername(), savedUser.getEmail(), userData.getContacts());
+		
+		return findByUsername(savedUser.getUsername());
 	}
 	
-	public void delete(Long id) throws EntityNotFoundException {
-		Optional<CoreUser> optional = coreUserService.findById(id);
-		if (optional.isEmpty()) {
+	public void delete(Long id) {
+		if (!coreUserService.existsById(id)) {
 			throw new EntityNotFoundException(CoreUser.class, id);
 		}
-		CoreUser coreUser = optional.get();
-		coreUser.setDaXoa(true);
-		coreUserService.save(coreUser);
+		coreUserService.deleteById(id);
 	}
+	
+	public void bulkDelete(Set<Long> ids) {
+		coreUserService.deleteByIds(ids);
+	}
+	
+	// =================================================================
+	// ========= KỊCH BẢN TRUY VẤN & TÌM KIẾM =========
+	// =================================================================
 	
 	@Transactional(readOnly = true)
 	public Page<CoreUserData> findAll(CoreUserSearchCriteria criteria) {
 		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
-		Page<CoreUser> pageCoreUser = coreUserService.findAll(criteria, pageable);
-		return pageCoreUser.map(coreUserMapper::toData);
-	}
-	
-	public CoreUserData findByEmail(String email) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameAndDaXoaFalse(email);
-		CoreUser coreUser = new CoreUser();
-		if (optionalCoreUser.isPresent()) {
-			coreUser = optionalCoreUser.get();
+		// Chuẩn hóa các tham số tìm kiếm nếu cần
+		if (criteria.getUsername() != null) {
+			criteria.setUsername(criteria.getUsername().toLowerCase());
 		}
-		return convertToCoreUserData(coreUser);
+		Page<CoreUser> pageUser = coreUserService.findAll(criteria, pageable);
+		return pageUser.map(this::mapEntityToDataWithRelations);
 	}
 	
+	@Transactional(readOnly = true)
 	public CoreUserData findById(Long id) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findById(id);
-		if (optionalCoreUser.isEmpty()) {
-			throw new EntityNotFoundException(CoreUser.class, id);
-		}
-		CoreUser coreUser = optionalCoreUser.get();
-		return convertToCoreUserData(coreUser);
+		return coreUserService.findById(id)
+				.map(this::mapEntityToDataWithRelations)
+				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, id));
 	}
 	
-	public CoreUserData update(Long id, CoreUserData coreUserData) {
-		Optional<CoreUser> optional = coreUserService.findById(id);
-		if (optional.isEmpty()) {
-			throw new EntityNotFoundException(CoreUser.class, id);
-		}
-		CoreUser coreUser = optional.get();
-		return save(coreUser, coreUserData);
+	@Transactional(readOnly = true)
+	public CoreUserData findByUsername(String username) {
+		String normalizedUsername = username.toLowerCase();
+		return coreUserService.findFirstByUsernameIgnoreCase(normalizedUsername)
+				.map(this::mapEntityToDataWithRelations)
+				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
 	}
 	
-	private CoreUserData save(CoreUser coreUser, CoreUserData coreUserData) {
-		coreUser.setDaXoa(false);
-		coreUser.setUsername(FunctionUtils.removeXss(coreUserData.getUsername()));
-		coreUser.setFullName(FunctionUtils.removeXss(coreUserData.getFullName()));
-//		coreUser.setUserTypeId(coreUserData.getUserType());
-//		coreUser.setIsEnabled(Boolean.TRUE.equals(coreUserData.getIsEnabled()));
-		if (Objects.isNull(coreUser.getId())) {
-			coreUser.setHashedPassword(BCrypt.hashpw(coreUserData.getPassword()));
-		}
-		coreUser = coreUserService.save(coreUser);
-		Set<String> roles = coreUserData.getRoles();
-		List<CoreRole> coreRoles = coreRoleService.findByMaIgnoreCaseInAndDaXoaFalse(roles);
-		
-		coreUserRoleService.setFixedDaXoaForUserName(true, coreUser.getUsername());
-		if (CollUtil.isNotEmpty(coreRoles)) {
-			for (CoreRole coreRole : coreRoles) {
-				CoreUserRole coreUserRole = new CoreUserRole();
-				Optional<CoreUserRole> optionalCoreUserRole = coreUserRoleService.findFirstByRoleAndUserName(coreRole.getCode(),
-						coreUser.getUsername());
-				if (optionalCoreUserRole.isPresent()) {
-					coreUserRole = optionalCoreUserRole.get();
-				}
-				coreUserRole.setDaXoa(false);
-				coreUserRole.setRoleCode(coreRole.getCode());
-				coreUserRole.setUsername(coreUser.getUsername());
-				coreUserRoleService.save(coreUserRole);
-			}
-		}
-		return convertToCoreUserData(coreUser);
+	// =================================================================
+	// ========= KỊCH BẢN QUẢN LÝ TÀI KHOẢN & PHÂN QUYỀN =========
+	// =================================================================
+	
+	public void changePassword(String username, String newPassword) {
+		String normalizedUsername = username.toLowerCase();
+		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(normalizedUsername)
+				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
+		user.setHashedPassword(BCrypt.hashpw(newPassword));
+		coreUserService.save(user);
 	}
 	
-	public void changePassword(CoreUserChangePasswordData coreUserChangePasswordData) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameIgnoreCase(coreUserChangePasswordData.getUsername());
-		if (optionalCoreUser.isEmpty()) {
-			throw new EntityNotFoundException(CoreUser.class, coreUserChangePasswordData.getUsername());
-		}
-		CoreUser coreUser = optionalCoreUser.get();
-		coreUser.setHashedPassword(BCrypt.hashpw(coreUserChangePasswordData.getPassword()));
-		coreUserService.save(coreUser);
+	public void updateStatus(String username, String newStatus) {
+		String normalizedUsername = username.toLowerCase();
+		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(normalizedUsername)
+				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
+		user.setStatus(newStatus);
+		coreUserService.save(user);
 	}
 	
-	public void changeIsEnabled(CoreUserChangeIsEnabledData coreUserChangeIsEnabledData) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameIgnoreCase(coreUserChangeIsEnabledData.getUsername());
-		if (optionalCoreUser.isEmpty()) {
-			throw new EntityNotFoundException(CoreUser.class, coreUserChangeIsEnabledData.getUsername());
-		}
-		CoreUser coreUser = optionalCoreUser.get();
-		//coreUser.setStatus(Boolean.TRUE.equals(coreUserChangeIsEnabledData.getIsEnabled()));
-		coreUserService.save(coreUser);
-	}
+	// =================================================================
+	// ========= CÁC HÀM HELPER PRIVATE =========
+	// =================================================================
 	
 	private void syncUserRelations(String username, CoreUserData userData) {
+		String currentAppCode = LoginHelper.getAppCode();
+		
+		// Đồng bộ App
 		coreUserAppService.replaceUserApps(username, userData.getApps());
 		
-		// Giả sử DTO.getRoles() trả về một Set<String> dạng "ROLE_SYT_ADMIN", "ROLE_SKHCN_USER"
-		if (userData.getRoles() != null) {
-			// Cần một hàm helper để chuyển Set<String> thành Map<String, Set<String>>
-			Map<String, Set<String>> rolesByApp = groupRolesByApp(userData.getRoles());
-			coreUserRoleService.replaceUserRoles(username, rolesByApp);
-		}
+		// Đồng bộ Role (chỉ trong phạm vi app hiện tại)
+		Set<String> rolesForCurrentApp = (userData.getRoles() == null)
+				? Collections.emptySet()
+				: userData.getRoles().stream()
+				.filter(roleCode -> isRoleOfApp(roleCode, currentAppCode))
+				.collect(Collectors.toSet());
+		coreUserRoleService.replaceUserRolesForApp(username, currentAppCode, rolesForCurrentApp);
 		
+		// Đồng bộ Group (giả định Group là toàn cục)
 		coreUserGroupService.replaceUserGroups(username, userData.getGroups());
 	}
 	
-	private Map<String, Set<String>> groupRolesByApp(Set<String> flatRoleCodes) {
-		if (flatRoleCodes == null) return Collections.emptyMap();
-		return flatRoleCodes.stream()
-				.filter(roleCode -> roleCode.startsWith("ROLE_") && roleCode.chars().filter(ch -> ch == '_').count() >= 2)
-				.collect(Collectors.groupingBy(roleCode -> roleCode.split("_")[1].toLowerCase(), Collectors.toSet()));
+	private boolean isRoleOfApp(String roleCode, String appCode) {
+		if (roleCode == null || appCode == null) return false;
+		// Quy ước: ROLE_{APP_CODE}_{SUFFIX}
+		String[] parts = roleCode.split("_");
+		return parts.length >= 3 && "ROLE".equals(parts[0]) && appCode.equalsIgnoreCase(parts[1]);
 	}
 	
-	private void syncUserContacts(String username, List<CoreContactData> newContactDataList) {
+	private void syncUserContacts(String username, String primaryEmail, List<CoreContactData> newContactDataList) {
 		final String ownerType = "CORE_USER";
-		List<CoreContact> existingContacts = coreContactService.findByOwner(ownerType, username);
-		Map<Long, CoreContact> existingContactsMap = existingContacts.stream()
+		List<CoreContact> existingContacts = coreContactService.findAllByOwnerIncludingDeleted(ownerType, username);
+		Map<Long, CoreContact> existingContactsMapById = existingContacts.stream()
 				.collect(Collectors.toMap(CoreContact::getId, Function.identity()));
 		
-		if (newContactDataList == null) {
-			newContactDataList = Collections.emptyList();
-		}
-		
-		Map<Long, CoreContactData> newContactsMap = newContactDataList.stream()
-				.filter(dto -> dto.getId() != null)
-				.collect(Collectors.toMap(CoreContactData::getId, Function.identity()));
+		final List<CoreContactData> finalNewContacts = (newContactDataList != null) ? newContactDataList : Collections.emptyList();
 		
 		List<CoreContact> toSave = new ArrayList<>();
+		Set<Long> processedIds = new HashSet<>();
 		
-		// Update hoặc Deactivate các contact cũ
-		for (CoreContact existingContact : existingContacts) {
-			CoreContactData dto = newContactsMap.get(existingContact.getId());
-			if (dto != null) { // Update
-				coreContactMapper.updateEntity(dto, existingContact);
-				existingContact.setStatus("ACTIVE");
-				toSave.add(existingContact);
-			} else { // Deactivate
-				existingContact.setStatus("INACTIVE");
-				toSave.add(existingContact);
-			}
-		}
+		// Update các contact hiện có được gửi lên
+		finalNewContacts.stream()
+				.filter(dto -> dto.getId() != null && existingContactsMapById.containsKey(dto.getId()))
+				.forEach(dto -> {
+					CoreContact existingContact = existingContactsMapById.get(dto.getId());
+					coreContactMapper._updateEntityFromData(dto, existingContact);
+					existingContact.setDeletedAt(null); // Khôi phục nếu cần
+					toSave.add(existingContact);
+					processedIds.add(dto.getId());
+				});
 		
-		// Insert các contact mới
-		newContactDataList.stream()
+		// Xóa mềm các contact không còn trong danh sách mới
+		existingContacts.stream()
+				.filter(ec -> ec.getDeletedAt() == null && !processedIds.contains(ec.getId()))
+				.forEach(ec -> {
+					// Đảm bảo không xóa mềm email chính
+					if (!Boolean.TRUE.equals(ec.getIsPrimary())) {
+						ec.setDeletedAt(LocalDateTime.now());
+						toSave.add(ec);
+					}
+				});
+		
+		// Thêm các contact hoàn toàn mới
+		finalNewContacts.stream()
 				.filter(dto -> dto.getId() == null)
 				.map(coreContactMapper::toEntity)
 				.peek(contact -> {
 					contact.setOwnerValue(username);
 					contact.setOwnerType(ownerType);
-					contact.setStatus("ACTIVE");
 				})
 				.forEach(toSave::add);
 		
@@ -227,29 +228,26 @@ public class CoreUserBusiness {
 			coreContactService.saveAll(toSave);
 		}
 		
-		ensurePrimaryEmailContactExists(username, ownerType);
+		ensurePrimaryEmailContactExists(username, primaryEmail);
 	}
 	
-	private void ensurePrimaryEmailContactExists(String username, String ownerType) {
-		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(username).get();
-		coreContactService.findByOwner(ownerType, username).stream()
-				.filter(c -> "EMAIL".equals(c.getContactType()) && Boolean.TRUE.equals(c.getIsPrimary()))
-				.findFirst()
+	private void ensurePrimaryEmailContactExists(String username, String primaryEmail) {
+		coreContactService.findPrimaryEmailByOwner("CORE_USER", username)
 				.ifPresentOrElse(
-						primaryContact -> { // Nếu đã có primary email contact
-							if (!primaryContact.getValue().equals(user.getEmail())) {
-								primaryContact.setValue(user.getEmail());
+						primaryContact -> {
+							if (!primaryContact.getValue().equals(primaryEmail)) {
+								primaryContact.setValue(primaryEmail);
 								coreContactService.save(primaryContact);
 							}
 						},
-						() -> { // Nếu chưa có
-							CoreContact newPrimaryContact = new CoreContact();
-							newPrimaryContact.setOwnerValue(username);
-							newPrimaryContact.setOwnerType(ownerType);
-							newPrimaryContact.setContactType("EMAIL");
-							newPrimaryContact.setValue(user.getEmail());
-							newPrimaryContact.setIsPrimary(true);
-							newPrimaryContact.setStatus("ACTIVE");
+						() -> {
+							CoreContact newPrimaryContact = CoreContact.builder()
+									.ownerValue(username)
+									.ownerType("CORE_USER")
+									.contactType("EMAIL")
+									.value(primaryEmail)
+									.isPrimary(true)
+									.build();
 							coreContactService.save(newPrimaryContact);
 						}
 				                );
@@ -258,6 +256,7 @@ public class CoreUserBusiness {
 	private CoreUserData mapEntityToDataWithRelations(CoreUser user) {
 		CoreUserData data = coreUserMapper.toData(user);
 		
+		// Chỉ lấy các contact đang hoạt động để hiển thị
 		data.setContacts(coreContactService.findActiveByOwner("CORE_USER", user.getUsername())
 				.stream().map(coreContactMapper::toData).collect(Collectors.toList()));
 		
@@ -267,5 +266,4 @@ public class CoreUserBusiness {
 		
 		return data;
 	}
-	
 }

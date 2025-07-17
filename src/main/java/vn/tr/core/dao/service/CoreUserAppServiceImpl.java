@@ -3,7 +3,7 @@ package vn.tr.core.dao.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.tr.common.core.enums.CatalogStatus;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.core.dao.model.CoreUserApp;
 
 import java.time.LocalDateTime;
@@ -60,7 +60,7 @@ public class CoreUserAppServiceImpl implements CoreUserAppService {
 			
 			if (isInNewList && isCurrentlyDeleted) {
 				assignment.setDeletedAt(null);
-				assignment.setStatus(CatalogStatus.ACTIVE.getValue());
+				assignment.setStatus(LifecycleStatus.ACTIVE.getValue());
 				assignment.setAssignedAt(LocalDateTime.now());
 				toSaveOrUpdate.add(assignment);
 			} else if (!isInNewList && !isCurrentlyDeleted) {
