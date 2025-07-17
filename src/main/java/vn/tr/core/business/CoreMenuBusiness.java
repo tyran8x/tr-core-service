@@ -33,17 +33,17 @@ public class CoreMenuBusiness {
 	private CoreMenuData convertToCoreMenuData(CoreMenu coreMenu) {
 		CoreMenuData coreMenuData = new CoreMenuData();
 		coreMenuData.setId(coreMenu.getId());
-		coreMenuData.setTen(coreMenu.getTen());
-		coreMenuData.setMa(coreMenu.getMa());
-		coreMenuData.setChaId(null);
-		if (Objects.nonNull(coreMenu.getChaId())) {
-			Optional<CoreMenu> optionalCoreMenu = coreMenuService.findByIdAndDaXoaFalse(coreMenu.getChaId());
-			if (optionalCoreMenu.isPresent()) {
-				coreMenuData.setChaId(optionalCoreMenu.get().getId());
-				coreMenuData.setChaTen(optionalCoreMenu.get().getTen());
-			}
-		}
-		coreMenuData.setMoTa(coreMenu.getMoTa());
+//		coreMenuData.setTen(coreMenu.getTen());
+//		coreMenuData.setMa(coreMenu.getMa());
+//		coreMenuData.setChaId(null);
+//		if (Objects.nonNull(coreMenu.getChaId())) {
+//			Optional<CoreMenu> optionalCoreMenu = coreMenuService.findByIdAndDaXoaFalse(coreMenu.getChaId());
+//			if (optionalCoreMenu.isPresent()) {
+//				coreMenuData.setChaId(optionalCoreMenu.get().getId());
+//				coreMenuData.setChaTen(optionalCoreMenu.get().getTen());
+//			}
+//		}
+//		coreMenuData.setMoTa(coreMenu.getMoTa());
 		coreMenuData.setPath(coreMenu.getPath());
 		coreMenuData.setComponent(coreMenu.getComponent());
 		coreMenuData.setIsHidden(coreMenu.getIsHidden());
@@ -56,7 +56,7 @@ public class CoreMenuBusiness {
 		coreMenuData.setActiveMenu(coreMenu.getActiveMenu());
 		coreMenuData.setProps(coreMenu.getProps());
 		coreMenuData.setIsReload(coreMenu.getIsReload());
-		coreMenuData.setTrangThai(coreMenu.getTrangThai());
+		//coreMenuData.setTrangThai(coreMenu.getTrangThai());
 		coreMenuData.setSapXep(coreMenu.getSapXep());
 		return coreMenuData;
 	}
@@ -78,7 +78,7 @@ public class CoreMenuBusiness {
 	
 	public void deleteByIds(List<Long> ids) {
 		if (CollUtil.isNotEmpty(ids)) {
-			coreMenuService.setFixedDaXoaForIds(true, ids);
+			//		coreMenuService.setFixedDaXoaForIds(true, ids);
 		}
 	}
 	
@@ -121,33 +121,33 @@ public class CoreMenuBusiness {
 		if (CollUtil.contains(roles, "ROLE_ADMIN")) {
 			coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
 		} else {
-			List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
-			log.info("appCode: {} - menuIds: {}", appCode, menuIds);
-			coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
+			//	List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
+			//	log.info("appCode: {} - menuIds: {}", appCode, menuIds);
+			//	coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
 		}
-		if (CollUtil.isNotEmpty(coreMenus)) {
-			List<CoreMenu> cMenus = coreMenus.stream()
-					.filter(e -> Objects.isNull(e.getChaId()))
-					.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
-					.toList();
-			coreDsMenuData.setCoreMenuDatas(setCoreMenuData(cMenus, coreMenus));
-		}
+//		if (CollUtil.isNotEmpty(coreMenus)) {
+//			List<CoreMenu> cMenus = coreMenus.stream()
+//			//		.filter(e -> Objects.isNull(e.getChaId()))
+//					.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
+//					.toList();
+//			coreDsMenuData.setCoreMenuDatas(setCoreMenuData(cMenus, coreMenus));
+//		}
 		
 		return coreDsMenuData;
 	}
 	
 	private CoreMenuData save(CoreMenu coreMenu, CoreMenuData coreMenuData) {
 		coreMenu.setDaXoa(false);
-		coreMenu.setTen(FunctionUtils.removeXss(coreMenuData.getTen()));
-		coreMenu.setMa(FunctionUtils.removeXss(coreMenuData.getMa()));
-		coreMenu.setChaId(null);
-		if (Objects.nonNull(coreMenuData.getChaId())) {
-			Optional<CoreMenu> optionalCoreMenu = coreMenuService.findByIdAndDaXoaFalse(coreMenuData.getChaId());
-			if (optionalCoreMenu.isPresent()) {
-				coreMenu.setChaId(optionalCoreMenu.get().getId());
-			}
-		}
-		coreMenu.setMoTa(FunctionUtils.removeXss(coreMenuData.getMoTa()));
+//		coreMenu.setTen(FunctionUtils.removeXss(coreMenuData.getTen()));
+//		coreMenu.setMa(FunctionUtils.removeXss(coreMenuData.getMa()));
+//		coreMenu.setChaId(null);
+//		if (Objects.nonNull(coreMenuData.getChaId())) {
+//			Optional<CoreMenu> optionalCoreMenu = coreMenuService.findByIdAndDaXoaFalse(coreMenuData.getChaId());
+//			if (optionalCoreMenu.isPresent()) {
+//				coreMenu.setChaId(optionalCoreMenu.get().getId());
+//			}
+//		}
+//		coreMenu.setMoTa(FunctionUtils.removeXss(coreMenuData.getMoTa()));
 		coreMenu.setPath(FunctionUtils.removeXss(coreMenuData.getPath()));
 		coreMenu.setComponent(FunctionUtils.removeXss(coreMenuData.getComponent()));
 		coreMenu.setRedirect(FunctionUtils.removeXss(coreMenuData.getRedirect()));
@@ -161,7 +161,7 @@ public class CoreMenuBusiness {
 		coreMenu.setActiveMenu(FunctionUtils.removeXss(coreMenuData.getActiveMenu()));
 		coreMenu.setProps(FunctionUtils.removeXss(coreMenuData.getProps()));
 		coreMenu.setIsReload(Boolean.TRUE.equals(coreMenuData.getIsReload()));
-		coreMenu.setTrangThai(Boolean.TRUE.equals(coreMenuData.getTrangThai()));
+		//	coreMenu.setTrangThai(Boolean.TRUE.equals(coreMenuData.getTrangThai()));
 		coreMenu.setSapXep(coreMenuData.getSapXep());
 		coreMenu = coreMenuService.save(coreMenu);
 		return convertToCoreMenuData(coreMenu);
@@ -176,10 +176,10 @@ public class CoreMenuBusiness {
 		}
 		coreMenu.setDaXoa(false);
 		coreMenu.setIsReload(true);
-		coreMenu.setTrangThai(true);
-		coreMenu.setAppCode(FunctionUtils.removeXss(appCode));
-		coreMenu.setChaId(chaId);
-		coreMenu.setMa(FunctionUtils.removeXss(routerData.getName()));
+//		coreMenu.setTrangThai(true);
+//		coreMenu.setAppCode(FunctionUtils.removeXss(appCode));
+//		coreMenu.setChaId(chaId);
+//		coreMenu.setMa(FunctionUtils.removeXss(routerData.getName()));
 		coreMenu.setPath(FunctionUtils.removeXss(routerData.getPath()));
 		coreMenu.setRedirect(FunctionUtils.removeXss(routerData.getRedirect()));
 		coreMenu.setIsHidden(Boolean.TRUE.equals(routerData.getHidden()));
@@ -190,8 +190,8 @@ public class CoreMenuBusiness {
 		if (Objects.nonNull(routerData.getMeta())) {
 			MetaData metaData = routerData.getMeta();
 			coreMenu.setIcon(FunctionUtils.removeXss(metaData.getIcon()));
-			coreMenu.setTen(FunctionUtils.removeXss(metaData.getTitle()));
-			coreMenu.setMoTa(FunctionUtils.removeXss(metaData.getTitle()));
+//			coreMenu.setTen(FunctionUtils.removeXss(metaData.getTitle()));
+//			coreMenu.setMoTa(FunctionUtils.removeXss(metaData.getTitle()));
 			coreMenu.setActiveMenu(FunctionUtils.removeXss(metaData.getActiveMenu()));
 			coreMenu.setIsAffix(Boolean.TRUE.equals(metaData.getAffix()));
 			coreMenu.setIsBreadcrumb(Boolean.TRUE.equals(metaData.getBreadcrumb()));
@@ -216,10 +216,10 @@ public class CoreMenuBusiness {
 			for (CoreMenu coreMenu : cMenus) {
 				CoreMenuData coreMenuData = new CoreMenuData();
 				coreMenuData.setId(coreMenu.getId());
-				coreMenuData.setTen(coreMenu.getTen());
-				coreMenuData.setMa(coreMenu.getMa());
-				coreMenuData.setChaId(coreMenu.getChaId());
-				coreMenuData.setMoTa(coreMenu.getMoTa());
+//				coreMenuData.setTen(coreMenu.getTen());
+//				coreMenuData.setMa(coreMenu.getMa());
+//				coreMenuData.setChaId(coreMenu.getChaId());
+//				coreMenuData.setMoTa(coreMenu.getMoTa());
 				coreMenuData.setPath(coreMenu.getPath());
 				coreMenuData.setComponent(coreMenu.getComponent());
 				coreMenuData.setRedirect(coreMenu.getRedirect());
@@ -233,16 +233,16 @@ public class CoreMenuBusiness {
 				coreMenuData.setActiveMenu(coreMenu.getActiveMenu());
 				coreMenuData.setProps(coreMenu.getProps());
 				coreMenuData.setIsReload(coreMenu.getIsReload());
-				coreMenuData.setTrangThai(coreMenu.getTrangThai());
+				//	coreMenuData.setTrangThai(coreMenu.getTrangThai());
 				coreMenuData.setSapXep(coreMenu.getSapXep());
 				coreMenuData.setAppCode(coreMenu.getAppCode());
-				
-				List<CoreMenu> children = coreMenus.stream()
-						.filter(e -> Objects.nonNull(e.getChaId()))
-						.filter(e -> e.getChaId().equals(coreMenu.getId()))
-						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
-						.toList();
-				coreMenuData.setChildren(setCoreMenuData(children, coreMenus));
+
+//				List<CoreMenu> children = coreMenus.stream()
+//						.filter(e -> Objects.nonNull(e.getChaId()))
+//						.filter(e -> e.getChaId().equals(coreMenu.getId()))
+//						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
+//						.toList();
+//				coreMenuData.setChildren(setCoreMenuData(children, coreMenus));
 				coreMenuDatas.add(coreMenuData);
 			}
 		}
@@ -291,17 +291,17 @@ public class CoreMenuBusiness {
 			if (CollUtil.contains(roles, "ROLE_ADMIN")) {
 				coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
 			} else {
-				List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
-				log.info("getRoutes appCode: {} - menuIds: {}", appCode, menuIds);
-				coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
+//				List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
+//				log.info("getRoutes appCode: {} - menuIds: {}", appCode, menuIds);
+//				coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
 			}
-			if (CollUtil.isNotEmpty(coreMenus)) {
-				List<CoreMenu> cMenus = coreMenus.stream()
-						.filter(e -> Objects.isNull(e.getChaId()))
-						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
-						.toList();
-				routeRecordRawDatas = setRouteRecordRawData(cMenus, coreMenus);
-			}
+//			if (CollUtil.isNotEmpty(coreMenus)) {
+//				List<CoreMenu> cMenus = coreMenus.stream()
+//						.filter(e -> Objects.isNull(e.getChaId()))
+//						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
+//						.toList();
+//				routeRecordRawDatas = setRouteRecordRawData(cMenus, coreMenus);
+//			}
 		}
 		return routeRecordRawDatas;
 		
@@ -312,14 +312,14 @@ public class CoreMenuBusiness {
 		if (CollUtil.isNotEmpty(cMenus)) {
 			for (CoreMenu coreMenu : cMenus) {
 				RouteRecordRawData routeRecordRawData = new RouteRecordRawData();
-				routeRecordRawData.setName(coreMenu.getMa());
+				//	routeRecordRawData.setName(coreMenu.getMa());
 				routeRecordRawData.setPath(coreMenu.getPath());
 				routeRecordRawData.setComponent(coreMenu.getComponent());
 				routeRecordRawData.setRedirect(coreMenu.getRedirect());
 				routeRecordRawData.setProps(coreMenu.getProps());
 				
 				RouterMetaData routerMetaData = new RouterMetaData();
-				routerMetaData.setTitle(coreMenu.getTen());
+				//	routerMetaData.setTitle(coreMenu.getTen());
 				routerMetaData.setLayout(coreMenu.getLayout());
 				routerMetaData.setNoBasicLayout(Boolean.TRUE.equals(coreMenu.getIsNoBasicLayout()));
 				routerMetaData.setIcon(coreMenu.getIcon());
@@ -355,12 +355,12 @@ public class CoreMenuBusiness {
 				routerMetaData.setBadgeVariants(coreMenu.getBadgeVariants());
 				
 				routeRecordRawData.setMeta(routerMetaData);
-				List<CoreMenu> children = coreMenus.stream()
-						.filter(e -> Objects.nonNull(e.getChaId()))
-						.filter(e -> e.getChaId().equals(coreMenu.getId()))
-						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
-						.toList();
-				routeRecordRawData.setChildren(setRouteRecordRawData(children, coreMenus));
+//				List<CoreMenu> children = coreMenus.stream()
+//						.filter(e -> Objects.nonNull(e.getChaId()))
+//						.filter(e -> e.getChaId().equals(coreMenu.getId()))
+//						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
+//						.toList();
+//				routeRecordRawData.setChildren(setRouteRecordRawData(children, coreMenus));
 				routeRecordRawDatas.add(routeRecordRawData);
 			}
 		}
@@ -396,10 +396,10 @@ public class CoreMenuBusiness {
 		}
 		coreMenu.setDaXoa(false);
 		coreMenu.setIsReload(true);
-		coreMenu.setTrangThai(true);
-		coreMenu.setAppCode(FunctionUtils.removeXss(appCode));
-		coreMenu.setChaId(chaId);
-		coreMenu.setMa(FunctionUtils.removeXss(routeRecordRawData.getName()));
+//		coreMenu.setTrangThai(true);
+//		coreMenu.setAppCode(FunctionUtils.removeXss(appCode));
+//		coreMenu.setChaId(chaId);
+//		coreMenu.setMa(FunctionUtils.removeXss(routeRecordRawData.getName()));
 		coreMenu.setPath(FunctionUtils.removeXss(routeRecordRawData.getPath()));
 		coreMenu.setRedirect(FunctionUtils.removeXss(routeRecordRawData.getRedirect()));
 		coreMenu.setComponent(FunctionUtils.removeXss(routeRecordRawData.getComponent()));
@@ -409,8 +409,8 @@ public class CoreMenuBusiness {
 		if (Objects.nonNull(routeRecordRawData.getMeta())) {
 			RouterMetaData routerMetaData = routeRecordRawData.getMeta();
 			coreMenu.setIcon(FunctionUtils.removeXss(routerMetaData.getIcon()));
-			coreMenu.setTen(FunctionUtils.removeXss(routerMetaData.getTitle()));
-			coreMenu.setMoTa(FunctionUtils.removeXss(routerMetaData.getTitle()));
+//			coreMenu.setTen(FunctionUtils.removeXss(routerMetaData.getTitle()));
+//			coreMenu.setMoTa(FunctionUtils.removeXss(routerMetaData.getTitle()));
 			coreMenu.setActiveMenu(FunctionUtils.removeXss(routerMetaData.getActiveMenu()));
 			coreMenu.setActiveIcon(FunctionUtils.removeXss(routerMetaData.getActiveIcon()));
 			coreMenu.setActivePath(FunctionUtils.removeXss(routerMetaData.getActivePath()));

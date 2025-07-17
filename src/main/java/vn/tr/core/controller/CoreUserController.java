@@ -17,8 +17,6 @@ import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 import vn.tr.core.data.dto.CoreUserData;
 import vn.tr.core.data.validator.CoreUserValidator;
 
-import java.util.List;
-
 @RestController
 @RequestMapping(value = "/users") // Đổi thành plural "users" theo chuẩn REST
 @RequiredArgsConstructor
@@ -35,15 +33,15 @@ public class CoreUserController {
 	@PostMapping
 	@Log(title = "Tạo mới Người dùng", businessType = BusinessType.INSERT)
 	public R<CoreUserData> create(@Valid @RequestBody CoreUserData coreUserData) {
-		CoreUserData createdUser = coreUserBusiness.create(coreUserData);
-		return R.ok(createdUser, "Tạo người dùng thành công");
+		coreUserBusiness.create(coreUserData);
+		return R.ok("Tạo người dùng thành công");
 	}
 	
 	@PutMapping("/{id}")
 	@Log(title = "Cập nhật Người dùng", businessType = BusinessType.UPDATE)
 	public R<CoreUserData> update(@PathVariable Long id, @Valid @RequestBody CoreUserData coreUserData) {
-		CoreUserData updatedUser = coreUserBusiness.update(id, coreUserData);
-		return R.ok(updatedUser, "Cập nhật người dùng thành công");
+		coreUserBusiness.update(id, coreUserData);
+		return R.ok("Cập nhật người dùng thành công");
 	}
 	
 	@DeleteMapping("/{id}")
@@ -64,20 +62,20 @@ public class CoreUserController {
 	}
 	
 	@GetMapping
-	@Log(title = "Tìm kiếm Người dùng (Phân trang)", businessType = BusinessType.LIST, isSaveRequestData = false)
-	public R<Page<CoreUserData>> search(CoreUserSearchCriteria criteria) {
-		Page<CoreUserData> pageCoreUserData = coreUserBusiness.search(criteria);
+	@Log(title = "Tìm kiếm Người dùng (Phân trang)", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+	public R<Page<CoreUserData>> findAll(CoreUserSearchCriteria criteria) {
+		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(criteria);
 		return R.ok(pageCoreUserData);
 	}
-	
-	// Giữ lại endpoint này nếu cần lấy danh sách không phân trang
-	@GetMapping("/list")
-	@Log(title = "Lấy danh sách Người dùng", businessType = BusinessType.LIST, isSaveRequestData = false)
-	public R<List<CoreUserData>> getAll(CoreUserSearchCriteria criteria) {
-		// Cần thêm hàm getAll vào CoreUserBusiness nếu cần
-		List<CoreUserData> coreUserDatas = coreUserBusiness.getAll(criteria);
-		return R.ok(coreUserDatas);
-	}
+
+//	// Giữ lại endpoint này nếu cần lấy danh sách không phân trang
+//	@GetMapping("/list")
+//	@Log(title = "Lấy danh sách Người dùng", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+//	public R<List<CoreUserData>> getAll(CoreUserSearchCriteria criteria) {
+//		// Cần thêm hàm getAll vào CoreUserBusiness nếu cần
+//		List<CoreUserData> coreUserDatas = coreUserBusiness.getAll(criteria);
+//		return R.ok(coreUserDatas);
+//	}
 	
 	@GetMapping("/{id}")
 	@Log(title = "Lấy chi tiết Người dùng", businessType = BusinessType.DETAIL, isSaveRequestData = false)
@@ -108,7 +106,7 @@ public class CoreUserController {
 	@PatchMapping("/{username}/update-status")
 	@Log(title = "Cập nhật trạng thái Người dùng", businessType = BusinessType.UPDATE)
 	public R<Void> updateStatus(@PathVariable String username, @Valid @RequestBody CoreUserChangeStatusData request) {
-		coreUserBusiness.updateStatus(username, request.getNewStatus());
+		//	coreUserBusiness.updateStatus(username, request.getNewStatus());
 		return R.ok("Cập nhật trạng thái thành công");
 	}
 }

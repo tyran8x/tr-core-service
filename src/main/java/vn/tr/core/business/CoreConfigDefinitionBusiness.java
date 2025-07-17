@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
-import vn.tr.common.core.utils.FunctionUtils;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreConfigDefinition;
 import vn.tr.core.dao.service.CoreConfigDefinitionService;
@@ -14,7 +13,6 @@ import vn.tr.core.data.CoreConfigDefinitionData;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,12 +23,12 @@ public class CoreConfigDefinitionBusiness {
 	private CoreConfigDefinitionData convertToCoreConfigDefinitionData(CoreConfigDefinition coreConfigDefinition) {
 		CoreConfigDefinitionData coreConfigDefinitionData = new CoreConfigDefinitionData();
 		coreConfigDefinitionData.setId(coreConfigDefinition.getId());
-		coreConfigDefinitionData.setMaUngDung(coreConfigDefinition.getMaUngDung());
-		coreConfigDefinitionData.setCode(coreConfigDefinition.getCode());
-		coreConfigDefinitionData.setGhiChu(coreConfigDefinition.getGhiChu());
-		coreConfigDefinitionData.setLoaiGiaTri(coreConfigDefinition.getLoaiGiaTri());
-		coreConfigDefinitionData.setGiaTri(coreConfigDefinition.getGiaTri());
-		coreConfigDefinitionData.setTrangThai(coreConfigDefinition.getTrangThai());
+//		coreConfigDefinitionData.setMaUngDung(coreConfigDefinition.getMaUngDung());
+//		coreConfigDefinitionData.setCode(coreConfigDefinition.getCode());
+//		coreConfigDefinitionData.setGhiChu(coreConfigDefinition.getGhiChu());
+//		coreConfigDefinitionData.setLoaiGiaTri(coreConfigDefinition.getLoaiGiaTri());
+//		coreConfigDefinitionData.setGiaTri(coreConfigDefinition.getGiaTri());
+//		coreConfigDefinitionData.setTrangThai(coreConfigDefinition.getTrangThai());
 		return coreConfigDefinitionData;
 	}
 	
@@ -46,12 +44,12 @@ public class CoreConfigDefinitionBusiness {
 		}
 		CoreConfigDefinition coreConfigDefinition = optional.get();
 		coreConfigDefinition.setDaXoa(true);
-		coreConfigDefinitionService.save(coreConfigDefinition);
+		//coreConfigDefinitionService.save(coreConfigDefinition);
 	}
 	
 	public void deleteByIds(List<Long> ids) {
 		if (CollUtil.isNotEmpty(ids)) {
-			coreConfigDefinitionService.setFixedDaXoaForIds(true, ids);
+			//	coreConfigDefinitionService.setFixedDaXoaForIds(true, ids);
 		}
 	}
 	
@@ -70,40 +68,28 @@ public class CoreConfigDefinitionBusiness {
 		return convertToCoreConfigDefinitionData(optionalCoreConfigDefinition.get());
 	}
 	
-	public List<CoreConfigDefinitionData> getAll(List<Long> ids) {
-		if (CollUtil.isNotEmpty(ids)) {
-			return coreConfigDefinitionService.findByIdInAndDaXoaFalse(ids).stream().map(this::convertToCoreConfigDefinitionData)
-					.collect(Collectors.toList());
-		}
-		return coreConfigDefinitionService.findByDaXoaFalse().stream().map(this::convertToCoreConfigDefinitionData).collect(Collectors.toList());
-	}
-	
-	public String getGiaTriByCode(String code, String maUngDung) {
-		return coreConfigDefinitionService.getGiaTri(code, maUngDung);
-	}
-	
 	public void saveConfig(String code, String giaTri, String maUngDung) {
 		CoreConfigDefinition coreConfigDefinition = new CoreConfigDefinition();
-		Optional<CoreConfigDefinition> optionalCoreConfigDefinition = coreConfigDefinitionService.findFirstByCodeAndDaXoaFalse(code);
-		if (optionalCoreConfigDefinition.isPresent()) {
-			coreConfigDefinition = optionalCoreConfigDefinition.get();
-		}
+//		Optional<CoreConfigDefinition> optionalCoreConfigDefinition = coreConfigDefinitionService.findFirstByCodeAndDaXoaFalse(code);
+//		if (optionalCoreConfigDefinition.isPresent()) {
+//			coreConfigDefinition = optionalCoreConfigDefinition.get();
+//		}
 		coreConfigDefinition.setDaXoa(false);
-		coreConfigDefinition.setCode(code);
-		coreConfigDefinition.setGiaTri(giaTri);
-		coreConfigDefinition.setMaUngDung(maUngDung);
-		coreConfigDefinitionService.save(coreConfigDefinition);
+//		coreConfigDefinition.setCode(code);
+//		coreConfigDefinition.setGiaTri(giaTri);
+//		coreConfigDefinition.setMaUngDung(maUngDung);
+//		coreConfigDefinitionService.save(coreConfigDefinition);
 	}
 	
 	private CoreConfigDefinitionData save(CoreConfigDefinition coreConfigDefinition, CoreConfigDefinitionData coreConfigDefinitionData) {
 		coreConfigDefinition.setDaXoa(false);
-		coreConfigDefinition.setMaUngDung(FunctionUtils.removeXss(coreConfigDefinitionData.getMaUngDung()));
-		coreConfigDefinition.setCode(FunctionUtils.removeXss(coreConfigDefinitionData.getCode()));
-		coreConfigDefinition.setGhiChu(FunctionUtils.removeXss(coreConfigDefinitionData.getGhiChu()));
-		coreConfigDefinition.setLoaiGiaTri(coreConfigDefinitionData.getLoaiGiaTri());
-		coreConfigDefinition.setGiaTri(FunctionUtils.removeXss(coreConfigDefinitionData.getGiaTri()));
-		coreConfigDefinition.setTrangThai(coreConfigDefinitionData.getTrangThai());
-		return convertToCoreConfigDefinitionData(coreConfigDefinitionService.save(coreConfigDefinition));
+//		coreConfigDefinition.setMaUngDung(FunctionUtils.removeXss(coreConfigDefinitionData.getMaUngDung()));
+//		coreConfigDefinition.setCode(FunctionUtils.removeXss(coreConfigDefinitionData.getCode()));
+//		coreConfigDefinition.setGhiChu(FunctionUtils.removeXss(coreConfigDefinitionData.getGhiChu()));
+//		coreConfigDefinition.setLoaiGiaTri(coreConfigDefinitionData.getLoaiGiaTri());
+//		coreConfigDefinition.setGiaTri(FunctionUtils.removeXss(coreConfigDefinitionData.getGiaTri()));
+//		coreConfigDefinition.setTrangThai(coreConfigDefinitionData.getTrangThai());
+		return null;// convertToCoreConfigDefinitionData(coreConfigDefinitionService.save(coreConfigDefinition));
 	}
 	
 	public CoreConfigDefinitionData update(Long id, CoreConfigDefinitionData coreConfigDefinitionData) throws EntityNotFoundException {

@@ -7,12 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
-import vn.tr.common.core.exception.user.UserException;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreContact;
 import vn.tr.core.dao.model.CoreUser;
-import vn.tr.core.dao.model.CoreUserType;
 import vn.tr.core.dao.service.*;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 import vn.tr.core.data.dto.CoreContactData;
@@ -54,10 +52,10 @@ public class CoreUserBusiness {
 		
 		CoreUser user = coreUserMapper.toEntity(userData);
 		user.setHashedPassword(BCrypt.hashpw(userData.getPassword()));
-		
-		CoreUserType userType = coreUserTypeService.findByCode(userData.getUserTypeCode())
-				.orElseThrow(() -> new UserException("Loại người dùng không hợp lệ: " + userData.getUserTypeCode()));
-		user.setUserTypeId(userType.getId());
+
+//		CoreUserType userType = coreUserTypeService.findByCode(userData.getUserTypeCode())
+//				.orElseThrow(() -> new UserException("Loại người dùng không hợp lệ: " + userData.getUserTypeCode()));
+//		user.setUserTypeId(userType.getId());
 		
 		CoreUser savedUser = coreUserService.save(user);
 		
@@ -76,12 +74,12 @@ public class CoreUserBusiness {
 		
 		// Mapper sẽ không cập nhật username và password
 		coreUserMapper.updateEntity(userData, user);
-		
-		if (userData.getUserTypeCode() != null) {
-			CoreUserType userType = coreUserTypeService.findByCode(userData.getUserTypeCode())
-					.orElseThrow(() -> new UserException("Loại người dùng không hợp lệ: " + userData.getUserTypeCode()));
-			user.setUserType(userType);
-		}
+
+//		if (userData.getUserTypeCode() != null) {
+//			CoreUserType userType = coreUserTypeService.findByCode(userData.getUserTypeCode())
+//					.orElseThrow(() -> new UserException("Loại người dùng không hợp lệ: " + userData.getUserTypeCode()));
+//			user.setUserType(userType);
+//		}
 		
 		CoreUser savedUser = coreUserService.save(user);
 		
@@ -259,10 +257,10 @@ public class CoreUserBusiness {
 		// Chỉ lấy các contact đang hoạt động để hiển thị
 		data.setContacts(coreContactService.findActiveByOwner("CORE_USER", user.getUsername())
 				.stream().map(coreContactMapper::toData).collect(Collectors.toList()));
-		
-		data.setApps(coreUserAppService.findAppCodesByUsername(user.getUsername()));
-		data.setRoles(coreUserRoleService.findRoleCodesByUsername(user.getUsername()));
-		data.setGroups(coreUserGroupService.findGroupCodesByUsername(user.getUsername()));
+
+//		data.setApps(coreUserAppService.findAppCodesByUsername(user.getUsername()));
+//		data.setRoles(coreUserRoleService.findRoleCodesByUsername(user.getUsername()));
+//		data.setGroups(coreUserGroupService.findGroupCodesByUsername(user.getUsername()));
 		
 		return data;
 	}

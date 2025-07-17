@@ -54,19 +54,19 @@ public class CoreConfigDefinitionController {
 		CoreConfigDefinitionData coreConfigSystemData = coreConfigSystemBusiness.findById(id);
 		return R.ok(coreConfigSystemData);
 	}
-	
-	@GetMapping(value = "/get")
-	public R<List<CoreConfigDefinitionData>> getAll(@RequestParam(name = "ids", required = false) List<Long> ids) {
-		List<CoreConfigDefinitionData> coreConfigSystemDatas = coreConfigSystemBusiness.getAll(ids);
-		return R.ok(coreConfigSystemDatas);
-	}
-	
-	@GetMapping(value = "/get/giatri")
-	public R<String> getGiaTriByCode(@RequestParam(name = "code", required = false) String code,
-			@RequestParam(name = "maUngDung", required = false) String maUngDung) {
-		String value = coreConfigSystemBusiness.getGiaTriByCode(code, maUngDung);
-		return R.ok("Thành công", value);
-	}
+
+//	@GetMapping(value = "/get")
+//	public R<List<CoreConfigDefinitionData>> getAll(@RequestParam(name = "ids", required = false) List<Long> ids) {
+//		List<CoreConfigDefinitionData> coreConfigSystemDatas = coreConfigSystemBusiness.getAll(ids);
+//		return R.ok(coreConfigSystemDatas);
+//	}
+//
+//	@GetMapping(value = "/get/giatri")
+//	public R<String> getGiaTriByCode(@RequestParam(name = "code", required = false) String code,
+//			@RequestParam(name = "maUngDung", required = false) String maUngDung) {
+//		String value = coreConfigSystemBusiness.getGiaTriByCode(code, maUngDung);
+//		return R.ok("Thành công", value);
+//	}
 	
 	@PutMapping(value = {"/{id}"})
 	public R<CoreConfigDefinitionData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreConfigDefinitionData coreConfigSystemData) {
