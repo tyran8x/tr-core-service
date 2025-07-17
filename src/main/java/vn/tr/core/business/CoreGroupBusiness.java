@@ -16,6 +16,7 @@ import vn.tr.core.data.dto.CoreGroupData;
 import vn.tr.core.data.mapper.CoreGroupMapper;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,6 +33,30 @@ public class CoreGroupBusiness {
 		CoreGroup coreGroup = coreGroupMapper.toEntity(coreGroupData);
 		coreGroup.setAppCode(LoginHelper.getAppCode());
 		return save(coreGroup, coreGroupData);
+	}
+	
+	private CoreGroupData save(CoreGroup coreGroup, CoreGroupData coreGroupData) {
+		coreGroupMapper.save(coreGroupData, coreGroup);
+		if (coreGroupData.getParentId() != null) {
+			CoreGroup parentEntity = coreGroupService.findById(coreGroupData.getParentId())
+					.orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, coreGroupData.getParentId()));
+			
+			if (Objects.equals(LifecycleStatus.INACTIVE, parentEntity.getStatus())) {
+				throw new IllegalStateException("Không thể gán vào nhóm cha đã bị vô hiệu hóa.");
+			}
+			coreGroup.setParentId(coreGroupData.getParentId());
+		} else {
+			coreGroup.setParentId(null);
+		}
+		CoreGroup savedGroup = coreGroupService.save(coreGroup);
+		return findById(savedGroup.getId());
+	}
+	
+	@Transactional(readOnly = true)
+	public CoreGroupData findById(Long id) {
+		return coreGroupService.findById(id)
+				.map(coreGroupMapper::toData)
+				.orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, id));
 	}
 	
 	public void delete(Long id) {
@@ -59,35 +84,11 @@ public class CoreGroupBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public CoreGroupData findById(Long id) {
-		return coreGroupService.findById(id)
-				.map(coreGroupMapper::toData)
-				.orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, id));
-	}
-	
-	@Transactional(readOnly = true)
 	public Optional<CoreGroupData> getById(Long id) {
 		if (id == null) {
 			return Optional.empty();
 		}
 		return coreGroupService.findById(id).map(coreGroupMapper::toData);
-	}
-	
-	private CoreGroupData save(CoreGroup coreGroup, CoreGroupData coreGroupData) {
-		coreGroupMapper.save(coreGroupData, coreGroup);
-		if (coreGroupData.getParentId() != null) {
-			CoreGroup parentEntity = coreGroupService.findById(coreGroupData.getParentId())
-					.orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, coreGroupData.getParentId()));
-			
-			if (LifecycleStatus.INACTIVE.getValue().equals(parentEntity.getStatus())) {
-				throw new IllegalStateException("Không thể gán vào nhóm cha đã bị vô hiệu hóa.");
-			}
-			coreGroup.setParentId(coreGroupData.getParentId());
-		} else {
-			coreGroup.setParentId(null);
-		}
-		CoreGroup savedGroup = coreGroupService.save(coreGroup);
-		return findById(savedGroup.getId());
 	}
 	
 	public CoreGroupData update(Long id, CoreGroupData coreGroupData) {

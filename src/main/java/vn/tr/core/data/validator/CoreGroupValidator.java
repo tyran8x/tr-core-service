@@ -47,11 +47,11 @@ public class CoreGroupValidator implements Validator {
 //		}
 		
 		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), appCode, true)) {
-			errors.rejectValue("code", ERROR_CODE_DUPLICATE, "Mã nhóm đã tồn tại.");
+			errors.rejectValue("code", ERROR_CODE_DUPLICATE, "Mã đã tồn tại.");
 		}
 		
 		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), appCode, false)) {
-			errors.rejectValue("name", ERROR_NAME_DUPLICATE, "Tên nhóm đã tồn tại.");
+			errors.rejectValue("name", ERROR_NAME_DUPLICATE, "Tên đã tồn tại.");
 		}
 		
 		if (data.getParentId() != null) {

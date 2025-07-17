@@ -35,4 +35,6 @@ public interface CoreAppService {
 	
 	void deleteByIds(Set<Long> ids);
 	
+	CoreApp findOrCreate(String code, String name);
+	
 }

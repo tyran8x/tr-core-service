@@ -4,115 +4,82 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
+import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreRole;
-import vn.tr.core.dao.service.CoreMenuService;
-import vn.tr.core.dao.service.CoreRolePermissionService;
 import vn.tr.core.dao.service.CoreRoleService;
-import vn.tr.core.data.CoreRoleData;
+import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
+import vn.tr.core.data.dto.CoreRoleData;
+import vn.tr.core.data.mapper.CoreRoleMapper;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CoreRoleBusiness {
 	
 	private final CoreRoleService coreRoleService;
-	private final CoreRolePermissionService coreRole2MenuService;
-	private final CoreMenuService coreMenuService;
-	
-	private CoreRoleData convertToCoreRoleData(CoreRole coreRole) {
-		CoreRoleData coreRoleData = new CoreRoleData();
-//		coreRoleData.setId(coreRole.getId());
-//		coreRoleData.setTen(coreRole.getTen());
-//		coreRoleData.setMa(coreRole.getMa());
-//		coreRoleData.setIsDefault(Boolean.TRUE.equals(coreRole.getIsDefault()));
-//		coreRoleData.setMoTa(coreRole.getMoTa());
-//		coreRoleData.setTrangThai(Boolean.TRUE.equals(coreRole.getTrangThai()));
-//		coreRoleData.setAppCode(coreRole.getAppCode());
-//		List<CoreRole2Menu> coreRole2Menus = coreRole2MenuService.findByRoleIdAndDaXoaFalse(coreRole.getId());
-//		List<CoreMenu> coreMenus = coreMenuService.findByIdInAndDaXoaFalse(coreRole2Menus.stream().map(
-//				CoreRole2Menu::getMenuId).collect(Collectors.toList()));
-//		List<String> menus = new ArrayList<>();
-//		if (CollUtil.isNotEmpty(coreMenus)) {
-//			for (CoreMenu coreMenu : coreMenus) {
-//				menus.add(coreMenu.getMa());
-//			}
-//		}
-//		coreRoleData.setMenus(menus);
-		return coreRoleData;
-	}
+	private final CoreRoleMapper coreRoleMapper;
 	
 	public CoreRoleData create(CoreRoleData coreRoleData) {
-		CoreRole coreRole = new CoreRole();
+		CoreRole coreRole = coreRoleMapper.toEntity(coreRoleData);
+		coreRole.setAppCode(LoginHelper.getAppCode());
 		return save(coreRole, coreRoleData);
-	}
-	
-	public void delete(Long id) throws EntityNotFoundException {
-		Optional<CoreRole> optional = coreRoleService.findById(id);
-		if (optional.isEmpty()) {
-			throw new EntityNotFoundException(CoreRole.class, id);
-		}
-		CoreRole coreRole = optional.get();
-		coreRole.setDaXoa(true);
-		coreRoleService.save(coreRole);
-	}
-	
-	public Page<CoreRoleData> findAll(int page, int size, String sortBy, String sortDir, String search, Boolean trangThai, String appCode) {
-		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
-		Page<CoreRole> pageCoreRole = coreRoleService.findAll(search, trangThai, appCode, pageable);
-		return pageCoreRole.map(this::convertToCoreRoleData);
-	}
-	
-	public CoreRoleData findById(Long id) throws EntityNotFoundException {
-		Optional<CoreRole> optional = coreRoleService.findById(id);
-		if (optional.isEmpty()) {
-			throw new EntityNotFoundException(CoreRole.class, id);
-		}
-		return convertToCoreRoleData(optional.get());
 	}
 	
 	private CoreRoleData save(CoreRole coreRole, CoreRoleData coreRoleData) {
-		coreRole.setDaXoa(false);
-//		coreRole.setTen(FunctionUtils.removeXss(coreRoleData.getTen()));
-//		coreRole.setMa(FunctionUtils.removeXss(coreRoleData.getMa()));
-//		coreRole.setIsDefault(Boolean.TRUE.equals(coreRoleData.getIsDefault()));
-//		coreRole.setMoTa(FunctionUtils.removeXss(coreRoleData.getMoTa()));
-//		coreRole.setTrangThai(Boolean.TRUE.equals(coreRoleData.getTrangThai()));
-//		coreRole.setAppCode(FunctionUtils.removeXss(coreRoleData.getAppCode()));
-//		coreRole = coreRoleService.save(coreRole);
-//		coreRole2MenuService.setFixedDaXoaForRoleId(true, coreRole.getId());
-//		if (CollUtil.isNotEmpty(coreRoleData.getMenus())) {
-//			for (String menu : coreRoleData.getMenus()) {
-//				if (CharSequenceUtil.isNotBlank(menu)) {
-//					Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(menu,
-//							coreRoleData.getAppCode());
-//					if (optionalCoreMenu.isPresent()) {
-//						CoreRole2Menu coreRole2Menu = new CoreRole2Menu();
-//						Optional<CoreRole2Menu> optionalCoreRole2Menu = coreRole2MenuService.findFirstByRoleIdAndMenuId(coreRole.getId(),
-//								optionalCoreMenu.get().getId());
-//						if (optionalCoreRole2Menu.isPresent()) {
-//							coreRole2Menu = optionalCoreRole2Menu.get();
-//						}
-//						coreRole2Menu.setDaXoa(false);
-//						coreRole2Menu.setMenuId(optionalCoreMenu.get().getId());
-//						coreRole2Menu.setRoleId(coreRole.getId());
-//						coreRole2MenuService.save(coreRole2Menu);
-//					}
-//				}
-//			}
-		//	}
-		return convertToCoreRoleData(coreRole);
+		coreRoleMapper.save(coreRoleData, coreRole);
+		CoreRole savedRole = coreRoleService.save(coreRole);
+		return findById(savedRole.getId());
 	}
 	
-	public CoreRoleData update(Long id, CoreRoleData coreRoleData) throws EntityNotFoundException {
-		Optional<CoreRole> optional = coreRoleService.findById(id);
-		if (optional.isEmpty()) {
+	@Transactional(readOnly = true)
+	public CoreRoleData findById(Long id) {
+		return coreRoleService.findById(id)
+				.map(coreRoleMapper::toData)
+				.orElseThrow(() -> new EntityNotFoundException(CoreRole.class, id));
+	}
+	
+	public void delete(Long id) {
+		if (!coreRoleService.existsById(id)) {
 			throw new EntityNotFoundException(CoreRole.class, id);
 		}
-		CoreRole coreRole = optional.get();
-		return save(coreRole, coreRoleData);
+		coreRoleService.delete(id);
 	}
 	
+	public void bulkDelete(Set<Long> ids) {
+		coreRoleService.deleteByIds(ids);
+	}
+	
+	@Transactional(readOnly = true)
+	public Page<CoreRoleData> findAll(CoreRoleSearchCriteria criteria) {
+		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
+		Page<CoreRole> pageCoreRole = coreRoleService.findAll(criteria, pageable);
+		return pageCoreRole.map(coreRoleMapper::toData);
+	}
+	
+	@Transactional(readOnly = true)
+	public List<CoreRoleData> getAll(CoreRoleSearchCriteria criteria) {
+		List<CoreRole> pageCoreRole = coreRoleService.findAll(criteria);
+		return pageCoreRole.stream().map(coreRoleMapper::toData).collect(Collectors.toList());
+	}
+	
+	@Transactional(readOnly = true)
+	public Optional<CoreRoleData> getById(Long id) {
+		if (id == null) {
+			return Optional.empty();
+		}
+		return coreRoleService.findById(id).map(coreRoleMapper::toData);
+	}
+	
+	public CoreRoleData update(Long id, CoreRoleData coreRoleData) {
+		CoreRole coreRole = coreRoleService.findById(id).orElseThrow(() -> new EntityNotFoundException(CoreRole.class, id));
+		return save(coreRole, coreRoleData);
+	}
 }

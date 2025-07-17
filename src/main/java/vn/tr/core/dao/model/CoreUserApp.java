@@ -6,7 +6,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-import vn.tr.common.jpa.entity.BaseCommonEntity;
+import vn.tr.common.core.enums.LifecycleStatus;
+import vn.tr.common.jpa.entity.BaseEntity;
 
 import java.time.LocalDateTime;
 
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE core_user_app SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreUserApp extends BaseCommonEntity {
+public class CoreUserApp extends BaseEntity {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
@@ -30,12 +31,16 @@ public class CoreUserApp extends BaseCommonEntity {
 	@Column(name = "username")
 	private String username;
 	
-	@Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
+	@Column(name = "status", nullable = false, length = 50)
+	@Enumerated(EnumType.STRING)
 	@Builder.Default
-	private String status = "ACTIVE";
+	private LifecycleStatus status = LifecycleStatus.ACTIVE;
 	
 	@Column(name = "app_code", length = 50)
 	private String appCode;
+	
+	@Column(name = "user_type_code", length = 50)
+	private String userTypeCode;
 	
 	@Column(name = "assigned_at")
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy HH:mm:ss")

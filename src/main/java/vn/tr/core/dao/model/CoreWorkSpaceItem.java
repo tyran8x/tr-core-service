@@ -32,8 +32,8 @@ public class CoreWorkSpaceItem extends BaseCommonEntity {
 	@ToString.Exclude
 	private CoreWorkSpaceItem parent;
 	
-	@Column(name = "owner_id")
-	private Long ownerId;
+	@Column(name = "owner_value", length = 100)
+	private String ownerValue;
 	
 	@Column(name = "owner_type", length = 50)
 	private String ownerType;

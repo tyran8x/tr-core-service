@@ -3,10 +3,8 @@ package vn.tr.core.dao.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import vn.tr.core.dao.model.CoreUserRole;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -19,13 +17,13 @@ public class CorePermissionServiceImpl implements CorePermissionService {
 	
 	@Override
 	public Set<String> getRolePermission(String userName) {
-		List<CoreUserRole> coreUserRoles = coreUserRoleService.findByUserNameAndDaXoaFalse(userName);
-		return new HashSet<>(coreUserRoles.stream().map(CoreUserRole::getRoleCode).toList());
+		//List<CoreUserRole> coreUserRoles = coreUserRoleService.findByUserNameAndDaXoaFalse(userName);
+		return new HashSet<>();//(coreUserRoles.stream().map(CoreUserRole::getRoleCode).toList());
 	}
 	
 	@Override
 	public Set<String> getMenuPermission(String userName) {
-		List<CoreUserRole> coreUserRoles = coreUserRoleService.findByUserNameAndDaXoaFalse(userName);
-		return new HashSet<>(coreUserRoles.stream().map(CoreUserRole::getRoleCode).toList());
+		//List<CoreUserRole> coreUserRoles = coreUserRoleService.findByUserNameAndDaXoaFalse(userName);
+		return new HashSet<>();//(coreUserRoles.stream().map(CoreUserRole::getRoleCode).toList());
 	}
 }

@@ -29,9 +29,9 @@ public class CoreConfigDefinition extends BaseEntity {
 	@Column(name = "description", columnDefinition = "TEXT")
 	private String description;
 	
-	@Column(name = "data_type", nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'STRING'")
+	@Column(name = "data_type", nullable = false, length = 50)
 	//  ENUM: 'STRING', 'TEXT', 'INTEGER', 'NUMBER', 'BOOLEAN', 'JSON', 'SECRET'
-	private String dataType;
+	private String dataType = "STRING";
 	
 	@Column(name = "validation_rules", columnDefinition = "JSONB")
 	private String validationRules;

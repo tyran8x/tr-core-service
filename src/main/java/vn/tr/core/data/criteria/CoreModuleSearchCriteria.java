@@ -2,6 +2,7 @@ package vn.tr.core.data.criteria;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.web.data.criteria.BaseSearchCriteria;
 
 import java.util.Set;
@@ -16,6 +17,6 @@ public class CoreModuleSearchCriteria extends BaseSearchCriteria {
 	
 	private String code;
 	
-	private String status;
+	private LifecycleStatus status;
 	
 }

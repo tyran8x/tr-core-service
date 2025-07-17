@@ -45,4 +45,7 @@ public interface CoreUserService {
 	void checkLogin(LoginType loginType, String userName, Supplier<Boolean> supplier);
 	
 	void logout();
+	
+	CoreUser findOrCreate(String username, String fullName, String email, String rawPassword);
+	
 }

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreApp;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -22,6 +23,8 @@ public interface CoreAppRepo extends JpaRepository<CoreApp, Long>, JpaSpecificat
 	boolean existsByNameIgnoreCase(String name);
 	
 	boolean existsById(long id);
+	
+	Optional<CoreApp> findFirstByCodeIgnoreCase(String code);
 	
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreApp g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")

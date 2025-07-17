@@ -6,11 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.redis.utils.RedisUtils;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreRolePermission;
+import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -42,33 +43,8 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	}
 	
 	@Override
-	public List<CoreRolePermission> findByDaXoaFalse() {
-		return repo.findByDaXoaFalse();
-	}
-	
-	@Override
 	public Optional<CoreRolePermission> findById(Long id) {
 		return repo.findById(id);
-	}
-	
-	@Override
-	public List<CoreRolePermission> findByMenuIdAndDaXoaFalse(Long menuId) {
-		return repo.findByMenuIdAndDaXoaFalse(menuId);
-	}
-	
-	@Override
-	public List<CoreRolePermission> findByRoleIdAndDaXoaFalse(Long roleId) {
-		return repo.findByRoleIdAndDaXoaFalse(roleId);
-	}
-	
-	@Override
-	public Optional<CoreRolePermission> findFirstByRoleIdAndMenuId(Long roleId, Long menuId) {
-		return repo.findFirstByRoleIdAndMenuId(roleId, menuId);
-	}
-	
-	@Override
-	public Set<String> getMenuMas(Set<String> roles) {
-		return repo.getMenuMas(roles);
 	}
 	
 	@Override
@@ -85,11 +61,13 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	public void refreshRolePermsCache() {
 		RedisUtils.deleteKeys(CoreRolePermission.class.getSimpleName() + "*");
 		
-		List<CoreRole> coreRoles = coreRoleService.findByTrangThaiTrueAndDaXoaFalse();
+		CoreRoleSearchCriteria coreRoleSearchCriteria = new CoreRoleSearchCriteria();
+		coreRoleSearchCriteria.setStatus(LifecycleStatus.ACTIVE);
+		List<CoreRole> coreRoles = coreRoleService.findAll(coreRoleSearchCriteria);
 		if (CollectionUtil.isNotEmpty(coreRoles)) {
 			coreRoles.forEach(item -> {
 				String roleCode = item.getCode();
-				Set<String> perms = repo.getMenuMas(Collections.singleton(roleCode));
+				Set<String> perms = null;// repo.getMenuMas(Collections.singleton(roleCode));
 				log.info("refreshRolePermsCache: {}, {}", roleCode, perms);
 				if (CollectionUtil.isNotEmpty(perms)) {
 					RedisUtils.setCacheObject(CoreRolePermission.class.getSimpleName() + ":" + roleCode, perms);
@@ -102,9 +80,8 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	public void refreshRolePermsCache(String roleCode) {
 		RedisUtils.deleteObject(CoreRolePermission.class.getSimpleName() + ":" + roleCode);
 		
-		Optional<CoreRole> optionalCoreRole = coreRoleService.findFirstByMaIgnoreCaseAndDaXoaFalse(roleCode);
-		if (optionalCoreRole.isPresent()) {
-			Set<String> perms = repo.getMenuMas(Collections.singleton(roleCode));
+		if (coreRoleService.existsByCodeIgnoreCase(roleCode)) {
+			Set<String> perms = null;// repo.getMenuMas(Collections.singleton(roleCode));
 			if (CollectionUtil.isNotEmpty(perms)) {
 				RedisUtils.setCacheObject(CoreRolePermission.class.getSimpleName() + ":" + roleCode, perms);
 			}
@@ -116,9 +93,8 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 		
 		RedisUtils.deleteObject(CoreRolePermission.class.getSimpleName() + ":" + oldRoleCode);
 		
-		Optional<CoreRole> optionalCoreRole = coreRoleService.findFirstByMaIgnoreCaseAndDaXoaFalse(newRoleCode);
-		if (optionalCoreRole.isPresent()) {
-			Set<String> perms = repo.getMenuMas(Collections.singleton(newRoleCode));
+		if (coreRoleService.existsByCodeIgnoreCase(newRoleCode)) {
+			Set<String> perms = null;// repo.getMenuMas(Collections.singleton(newRoleCode));
 			if (CollectionUtil.isNotEmpty(perms)) {
 				RedisUtils.setCacheObject(CoreRolePermission.class.getSimpleName() + ":" + newRoleCode, perms);
 			}

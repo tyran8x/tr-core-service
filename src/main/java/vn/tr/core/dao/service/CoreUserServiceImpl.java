@@ -1,6 +1,7 @@
 package vn.tr.core.dao.service;
 
 import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.secure.BCrypt;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.ObjectUtil;
 import lombok.RequiredArgsConstructor;
@@ -177,6 +178,25 @@ public class CoreUserServiceImpl implements CoreUserService {
 			} catch (NotLoginException ignored) {
 			}
 		}
+	}
+	
+	@Override
+	@Transactional
+	public CoreUser findOrCreate(String username, String fullName, String email, String rawPassword) {
+		// Chuẩn hóa username
+		String normalizedUsername = username.toLowerCase();
+		
+		return repo.findFirstByUsernameIgnoreCase(normalizedUsername)
+				.orElseGet(() -> {
+					CoreUser newUser = new CoreUser();
+					newUser.setUsername(normalizedUsername);
+					newUser.setFullName(fullName);
+					newUser.setEmail(email);
+					newUser.setHashedPassword(BCrypt.hashpw(rawPassword));
+					// Gán các giá trị mặc định khác nếu cần
+					// Ví dụ: newUser.setUserType(...)
+					return repo.save(newUser);
+				});
 	}
 	
 }

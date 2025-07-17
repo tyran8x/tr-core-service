@@ -35,4 +35,6 @@ public interface CoreUserTypeService {
 	
 	void deleteByIds(Set<Long> ids);
 	
+	CoreUserType findOrCreate(String code, String name);
+	
 }

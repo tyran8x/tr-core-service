@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.core.utils.FunctionUtils;
@@ -19,8 +19,12 @@ import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.dao.service.CoreMenuService;
 import vn.tr.core.dao.service.CoreRolePermissionService;
 import vn.tr.core.data.*;
+import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
+import vn.tr.core.data.dto.CoreMenuData;
+import vn.tr.core.data.mapper.CoreMenuMapper;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -29,79 +33,56 @@ public class CoreMenuBusiness {
 	
 	private final CoreMenuService coreMenuService;
 	private final CoreRolePermissionService coreRole2MenuService;
-	
-	private CoreMenuData convertToCoreMenuData(CoreMenu coreMenu) {
-		CoreMenuData coreMenuData = new CoreMenuData();
-		coreMenuData.setId(coreMenu.getId());
-//		coreMenuData.setTen(coreMenu.getTen());
-//		coreMenuData.setMa(coreMenu.getMa());
-//		coreMenuData.setChaId(null);
-//		if (Objects.nonNull(coreMenu.getChaId())) {
-//			Optional<CoreMenu> optionalCoreMenu = coreMenuService.findByIdAndDaXoaFalse(coreMenu.getChaId());
-//			if (optionalCoreMenu.isPresent()) {
-//				coreMenuData.setChaId(optionalCoreMenu.get().getId());
-//				coreMenuData.setChaTen(optionalCoreMenu.get().getTen());
-//			}
-//		}
-//		coreMenuData.setMoTa(coreMenu.getMoTa());
-		coreMenuData.setPath(coreMenu.getPath());
-		coreMenuData.setComponent(coreMenu.getComponent());
-		coreMenuData.setIsHidden(coreMenu.getIsHidden());
-		coreMenuData.setIcon(coreMenu.getIcon());
-		coreMenuData.setIsAlwaysShow(coreMenu.getIsAlwaysShow());
-		coreMenuData.setIsNoCache(coreMenu.getIsNoCache());
-		coreMenuData.setIsAffix(coreMenu.getIsAffix());
-		coreMenuData.setIsBreadcrumb(coreMenu.getIsBreadcrumb());
-		coreMenuData.setLink(coreMenu.getLink());
-		coreMenuData.setActiveMenu(coreMenu.getActiveMenu());
-		coreMenuData.setProps(coreMenu.getProps());
-		coreMenuData.setIsReload(coreMenu.getIsReload());
-		//coreMenuData.setTrangThai(coreMenu.getTrangThai());
-		coreMenuData.setSapXep(coreMenu.getSapXep());
-		return coreMenuData;
-	}
+	private final CoreMenuMapper coreMenuMapper;
 	
 	public CoreMenuData create(CoreMenuData coreMenuData) {
 		CoreMenu coreMenu = new CoreMenu();
 		return save(coreMenu, coreMenuData);
 	}
 	
-	public void delete(@PathVariable("id") Long id) throws EntityNotFoundException {
-		Optional<CoreMenu> optional = coreMenuService.findById(id);
-		if (optional.isEmpty()) {
+	private CoreMenuData save(CoreMenu coreMenu, CoreMenuData coreMenuData) {
+		coreMenuMapper.save(coreMenuData, coreMenu);
+		CoreMenu savedMenu = coreMenuService.save(coreMenu);
+		return findById(savedMenu.getId());
+	}
+	
+	@Transactional(readOnly = true)
+	public CoreMenuData findById(Long id) {
+		return coreMenuService.findById(id)
+				.map(coreMenuMapper::toData)
+				.orElseThrow(() -> new EntityNotFoundException(CoreMenu.class, id));
+	}
+	
+	public void delete(Long id) {
+		if (!coreMenuService.existsById(id)) {
 			throw new EntityNotFoundException(CoreMenu.class, id);
 		}
-		CoreMenu coreMenu = optional.get();
-		coreMenu.setDaXoa(true);
-		coreMenuService.save(coreMenu);
+		coreMenuService.delete(id);
 	}
 	
-	public void deleteByIds(List<Long> ids) {
-		if (CollUtil.isNotEmpty(ids)) {
-			//		coreMenuService.setFixedDaXoaForIds(true, ids);
+	public void bulkDelete(Set<Long> ids) {
+		coreMenuService.deleteByIds(ids);
+	}
+	
+	@Transactional(readOnly = true)
+	public Page<CoreMenuData> findAll(CoreMenuSearchCriteria criteria) {
+		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
+		Page<CoreMenu> pageCoreMenu = coreMenuService.findAll(criteria, pageable);
+		return pageCoreMenu.map(coreMenuMapper::toData);
+	}
+	
+	@Transactional(readOnly = true)
+	public List<CoreMenuData> getAll(CoreMenuSearchCriteria criteria) {
+		List<CoreMenu> pageCoreMenu = coreMenuService.findAll(criteria);
+		return pageCoreMenu.stream().map(coreMenuMapper::toData).collect(Collectors.toList());
+	}
+	
+	@Transactional(readOnly = true)
+	public Optional<CoreMenuData> getById(Long id) {
+		if (id == null) {
+			return Optional.empty();
 		}
-	}
-	
-	public Page<CoreMenuData> findAll(int page, int size, String sortBy, String sortDir, String search, Boolean trangThai, String appCode) {
-		Pageable pageable = CoreUtils.getPageRequest(page, size, sortBy, sortDir);
-		Page<CoreMenu> pageCoreMenu = coreMenuService.findAll(search, trangThai, appCode, pageable);
-		return pageCoreMenu.map(this::convertToCoreMenuData);
-	}
-	
-	public CoreMenuData findById(Long id) throws EntityNotFoundException {
-		Optional<CoreMenu> optional = coreMenuService.findById(id);
-		if (optional.isEmpty()) {
-			throw new EntityNotFoundException(CoreMenu.class, id);
-		}
-		CoreMenu coreMenu = optional.get();
-		return convertToCoreMenuData(coreMenu);
-	}
-	
-	public List<CoreMenuData> getAll(List<Long> ids) {
-		if (CollUtil.isNotEmpty(ids)) {
-			return coreMenuService.findByIdInAndDaXoaFalse(ids).stream().map(this::convertToCoreMenuData).toList();
-		}
-		return coreMenuService.findByDaXoaFalse().stream().map(this::convertToCoreMenuData).toList();
+		return coreMenuService.findById(id).map(coreMenuMapper::toData);
 	}
 	
 	public CoreDsMenuData getRouterDatas(String appCode) {
@@ -118,13 +99,13 @@ public class CoreMenuBusiness {
 		List<CoreMenu> coreMenus;
 		//boolean isRoot = LoginHelper.isSuperAdmin();
 		//log.info("isRoot: {} - roles: {}", isRoot, roles);
-		if (CollUtil.contains(roles, "ROLE_ADMIN")) {
-			coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
-		} else {
-			//	List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
-			//	log.info("appCode: {} - menuIds: {}", appCode, menuIds);
-			//	coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
-		}
+//		if (CollUtil.contains(roles, "ROLE_ADMIN")) {
+//			coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
+//		} else {
+		//	List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
+		//	log.info("appCode: {} - menuIds: {}", appCode, menuIds);
+		//	coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
+		//	}
 //		if (CollUtil.isNotEmpty(coreMenus)) {
 //			List<CoreMenu> cMenus = coreMenus.stream()
 //			//		.filter(e -> Objects.isNull(e.getChaId()))
@@ -136,40 +117,9 @@ public class CoreMenuBusiness {
 		return coreDsMenuData;
 	}
 	
-	private CoreMenuData save(CoreMenu coreMenu, CoreMenuData coreMenuData) {
-		coreMenu.setDaXoa(false);
-//		coreMenu.setTen(FunctionUtils.removeXss(coreMenuData.getTen()));
-//		coreMenu.setMa(FunctionUtils.removeXss(coreMenuData.getMa()));
-//		coreMenu.setChaId(null);
-//		if (Objects.nonNull(coreMenuData.getChaId())) {
-//			Optional<CoreMenu> optionalCoreMenu = coreMenuService.findByIdAndDaXoaFalse(coreMenuData.getChaId());
-//			if (optionalCoreMenu.isPresent()) {
-//				coreMenu.setChaId(optionalCoreMenu.get().getId());
-//			}
-//		}
-//		coreMenu.setMoTa(FunctionUtils.removeXss(coreMenuData.getMoTa()));
-		coreMenu.setPath(FunctionUtils.removeXss(coreMenuData.getPath()));
-		coreMenu.setComponent(FunctionUtils.removeXss(coreMenuData.getComponent()));
-		coreMenu.setRedirect(FunctionUtils.removeXss(coreMenuData.getRedirect()));
-		coreMenu.setIsHidden(Boolean.TRUE.equals(coreMenuData.getIsHidden()));
-		coreMenu.setIcon(FunctionUtils.removeXss(coreMenuData.getIcon()));
-		coreMenu.setIsAlwaysShow(Boolean.TRUE.equals(coreMenuData.getIsAlwaysShow()));
-		coreMenu.setIsNoCache(Boolean.TRUE.equals(coreMenuData.getIsNoCache()));
-		coreMenu.setIsAffix(Boolean.TRUE.equals(coreMenuData.getIsAffix()));
-		coreMenu.setIsBreadcrumb(Boolean.TRUE.equals(coreMenuData.getIsBreadcrumb()));
-		coreMenu.setLink(FunctionUtils.removeXss(coreMenuData.getLink()));
-		coreMenu.setActiveMenu(FunctionUtils.removeXss(coreMenuData.getActiveMenu()));
-		coreMenu.setProps(FunctionUtils.removeXss(coreMenuData.getProps()));
-		coreMenu.setIsReload(Boolean.TRUE.equals(coreMenuData.getIsReload()));
-		//	coreMenu.setTrangThai(Boolean.TRUE.equals(coreMenuData.getTrangThai()));
-		coreMenu.setSapXep(coreMenuData.getSapXep());
-		coreMenu = coreMenuService.save(coreMenu);
-		return convertToCoreMenuData(coreMenu);
-	}
-	
 	public void saveRouterData(RouterData routerData, Long chaId, int sapXep, String appCode) {
 		log.info("Router: {}", routerData.getName());
-		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(routerData.getName(), appCode);
+		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(routerData.getName(), appCode);
 		CoreMenu coreMenu = new CoreMenu();
 		if (optionalCoreMenu.isPresent()) {
 			coreMenu = optionalCoreMenu.get();
@@ -184,7 +134,7 @@ public class CoreMenuBusiness {
 		coreMenu.setRedirect(FunctionUtils.removeXss(routerData.getRedirect()));
 		coreMenu.setIsHidden(Boolean.TRUE.equals(routerData.getHidden()));
 		coreMenu.setIsAlwaysShow(Boolean.TRUE.equals(routerData.getAlwaysShow()));
-		coreMenu.setSapXep(sapXep);
+		coreMenu.setSortOrder(sapXep);
 		coreMenu.setProps(JsonUtils.toJsonString(routerData.getProps()));
 		
 		if (Objects.nonNull(routerData.getMeta())) {
@@ -234,7 +184,7 @@ public class CoreMenuBusiness {
 				coreMenuData.setProps(coreMenu.getProps());
 				coreMenuData.setIsReload(coreMenu.getIsReload());
 				//	coreMenuData.setTrangThai(coreMenu.getTrangThai());
-				coreMenuData.setSapXep(coreMenu.getSapXep());
+				coreMenuData.setSortOrder(coreMenu.getSortOrder());
 				coreMenuData.setAppCode(coreMenu.getAppCode());
 
 //				List<CoreMenu> children = coreMenus.stream()
@@ -288,13 +238,13 @@ public class CoreMenuBusiness {
 			List<CoreMenu> coreMenus;
 			//boolean isRoot = LoginHelper.isSuperAdmin();
 			//log.info("isRoot: {} - roles: {}", isRoot, roles);
-			if (CollUtil.contains(roles, "ROLE_ADMIN")) {
-				coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
-			} else {
+//			if (CollUtil.contains(roles, "ROLE_ADMIN")) {
+//				coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
+//			} else {
 //				List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
 //				log.info("getRoutes appCode: {} - menuIds: {}", appCode, menuIds);
 //				coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
-			}
+//			}
 //			if (CollUtil.isNotEmpty(coreMenus)) {
 //				List<CoreMenu> cMenus = coreMenus.stream()
 //						.filter(e -> Objects.isNull(e.getChaId()))
@@ -345,7 +295,7 @@ public class CoreMenuBusiness {
 				
 				routerMetaData.setLink(coreMenu.getLink());
 				routerMetaData.setIframeSrc(coreMenu.getIframeSrc());
-				routerMetaData.setOrder(coreMenu.getSapXep());
+				routerMetaData.setOrder(coreMenu.getSortOrder());
 				routerMetaData.setMaxNumOfOpenTab(coreMenu.getMaxNumOfOpenTab());
 				routerMetaData.setMenuVisibleWithForbidden(Boolean.TRUE.equals(coreMenu.getIsMenuVisibleWithForbidden()));
 				routerMetaData.setIgnoreAccess(Boolean.TRUE.equals(coreMenu.getIsIgnoreAccess()));
@@ -389,7 +339,7 @@ public class CoreMenuBusiness {
 	
 	public void saveRouteRecordRawData(RouteRecordRawData routeRecordRawData, Long chaId, int sapXep, String appCode) {
 		log.info("RouteRecordRaw: {}", routeRecordRawData.getName());
-		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(routeRecordRawData.getName(), appCode);
+		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(routeRecordRawData.getName(), appCode);
 		CoreMenu coreMenu = new CoreMenu();
 		if (optionalCoreMenu.isPresent()) {
 			coreMenu = optionalCoreMenu.get();
@@ -403,7 +353,7 @@ public class CoreMenuBusiness {
 		coreMenu.setPath(FunctionUtils.removeXss(routeRecordRawData.getPath()));
 		coreMenu.setRedirect(FunctionUtils.removeXss(routeRecordRawData.getRedirect()));
 		coreMenu.setComponent(FunctionUtils.removeXss(routeRecordRawData.getComponent()));
-		coreMenu.setSapXep(sapXep);
+		coreMenu.setSortOrder(sapXep);
 		coreMenu.setProps(JsonUtils.toJsonString(routeRecordRawData.getProps()));
 		
 		if (Objects.nonNull(routeRecordRawData.getMeta())) {

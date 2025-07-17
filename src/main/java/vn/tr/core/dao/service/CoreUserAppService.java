@@ -17,4 +17,10 @@ public interface CoreUserAppService {
 	
 	void replaceUserApps(String username, Set<String> newAppCodes);
 	
+	Set<String> findAppCodesByUsername(String username);
+	
+	boolean existsByUsernameAndAppCode(String username, String appCode);
+	
+	void assignUserToAppIfNotExists(String username, String appCode);
+	
 }

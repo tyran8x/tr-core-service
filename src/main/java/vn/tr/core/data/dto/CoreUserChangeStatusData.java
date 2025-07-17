@@ -1,4 +1,4 @@
-package vn.tr.core.data;
+package vn.tr.core.data.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

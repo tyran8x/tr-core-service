@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreUserGroup;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -68,6 +69,15 @@ public class CoreUserGroupServiceImpl implements CoreUserGroupService {
 	@Override
 	public boolean existsById(Long id) {
 		return repo.existsById(id);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public Set<String> findGroupCodesByUsername(String username) {
+		if (username.isBlank()) {
+			return Collections.emptySet();
+		}
+		return repo.findGroupCodesByUsername(username.toLowerCase());
 	}
 	
 }

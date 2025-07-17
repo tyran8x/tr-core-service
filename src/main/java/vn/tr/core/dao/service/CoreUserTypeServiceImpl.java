@@ -36,6 +36,11 @@ public class CoreUserTypeServiceImpl implements CoreUserTypeService {
 	}
 	
 	@Override
+	public boolean existsById(Long id) {
+		return repo.existsById(id);
+	}
+	
+	@Override
 	public Page<CoreUserType> findAll(CoreUserTypeSearchCriteria coreUserTypeSearchCriteria, Pageable pageable) {
 		return repo.findAll(CoreUserTypeSpecifications.quickSearch(coreUserTypeSearchCriteria), pageable);
 	}
@@ -71,17 +76,24 @@ public class CoreUserTypeServiceImpl implements CoreUserTypeService {
 	}
 	
 	@Override
-	public boolean existsById(Long id) {
-		return repo.existsById(id);
-	}
-	
-	@Override
 	@Transactional
 	public void deleteByIds(Set<Long> ids) {
 		if (ids.isEmpty()) {
 			return;
 		}
 		repo.softDeleteByIds(ids);
+	}
+	
+	@Override
+	@Transactional
+	public CoreUserType findOrCreate(String code, String name) {
+		return repo.findFirstByCodeIgnoreCase(code)
+				.orElseGet(() -> {
+					CoreUserType newApp = new CoreUserType();
+					newApp.setCode(code);
+					newApp.setName(name);
+					return repo.save(newApp);
+				});
 	}
 	
 }

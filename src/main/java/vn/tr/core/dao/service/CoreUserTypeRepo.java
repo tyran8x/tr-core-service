@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreUserType;
 
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -26,4 +27,6 @@ public interface CoreUserTypeRepo extends JpaRepository<CoreUserType, Long>, Jpa
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreUserType g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
 	void softDeleteByIds(@Param("ids") Set<Long> ids);
+	
+	Optional<CoreUserType> findFirstByCodeIgnoreCase(String code);
 }

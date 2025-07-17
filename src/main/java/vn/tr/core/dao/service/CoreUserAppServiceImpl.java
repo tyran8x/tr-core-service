@@ -60,7 +60,7 @@ public class CoreUserAppServiceImpl implements CoreUserAppService {
 			
 			if (isInNewList && isCurrentlyDeleted) {
 				assignment.setDeletedAt(null);
-				assignment.setStatus(LifecycleStatus.ACTIVE.getValue());
+				assignment.setStatus(LifecycleStatus.ACTIVE);
 				assignment.setAssignedAt(LocalDateTime.now());
 				toSaveOrUpdate.add(assignment);
 			} else if (!isInNewList && !isCurrentlyDeleted) {
@@ -83,6 +83,47 @@ public class CoreUserAppServiceImpl implements CoreUserAppService {
 		}
 		if (!toSoftDelete.isEmpty()) {
 			repo.deleteAll(toSoftDelete);
+		}
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public Set<String> findAppCodesByUsername(String username) {
+		if (username.isBlank()) {
+			return Collections.emptySet();
+		}
+		return repo.findAppCodesByUsername(username.toLowerCase());
+	}
+	
+	@Override
+	public boolean existsByUsernameAndAppCode(String username, String appCode) {
+		return repo.existsByUsernameAndAppCode(username, appCode);
+	}
+	
+	@Override
+	@Transactional
+	public void assignUserToAppIfNotExists(String username, String appCode) {
+		String normalizedUsername = username.toLowerCase();
+		
+		List<CoreUserApp> assignments = repo.findAllByUsernameIncludingDeleted(normalizedUsername);
+		
+		Optional<CoreUserApp> existingAssignment = assignments.stream()
+				.filter(a -> a.getAppCode().equalsIgnoreCase(appCode))
+				.findFirst();
+		
+		if (existingAssignment.isPresent()) {
+			CoreUserApp assignment = existingAssignment.get();
+			if (assignment.getDeletedAt() != null) {
+				assignment.setDeletedAt(null);
+				assignment.setStatus(LifecycleStatus.ACTIVE);
+				repo.save(assignment);
+			}
+		} else {
+			CoreUserApp newAssignment = CoreUserApp.builder()
+					.username(normalizedUsername)
+					.appCode(appCode)
+					.build();
+			repo.save(newAssignment);
 		}
 	}
 	

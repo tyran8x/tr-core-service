@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(value = "/group")
+@RequestMapping(value = "/groups")
 @RequiredArgsConstructor
 public class CoreGroupController {
 	

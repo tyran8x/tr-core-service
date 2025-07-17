@@ -33,6 +33,19 @@ public class CoreModuleBusiness {
 		return save(coreModule, coreModuleData);
 	}
 	
+	private CoreModuleData save(CoreModule coreModule, CoreModuleData coreModuleData) {
+		coreModuleMapper.save(coreModuleData, coreModule);
+		CoreModule savedModule = coreModuleService.save(coreModule);
+		return findById(savedModule.getId());
+	}
+	
+	@Transactional(readOnly = true)
+	public CoreModuleData findById(Long id) {
+		return coreModuleService.findById(id)
+				.map(coreModuleMapper::toData)
+				.orElseThrow(() -> new EntityNotFoundException(CoreModule.class, id));
+	}
+	
 	public void delete(Long id) {
 		if (!coreModuleService.existsById(id)) {
 			throw new EntityNotFoundException(CoreModule.class, id);
@@ -58,24 +71,11 @@ public class CoreModuleBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public CoreModuleData findById(Long id) {
-		return coreModuleService.findById(id)
-				.map(coreModuleMapper::toData)
-				.orElseThrow(() -> new EntityNotFoundException(CoreModule.class, id));
-	}
-	
-	@Transactional(readOnly = true)
 	public Optional<CoreModuleData> getById(Long id) {
 		if (id == null) {
 			return Optional.empty();
 		}
 		return coreModuleService.findById(id).map(coreModuleMapper::toData);
-	}
-	
-	private CoreModuleData save(CoreModule coreModule, CoreModuleData coreModuleData) {
-		coreModuleMapper.save(coreModuleData, coreModule);
-		CoreModule savedModule = coreModuleService.save(coreModule);
-		return findById(savedModule.getId());
 	}
 	
 	public CoreModuleData update(Long id, CoreModuleData coreModuleData) {

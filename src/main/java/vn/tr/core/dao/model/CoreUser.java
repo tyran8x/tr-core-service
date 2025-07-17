@@ -1,12 +1,10 @@
 package vn.tr.core.dao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.jpa.entity.BaseEntity;
 
 @Entity
@@ -14,7 +12,9 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @SQLDelete(sql = "UPDATE core_user SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUser extends BaseEntity {
@@ -39,11 +39,10 @@ public class CoreUser extends BaseEntity {
 	@Column(name = "avatar_url", columnDefinition = "TEXT")
 	private String avatarUrl;
 	
-	@Column(name = "user_type_id")
-	private Long userTypeId;
-	
-	@Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
-	private String status = "ACTIVE";
+	@Column(name = "status", nullable = false, length = 50)
+	@Enumerated(EnumType.STRING)
+	@Builder.Default
+	private LifecycleStatus status = LifecycleStatus.ACTIVE;
 	
 	@Column(name = "sort_order", columnDefinition = "INTEGER DEFAULT 0")
 	private Integer sortOrder = 0;

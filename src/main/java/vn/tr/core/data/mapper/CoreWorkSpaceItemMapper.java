@@ -19,7 +19,7 @@ public interface CoreWorkSpaceItemMapper {
 	CoreWorkSpaceItem toEntity(CoreWorkSpaceItemData data);
 	
 	default void save(CoreWorkSpaceItemData data, CoreWorkSpaceItem entity) {
-		_updateEntityFromData(data, entity);
+		updateEntity(data, entity);
 		
 		if (entity.getStatus() == null) {
 			entity.setStatus(LifecycleStatus.ACTIVE);
@@ -39,6 +39,6 @@ public interface CoreWorkSpaceItemMapper {
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void _updateEntityFromData(CoreWorkSpaceItemData data, @MappingTarget CoreWorkSpaceItem entity);
+	void updateEntity(CoreWorkSpaceItemData data, @MappingTarget CoreWorkSpaceItem entity);
 	
 }

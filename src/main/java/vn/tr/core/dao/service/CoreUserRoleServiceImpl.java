@@ -16,13 +16,13 @@ public class CoreUserRoleServiceImpl implements CoreUserRoleService {
 	private final CoreUserRoleRepo repo;
 	
 	@Override
-	public CoreUserRole save(CoreUserRole coreUserRole) {
-		return repo.save(coreUserRole);
+	public void deleteById(Long id) {
+		repo.deleteById(id);
 	}
 	
 	@Override
-	public void deleteById(Long id) {
-		repo.deleteById(id);
+	public boolean existsById(Long id) {
+		return repo.existsById(id);
 	}
 	
 	@Override
@@ -31,8 +31,8 @@ public class CoreUserRoleServiceImpl implements CoreUserRoleService {
 	}
 	
 	@Override
-	public boolean existsById(Long id) {
-		return repo.existsById(id);
+	public CoreUserRole save(CoreUserRole coreUserRole) {
+		return repo.save(coreUserRole);
 	}
 	
 	@Override
@@ -47,7 +47,6 @@ public class CoreUserRoleServiceImpl implements CoreUserRoleService {
 				.map(toRoleCode)
 				.collect(Collectors.toSet());
 		
-		// Bước 3: Tối ưu hóa - Thoát sớm nếu không có gì thay đổi.
 		if (currentlyActiveRoleCodes.equals(newRoleCodesInApp)) {
 			return;
 		}
@@ -58,12 +57,10 @@ public class CoreUserRoleServiceImpl implements CoreUserRoleService {
 		List<CoreUserRole> toSaveOrUpdate = new ArrayList<>();
 		List<CoreUserRole> toSoftDelete = new ArrayList<>();
 		
-		// Bước 5: Logic đồng bộ hóa.
-		// Kích hoạt lại các vai trò đã bị xóa mềm.
 		newRoleCodesInApp.stream()
-				.filter(existingMap::containsKey) // Chỉ xét những role đã có trong DB
+				.filter(existingMap::containsKey)
 				.map(existingMap::get)
-				.filter(assignment -> assignment.getDeletedAt() != null) // Lọc ra những cái đang bị xóa mềm
+				.filter(assignment -> assignment.getDeletedAt() != null)
 				.forEach(assignment -> {
 					assignment.setDeletedAt(null);
 					toSaveOrUpdate.add(assignment);
@@ -90,6 +87,38 @@ public class CoreUserRoleServiceImpl implements CoreUserRoleService {
 		}
 		if (!toSoftDelete.isEmpty()) {
 			repo.deleteAll(toSoftDelete);
+		}
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public Set<String> findRoleCodesByUsername(String username) {
+		if (username.isBlank()) {
+			return Collections.emptySet();
+		}
+		return repo.findRoleCodesByUsername(username.toLowerCase());
+	}
+	
+	@Override
+	@Transactional
+	public void assignRoleToUserIfNotExists(String username, String appCode, String roleCode) {
+		String normalizedUsername = username.toLowerCase();
+		
+		Optional<CoreUserRole> existingAssignment = repo.findFirstByUsernameAndAppCodeAndRoleCode(normalizedUsername, appCode, roleCode);
+		
+		if (existingAssignment.isPresent()) {
+			CoreUserRole assignment = existingAssignment.get();
+			if (assignment.getDeletedAt() != null) {
+				assignment.setDeletedAt(null);
+				repo.save(assignment);
+			}
+		} else {
+			CoreUserRole newAssignment = CoreUserRole.builder()
+					.username(normalizedUsername)
+					.appCode(appCode)
+					.roleCode(roleCode)
+					.build();
+			repo.save(newAssignment);
 		}
 	}
 	

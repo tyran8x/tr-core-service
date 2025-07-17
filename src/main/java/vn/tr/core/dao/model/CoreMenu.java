@@ -1,10 +1,7 @@
 package vn.tr.core.dao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -15,7 +12,9 @@ import vn.tr.common.jpa.entity.BaseCommonEntity;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @SQLDelete(sql = "UPDATE core_menu SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreMenu extends BaseCommonEntity {
@@ -55,9 +54,6 @@ public class CoreMenu extends BaseCommonEntity {
 	
 	@Column(name = "link")
 	private String link;
-	
-	@Column(name = "sapxep")
-	private Integer sapXep;
 	
 	// meta v1
 	@Column(name = "is_hidden")

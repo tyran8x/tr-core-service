@@ -6,60 +6,84 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
-import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
+import vn.tr.common.web.data.dto.DeleteData;
 import vn.tr.core.business.CoreRoleBusiness;
-import vn.tr.core.data.CoreRoleData;
+import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
+import vn.tr.core.data.dto.CoreRoleData;
 import vn.tr.core.data.validator.CoreRoleValidator;
 
+import java.util.List;
+import java.util.Optional;
+
 @RestController
-@RequestMapping(value = "/role")
+@RequestMapping(value = "/roles")
 @RequiredArgsConstructor
 public class CoreRoleController {
 	
 	private final CoreRoleBusiness coreRoleBusiness;
 	private final CoreRoleValidator coreRoleValidator;
 	
+	@InitBinder("coreRoleData")
+	public void initBinder(WebDataBinder binder) {
+		binder.addValidators(coreRoleValidator);
+	}
+	
 	@PostMapping(value = {""})
+	@Log(title = "create CoreRole", businessType = BusinessType.DELETE)
 	public R<CoreRoleData> create(@Valid @RequestBody CoreRoleData coreRoleData) {
 		coreRoleData = coreRoleBusiness.create(coreRoleData);
 		return R.ok(coreRoleData);
 	}
 	
 	@DeleteMapping(value = {"/{id}"})
-	public R<Void> delete(@PathVariable("id") Long id) throws EntityNotFoundException {
+	@Log(title = "Delete CoreRole", businessType = BusinessType.DELETE)
+	public R<Void> delete(@PathVariable("id") Long id) {
 		coreRoleBusiness.delete(id);
 		return R.ok();
 	}
 	
+	@DeleteMapping(value = "")
+	@Log(title = "bulkDelete CoreRole", businessType = BusinessType.DELETE)
+	public R<Void> bulkDelete(@Valid @RequestBody DeleteData deleteData) {
+		if (deleteData.getIds() == null || deleteData.getIds().isEmpty()) {
+			return R.fail("Danh sách ID không được để trống.");
+		}
+		coreRoleBusiness.bulkDelete(deleteData.getIds());
+		return R.ok();
+	}
+	
 	@GetMapping(value = {"/", ""})
-	@Log(title = "FindAll CoreRole", businessType = BusinessType.OTHER, isSaveRequestData = false)
-	public R<Page<CoreRoleData>> findAll(
-			@RequestHeader(name = "X-App-Code", required = false) String xAppCode,
-			@RequestParam(name = "page", defaultValue = "0", required = false) int page,
-			@RequestParam(name = "size", defaultValue = "20", required = false) int size,
-			@RequestParam(name = "sortBy", defaultValue = "ngayCapNhat", required = false) String sortBy,
-			@RequestParam(name = "sortDir", defaultValue = "DESC", required = false) String sortDir,
-			@RequestParam(name = "search", required = false) String search,
-			@RequestParam(name = "trangThai", required = false) Boolean trangThai) {
-		Page<CoreRoleData> pageCoreRoleData = coreRoleBusiness.findAll(page, size, sortBy, sortDir, search, trangThai, xAppCode);
+	@Log(title = "FindAll CoreRole", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+	public R<Page<CoreRoleData>> findAll(CoreRoleSearchCriteria criteria) {
+		Page<CoreRoleData> pageCoreRoleData = coreRoleBusiness.findAll(criteria);
 		return R.ok(pageCoreRoleData);
 	}
 	
+	@GetMapping(value = {"/list"})
+	@Log(title = "getAll CoreRole", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+	public R<List<CoreRoleData>> getAll(CoreRoleSearchCriteria criteria) {
+		List<CoreRoleData> coreRoleDatas = coreRoleBusiness.getAll(criteria);
+		return R.ok(coreRoleDatas);
+	}
+	
 	@GetMapping(value = {"/{id}"})
-	public R<CoreRoleData> findById(@PathVariable("id") long id) throws EntityNotFoundException {
+	@Log(title = "findById CoreRole", businessType = BusinessType.DETAIL, isSaveRequestData = false)
+	public R<CoreRoleData> findById(@PathVariable("id") long id) {
 		CoreRoleData coreRoleData = coreRoleBusiness.findById(id);
 		return R.ok(coreRoleData);
 	}
 	
-	@InitBinder
-	public void initBinder(WebDataBinder webDataBinder) {
-		webDataBinder.addValidators(coreRoleValidator);
+	@GetMapping(value = {"/get/{id}"})
+	public R<CoreRoleData> getById(@PathVariable("id") Long id) {
+		Optional<CoreRoleData> optionalCoreRoleData = coreRoleBusiness.getById(id);
+		return R.ok(optionalCoreRoleData.orElse(null));
 	}
 	
 	@PutMapping(value = {"/{id}"})
-	public R<CoreRoleData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreRoleData coreRoleData) throws EntityNotFoundException {
+	@Log(title = "update CoreRole", businessType = BusinessType.UPDATE)
+	public R<CoreRoleData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreRoleData coreRoleData) {
 		coreRoleData = coreRoleBusiness.update(id, coreRoleData);
 		return R.ok(coreRoleData);
 	}

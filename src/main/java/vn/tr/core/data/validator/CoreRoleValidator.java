@@ -1,60 +1,67 @@
 package vn.tr.core.data.validator;
 
 import cn.hutool.core.util.StrUtil;
-import org.springframework.context.MessageSource;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
+import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.service.CoreRoleService;
-import vn.tr.core.data.CoreRoleData;
-
-import java.util.Objects;
+import vn.tr.core.data.dto.CoreRoleData;
 
 @Component
+@RequiredArgsConstructor
 public class CoreRoleValidator implements Validator {
-
-	protected final MessageSource messageSource;
-	protected final CoreRoleService coreRoleService;
-
-	public CoreRoleValidator(MessageSource messageSource, CoreRoleService coreRoleService) {
-		this.messageSource = messageSource;
-		this.coreRoleService = coreRoleService;
-	}
-
+	
+	private static final String ERROR_APP_ID_NOT_FOUND = "error.app.id.notfound";
+	private static final String ERROR_CODE_DUPLICATE = "error.code.duplicate";
+	private static final String ERROR_NAME_DUPLICATE = "error.name.duplicate";
+	private static final String ERROR_TARGET_NULL = "error.target.null";
+	private final CoreRoleService coreRoleService;
+	
 	@Override
-	public boolean supports(Class<?> clazz) {
+	public boolean supports(@NonNull Class<?> clazz) {
 		return CoreRoleData.class.isAssignableFrom(clazz);
 	}
-
+	
 	@Override
-	public void validate(Object target, Errors errors) {
-		CoreRoleData object = (CoreRoleData) target;
-
-		if (checkMaExits(object.getId(), object.getMa())) {
-			errors.rejectValue("ma", "error.ma", new Object[]{"ma"}, "Mã đã tồn tại");
+	public void validate(@Nullable Object target, @Nullable Errors errors) {
+		if (errors == null) {
+			throw new IllegalArgumentException("Errors object cannot be null.");
 		}
-		if (checkTenExits(object.getId(), object.getTen())) {
-			errors.rejectValue("ten", "error.ten", new Object[]{"ten"}, "Tên đã tồn tại");
+		if (target == null) {
+			errors.reject(ERROR_TARGET_NULL, "Đối tượng CoreRoleData không được null.");
+			return;
 		}
+		
+		CoreRoleData data = (CoreRoleData) target;
+		
+		String appCode = LoginHelper.getAppCode();
+//		if (appCode == null) {
+//			errors.reject(ERROR_APP_ID_NOT_FOUND, "Không thể xác định ứng dụng hiện tại.");
+//			return;
+//		}
+		
+		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), appCode, true)) {
+			errors.rejectValue("code", ERROR_CODE_DUPLICATE, "Mã đã tồn tại.");
+		}
+		
+		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), appCode, false)) {
+			errors.rejectValue("name", ERROR_NAME_DUPLICATE, "Tên đã tồn tại.");
+		}
+		
 	}
-
-	private boolean checkMaExits(Long id, String ma) {
-		if (StrUtil.isNotBlank(ma)) {
-			if (Objects.nonNull(id)) {
-				return coreRoleService.existsByIdNotAndMaIgnoreCaseAndDaXoaFalse(id, ma);
-			}
-			return coreRoleService.existsByMaIgnoreCaseAndDaXoaFalse(ma);
+	
+	private boolean isDuplicate(Long id, String value, String appCode, boolean isCode) {
+		if (id != null) {
+			return isCode
+					? coreRoleService.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, value, appCode)
+					: coreRoleService.existsByIdNotAndNameIgnoreCaseAndAppCode(id, value, appCode);
 		}
-		return false;
-	}
-
-	private boolean checkTenExits(Long id, String ten) {
-		if (StrUtil.isNotBlank(ten)) {
-			if (Objects.nonNull(id)) {
-				return coreRoleService.existsByIdNotAndTenIgnoreCaseAndDaXoaFalse(id, ten);
-			}
-			return coreRoleService.existsByTenIgnoreCaseAndDaXoaFalse(ten);
-		}
-		return false;
+		return isCode
+				? coreRoleService.existsByCodeIgnoreCaseAndAppCode(value, appCode)
+				: coreRoleService.existsByNameIgnoreCaseAndAppCode(value, appCode);
 	}
 }

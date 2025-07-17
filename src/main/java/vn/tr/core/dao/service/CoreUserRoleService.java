@@ -17,4 +17,8 @@ public interface CoreUserRoleService {
 	
 	void replaceUserRolesForApp(String username, String appCode, Set<String> newRoleCodesInApp);
 	
+	Set<String> findRoleCodesByUsername(String username);
+	
+	void assignRoleToUserIfNotExists(String username, String appCode, String roleCode);
+	
 }

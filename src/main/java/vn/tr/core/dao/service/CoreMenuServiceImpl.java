@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreMenu;
+import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,13 +32,13 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	}
 	
 	@Override
-	public Page<CoreMenu> findAll(String search, Boolean trangThai, String appCode, Pageable pageable) {
-		return repo.findAll(CoreMenuSpecifications.quickSearch(search, trangThai, appCode), pageable);
+	public Page<CoreMenu> findAll(CoreMenuSearchCriteria coreMenuSearchCriteria, Pageable pageable) {
+		return repo.findAll(CoreMenuSpecifications.quickSearch(coreMenuSearchCriteria), pageable);
 	}
 	
 	@Override
-	public List<CoreMenu> findByDaXoaFalse() {
-		return repo.findByDaXoaFalse();
+	public List<CoreMenu> findAll(CoreMenuSearchCriteria coreMenuSearchCriteria) {
+		return repo.findAll(CoreMenuSpecifications.quickSearch(coreMenuSearchCriteria));
 	}
 	
 	@Override
@@ -46,38 +47,8 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	}
 	
 	@Override
-	public Optional<CoreMenu> findByIdAndDaXoaFalse(Long id) {
-		return repo.findByIdAndDaXoaFalse(id);
-	}
-	
-	@Override
-	public List<CoreMenu> findByIdInAndDaXoaFalse(List<Long> ids) {
-		return repo.findByIdInAndDaXoaFalse(ids);
-	}
-	
-	@Override
-	public List<CoreMenu> findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(List<Long> ids, String appCode) {
-		return repo.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(ids, appCode);
-	}
-	
-	@Override
-	public List<CoreMenu> findByTrangThaiTrueAndAppCodeAndDaXoaFalse(String appCode) {
-		return repo.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
-	}
-	
-	@Override
-	public Optional<CoreMenu> findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(String ma, String appCode) {
-		return repo.findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(ma, appCode);
-	}
-	
-	@Override
 	public CoreMenu save(CoreMenu coreMenu) {
 		return repo.save(coreMenu);
-	}
-	
-	@Override
-	public void setFixedDaXoa(boolean daXoa) {
-		repo.setFixedDaXoa(daXoa);
 	}
 	
 	@Override
@@ -92,6 +63,11 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 			return;
 		}
 		repo.softDeleteByIds(ids);
+	}
+	
+	@Override
+	public Optional<CoreMenu> findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(String code, String appCode) {
+		return repo.findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(code, appCode);
 	}
 	
 }

@@ -20,21 +20,20 @@ public class CoreConfigDefinitionBusiness {
 	
 	private final CoreConfigDefinitionService coreConfigDefinitionService;
 	
-	private CoreConfigDefinitionData convertToCoreConfigDefinitionData(CoreConfigDefinition coreConfigDefinition) {
-		CoreConfigDefinitionData coreConfigDefinitionData = new CoreConfigDefinitionData();
-		coreConfigDefinitionData.setId(coreConfigDefinition.getId());
-//		coreConfigDefinitionData.setMaUngDung(coreConfigDefinition.getMaUngDung());
-//		coreConfigDefinitionData.setCode(coreConfigDefinition.getCode());
-//		coreConfigDefinitionData.setGhiChu(coreConfigDefinition.getGhiChu());
-//		coreConfigDefinitionData.setLoaiGiaTri(coreConfigDefinition.getLoaiGiaTri());
-//		coreConfigDefinitionData.setGiaTri(coreConfigDefinition.getGiaTri());
-//		coreConfigDefinitionData.setTrangThai(coreConfigDefinition.getTrangThai());
-		return coreConfigDefinitionData;
-	}
-	
 	public CoreConfigDefinitionData create(CoreConfigDefinitionData coreConfigDefinitionData) {
 		CoreConfigDefinition coreConfigDefinition = new CoreConfigDefinition();
 		return save(coreConfigDefinition, coreConfigDefinitionData);
+	}
+	
+	private CoreConfigDefinitionData save(CoreConfigDefinition coreConfigDefinition, CoreConfigDefinitionData coreConfigDefinitionData) {
+		coreConfigDefinition.setDaXoa(false);
+//		coreConfigDefinition.setMaUngDung(FunctionUtils.removeXss(coreConfigDefinitionData.getMaUngDung()));
+//		coreConfigDefinition.setCode(FunctionUtils.removeXss(coreConfigDefinitionData.getCode()));
+//		coreConfigDefinition.setGhiChu(FunctionUtils.removeXss(coreConfigDefinitionData.getGhiChu()));
+//		coreConfigDefinition.setLoaiGiaTri(coreConfigDefinitionData.getLoaiGiaTri());
+//		coreConfigDefinition.setGiaTri(FunctionUtils.removeXss(coreConfigDefinitionData.getGiaTri()));
+//		coreConfigDefinition.setTrangThai(coreConfigDefinitionData.getTrangThai());
+		return null;// convertToCoreConfigDefinitionData(coreConfigDefinitionService.save(coreConfigDefinition));
 	}
 	
 	public void delete(Long id) throws EntityNotFoundException {
@@ -60,6 +59,18 @@ public class CoreConfigDefinitionBusiness {
 		return pageCoreConfigDefinition.map(this::convertToCoreConfigDefinitionData);
 	}
 	
+	private CoreConfigDefinitionData convertToCoreConfigDefinitionData(CoreConfigDefinition coreConfigDefinition) {
+		CoreConfigDefinitionData coreConfigDefinitionData = new CoreConfigDefinitionData();
+		coreConfigDefinitionData.setId(coreConfigDefinition.getId());
+//		coreConfigDefinitionData.setMaUngDung(coreConfigDefinition.getMaUngDung());
+//		coreConfigDefinitionData.setCode(coreConfigDefinition.getCode());
+//		coreConfigDefinitionData.setGhiChu(coreConfigDefinition.getGhiChu());
+//		coreConfigDefinitionData.setLoaiGiaTri(coreConfigDefinition.getLoaiGiaTri());
+//		coreConfigDefinitionData.setGiaTri(coreConfigDefinition.getGiaTri());
+//		coreConfigDefinitionData.setTrangThai(coreConfigDefinition.getTrangThai());
+		return coreConfigDefinitionData;
+	}
+	
 	public CoreConfigDefinitionData findById(Long id) throws EntityNotFoundException {
 		Optional<CoreConfigDefinition> optionalCoreConfigDefinition = coreConfigDefinitionService.findById(id);
 		if (optionalCoreConfigDefinition.isEmpty()) {
@@ -79,17 +90,6 @@ public class CoreConfigDefinitionBusiness {
 //		coreConfigDefinition.setGiaTri(giaTri);
 //		coreConfigDefinition.setMaUngDung(maUngDung);
 //		coreConfigDefinitionService.save(coreConfigDefinition);
-	}
-	
-	private CoreConfigDefinitionData save(CoreConfigDefinition coreConfigDefinition, CoreConfigDefinitionData coreConfigDefinitionData) {
-		coreConfigDefinition.setDaXoa(false);
-//		coreConfigDefinition.setMaUngDung(FunctionUtils.removeXss(coreConfigDefinitionData.getMaUngDung()));
-//		coreConfigDefinition.setCode(FunctionUtils.removeXss(coreConfigDefinitionData.getCode()));
-//		coreConfigDefinition.setGhiChu(FunctionUtils.removeXss(coreConfigDefinitionData.getGhiChu()));
-//		coreConfigDefinition.setLoaiGiaTri(coreConfigDefinitionData.getLoaiGiaTri());
-//		coreConfigDefinition.setGiaTri(FunctionUtils.removeXss(coreConfigDefinitionData.getGiaTri()));
-//		coreConfigDefinition.setTrangThai(coreConfigDefinitionData.getTrangThai());
-		return null;// convertToCoreConfigDefinitionData(coreConfigDefinitionService.save(coreConfigDefinition));
 	}
 	
 	public CoreConfigDefinitionData update(Long id, CoreConfigDefinitionData coreConfigDefinitionData) throws EntityNotFoundException {

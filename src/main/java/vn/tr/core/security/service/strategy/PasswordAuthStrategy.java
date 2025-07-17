@@ -17,7 +17,6 @@ import vn.tr.common.core.utils.MessageUtils;
 import vn.tr.common.core.utils.ValidatorUtils;
 import vn.tr.common.json.utils.JsonUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
-import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.service.CoreRoleService;
 import vn.tr.core.dao.service.CoreUserRoleService;
@@ -26,7 +25,6 @@ import vn.tr.core.data.CoreClientData;
 import vn.tr.core.data.LoginResult;
 import vn.tr.core.security.service.IAuthStrategy;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -105,7 +103,7 @@ public class PasswordAuthStrategy implements IAuthStrategy {
 			coreUserService.save(coreUser);
 			
 			Set<String> roles = registerBody.getRoles();
-			List<CoreRole> coreRoles = coreRoleService.findByMaIgnoreCaseInAndDaXoaFalse(roles);
+			//		List<CoreRole> coreRoles = coreRoleService.findByMaIgnoreCaseInAndDaXoaFalse(roles);
 
 //			coreUserRoleService.setFixedDaXoaForUserName(true, coreUser.getUsername());
 //			if (CollUtil.isNotEmpty(coreRoles)) {

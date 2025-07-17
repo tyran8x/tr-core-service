@@ -3,6 +3,7 @@ package vn.tr.core.dao.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import vn.tr.core.dao.model.CoreMenu;
+import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,28 +15,18 @@ public interface CoreMenuService {
 	
 	boolean existsById(Long id);
 	
-	Page<CoreMenu> findAll(String search, Boolean trangThai, String appCode, Pageable pageable);
+	Page<CoreMenu> findAll(CoreMenuSearchCriteria coreMenuSearchCriteria, Pageable pageable);
 	
-	List<CoreMenu> findByDaXoaFalse();
+	List<CoreMenu> findAll(CoreMenuSearchCriteria coreMenuSearchCriteria);
 	
 	Optional<CoreMenu> findById(Long id);
 	
-	Optional<CoreMenu> findByIdAndDaXoaFalse(Long id);
-	
-	List<CoreMenu> findByIdInAndDaXoaFalse(List<Long> ids);
-	
-	List<CoreMenu> findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(List<Long> ids, String appCode);
-	
-	List<CoreMenu> findByTrangThaiTrueAndAppCodeAndDaXoaFalse(String appCode);
-	
-	Optional<CoreMenu> findFirstByMaIgnoreCaseAndAppCodeIgnoreCase(String ma, String appCode);
-	
 	CoreMenu save(CoreMenu coreMenu);
-	
-	void setFixedDaXoa(boolean daXoa);
 	
 	void setFixedDaXoaAndAppCode(boolean daXoa, String appCode);
 	
 	void deleteByIds(Set<Long> ids);
+	
+	Optional<CoreMenu> findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(String code, String appCode);
 	
 }

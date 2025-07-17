@@ -31,6 +31,19 @@ public class CoreAppBusiness {
 		return save(coreApp, coreAppData);
 	}
 	
+	private CoreAppData save(CoreApp coreApp, CoreAppData coreAppData) {
+		coreAppMapper.save(coreAppData, coreApp);
+		CoreApp savedApp = coreAppService.save(coreApp);
+		return findById(savedApp.getId());
+	}
+	
+	@Transactional(readOnly = true)
+	public CoreAppData findById(Long id) {
+		return coreAppService.findById(id)
+				.map(coreAppMapper::toData)
+				.orElseThrow(() -> new EntityNotFoundException(CoreApp.class, id));
+	}
+	
 	public void delete(Long id) {
 		if (!coreAppService.existsById(id)) {
 			throw new EntityNotFoundException(CoreApp.class, id);
@@ -56,24 +69,11 @@ public class CoreAppBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public CoreAppData findById(Long id) {
-		return coreAppService.findById(id)
-				.map(coreAppMapper::toData)
-				.orElseThrow(() -> new EntityNotFoundException(CoreApp.class, id));
-	}
-	
-	@Transactional(readOnly = true)
 	public Optional<CoreAppData> getById(Long id) {
 		if (id == null) {
 			return Optional.empty();
 		}
 		return coreAppService.findById(id).map(coreAppMapper::toData);
-	}
-	
-	private CoreAppData save(CoreApp coreApp, CoreAppData coreAppData) {
-		coreAppMapper.save(coreAppData, coreApp);
-		CoreApp savedApp = coreAppService.save(coreApp);
-		return findById(savedApp.getId());
 	}
 	
 	public CoreAppData update(Long id, CoreAppData coreAppData) {

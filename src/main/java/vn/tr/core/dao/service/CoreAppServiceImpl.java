@@ -36,6 +36,11 @@ public class CoreAppServiceImpl implements CoreAppService {
 	}
 	
 	@Override
+	public boolean existsById(Long id) {
+		return repo.existsById(id);
+	}
+	
+	@Override
 	public Page<CoreApp> findAll(CoreAppSearchCriteria coreAppSearchCriteria, Pageable pageable) {
 		return repo.findAll(CoreAppSpecifications.quickSearch(coreAppSearchCriteria), pageable);
 	}
@@ -71,17 +76,24 @@ public class CoreAppServiceImpl implements CoreAppService {
 	}
 	
 	@Override
-	public boolean existsById(Long id) {
-		return repo.existsById(id);
-	}
-	
-	@Override
 	@Transactional
 	public void deleteByIds(Set<Long> ids) {
 		if (ids.isEmpty()) {
 			return;
 		}
 		repo.softDeleteByIds(ids);
+	}
+	
+	@Override
+	@Transactional
+	public CoreApp findOrCreate(String code, String name) {
+		return repo.findFirstByCodeIgnoreCase(code)
+				.orElseGet(() -> {
+					CoreApp newApp = new CoreApp();
+					newApp.setCode(code);
+					newApp.setName(name);
+					return repo.save(newApp);
+				});
 	}
 	
 }

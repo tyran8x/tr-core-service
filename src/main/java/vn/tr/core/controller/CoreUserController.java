@@ -11,14 +11,16 @@ import vn.tr.common.log.enums.BusinessType;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.data.dto.DeleteData;
 import vn.tr.core.business.CoreUserBusiness;
-import vn.tr.core.data.CoreUserChangePasswordData;
-import vn.tr.core.data.CoreUserChangeStatusData;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
+import vn.tr.core.data.dto.CoreUserChangePasswordData;
+import vn.tr.core.data.dto.CoreUserChangeStatusData;
 import vn.tr.core.data.dto.CoreUserData;
 import vn.tr.core.data.validator.CoreUserValidator;
 
+import java.util.List;
+
 @RestController
-@RequestMapping(value = "/users") // Đổi thành plural "users" theo chuẩn REST
+@RequestMapping(value = "/users")
 @RequiredArgsConstructor
 public class CoreUserController {
 	
@@ -67,15 +69,13 @@ public class CoreUserController {
 		Page<CoreUserData> pageCoreUserData = coreUserBusiness.findAll(criteria);
 		return R.ok(pageCoreUserData);
 	}
-
-//	// Giữ lại endpoint này nếu cần lấy danh sách không phân trang
-//	@GetMapping("/list")
-//	@Log(title = "Lấy danh sách Người dùng", businessType = BusinessType.FINDALL, isSaveRequestData = false)
-//	public R<List<CoreUserData>> getAll(CoreUserSearchCriteria criteria) {
-//		// Cần thêm hàm getAll vào CoreUserBusiness nếu cần
-//		List<CoreUserData> coreUserDatas = coreUserBusiness.getAll(criteria);
-//		return R.ok(coreUserDatas);
-//	}
+	
+	@GetMapping("/list")
+	@Log(title = "Lấy danh sách Người dùng", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+	public R<List<CoreUserData>> getAll(CoreUserSearchCriteria criteria) {
+		List<CoreUserData> coreUserDatas = coreUserBusiness.getAll(criteria);
+		return R.ok(coreUserDatas);
+	}
 	
 	@GetMapping("/{id}")
 	@Log(title = "Lấy chi tiết Người dùng", businessType = BusinessType.DETAIL, isSaveRequestData = false)
@@ -84,21 +84,17 @@ public class CoreUserController {
 		return R.ok(coreUserData);
 	}
 	
-	// Endpoint để lấy thông tin của chính người dùng đang đăng nhập
 	@GetMapping("/me")
 	@Log(title = "Lấy thông tin cá nhân", businessType = BusinessType.DETAIL, isSaveRequestData = false)
 	public R<CoreUserData> getMyInfo() {
-		String username = LoginHelper.getUsername(); // Lấy username từ token
+		String username = LoginHelper.getUsername();
 		CoreUserData coreUserData = coreUserBusiness.findByUsername(username);
 		return R.ok(coreUserData);
 	}
 	
-	// --- Các Endpoint Hành động (Action) ---
-	
 	@PatchMapping("/{username}/change-password")
 	@Log(title = "Đổi mật khẩu Người dùng", businessType = BusinessType.UPDATE)
 	public R<Void> changePassword(@PathVariable String username, @Valid @RequestBody CoreUserChangePasswordData request) {
-		// Truyền cả username từ path vào để đảm bảo đúng đối tượng
 		coreUserBusiness.changePassword(username, request.getPassword());
 		return R.ok("Đổi mật khẩu thành công");
 	}
@@ -106,7 +102,7 @@ public class CoreUserController {
 	@PatchMapping("/{username}/update-status")
 	@Log(title = "Cập nhật trạng thái Người dùng", businessType = BusinessType.UPDATE)
 	public R<Void> updateStatus(@PathVariable String username, @Valid @RequestBody CoreUserChangeStatusData request) {
-		//	coreUserBusiness.updateStatus(username, request.getNewStatus());
+		coreUserBusiness.updateStatus(username, request.getNewStatus());
 		return R.ok("Cập nhật trạng thái thành công");
 	}
 }

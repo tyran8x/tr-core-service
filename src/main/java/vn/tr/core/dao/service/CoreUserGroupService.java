@@ -17,4 +17,6 @@ public interface CoreUserGroupService {
 	
 	void replaceUserGroups(String username, Set<String> newGroupCodes);
 	
+	Set<String> findGroupCodesByUsername(String username);
+	
 }

@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(value = "/app")
+@RequestMapping(value = "/apps")
 @RequiredArgsConstructor
 public class CoreAppController {
 	
