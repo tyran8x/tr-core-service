@@ -14,14 +14,14 @@ eureka:
   client:
     register-with-eureka: false
     serviceUrl:
-      defaultZone: http://10.49.41.112:8061/eureka
+      defaultZone: http://localhost:8061/eureka
 core:
   attachment:
     host:
       download: 'https://api.dnict.vn/v2/core'
 spring:
   datasource:
-    url: jdbc:postgresql://10.49.41.112:5432/dev_core_service
+    url: jdbc:postgresql://localhost:5432/dev_core_service
     username: postgres
     password: DnictPro@123
   jpa:
@@ -38,7 +38,7 @@ spring:
       WRITE_DATES_AS_TIMESTAMPS: false
   data:
     redis:
-      host: 10.49.41.112
+      host: localhost
       port: 6379
       password: 'DnictPro@123'
       timeout: 10s
