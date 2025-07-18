@@ -1,7 +1,6 @@
 package vn.tr.core.business;
 
-import cn.hutool.core.collection.CollUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,21 +8,21 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.tr.common.core.domain.model.LoginUser;
+import vn.tr.common.core.exception.base.BaseException;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
-import vn.tr.common.core.utils.FunctionUtils;
-import vn.tr.common.json.utils.JsonUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.dao.service.CoreMenuService;
-import vn.tr.core.dao.service.CoreRolePermissionService;
-import vn.tr.core.data.*;
+import vn.tr.core.dao.service.CorePermissionService;
 import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 import vn.tr.core.data.dto.CoreMenuData;
+import vn.tr.core.data.dto.RouteRecordRawData;
+import vn.tr.core.data.dto.RouterMetaData;
 import vn.tr.core.data.mapper.CoreMenuMapper;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,32 +31,18 @@ import java.util.stream.Collectors;
 public class CoreMenuBusiness {
 	
 	private final CoreMenuService coreMenuService;
-	private final CoreRolePermissionService coreRole2MenuService;
 	private final CoreMenuMapper coreMenuMapper;
-	
-	public CoreMenuData create(CoreMenuData coreMenuData) {
-		CoreMenu coreMenu = new CoreMenu();
-		return save(coreMenu, coreMenuData);
-	}
-	
-	private CoreMenuData save(CoreMenu coreMenu, CoreMenuData coreMenuData) {
-		coreMenuMapper.save(coreMenuData, coreMenu);
-		CoreMenu savedMenu = coreMenuService.save(coreMenu);
-		return findById(savedMenu.getId());
-	}
+	private final ObjectMapper objectMapper;
+	private final CorePermissionService corePermissionService;
 	
 	@Transactional(readOnly = true)
-	public CoreMenuData findById(Long id) {
-		return coreMenuService.findById(id)
+	public List<CoreMenuData> getMenuTreeForApp(String appCode) {
+		List<CoreMenu> flatList = coreMenuService.findAllByAppCode(appCode);
+		List<CoreMenuData> dtoList = flatList.stream()
 				.map(coreMenuMapper::toData)
-				.orElseThrow(() -> new EntityNotFoundException(CoreMenu.class, id));
-	}
-	
-	public void delete(Long id) {
-		if (!coreMenuService.existsById(id)) {
-			throw new EntityNotFoundException(CoreMenu.class, id);
-		}
-		coreMenuService.delete(id);
+				.collect(Collectors.toList());
+		
+		return buildTree(dtoList);
 	}
 	
 	public void bulkDelete(Set<Long> ids) {
@@ -78,322 +63,218 @@ public class CoreMenuBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public Optional<CoreMenuData> getById(Long id) {
-		if (id == null) {
-			return Optional.empty();
-		}
-		return coreMenuService.findById(id).map(coreMenuMapper::toData);
+	public List<CoreMenuData> getFlatListForApp(String appCode) {
+		return coreMenuService.findAllByAppCode(appCode).stream()
+				.map(coreMenuMapper::toData)
+				.collect(Collectors.toList());
 	}
 	
-	public CoreDsMenuData getRouterDatas(String appCode) {
-		String email = LoginHelper.getUsername();
-		Set<String> roles = new HashSet<>();
-		LoginUser loginUser = LoginHelper.getLoginUser();
-		if (Objects.nonNull(loginUser)) {
-			roles = loginUser.getRoleCodes();
-		}
-		
-		CoreDsMenuData coreDsMenuData = new CoreDsMenuData();
-		coreDsMenuData.setEmail(email);
-		coreDsMenuData.setRoles(roles);
-		List<CoreMenu> coreMenus;
-		//boolean isRoot = LoginHelper.isSuperAdmin();
-		//log.info("isRoot: {} - roles: {}", isRoot, roles);
-//		if (CollUtil.contains(roles, "ROLE_ADMIN")) {
-//			coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
-//		} else {
-		//	List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
-		//	log.info("appCode: {} - menuIds: {}", appCode, menuIds);
-		//	coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
-		//	}
-//		if (CollUtil.isNotEmpty(coreMenus)) {
-//			List<CoreMenu> cMenus = coreMenus.stream()
-//			//		.filter(e -> Objects.isNull(e.getChaId()))
-//					.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
-//					.toList();
-//			coreDsMenuData.setCoreMenuDatas(setCoreMenuData(cMenus, coreMenus));
-//		}
-		
-		return coreDsMenuData;
+	@Transactional(readOnly = true)
+	public CoreMenuData findById(Long id) {
+		return coreMenuService.findById(id)
+				.map(coreMenuMapper::toData)
+				.orElseThrow(() -> new EntityNotFoundException(CoreMenu.class, id));
 	}
 	
-	public void saveRouterData(RouterData routerData, Long chaId, int sapXep, String appCode) {
-		log.info("Router: {}", routerData.getName());
-		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(routerData.getName(), appCode);
-		CoreMenu coreMenu = new CoreMenu();
-		if (optionalCoreMenu.isPresent()) {
-			coreMenu = optionalCoreMenu.get();
-		}
-		coreMenu.setDaXoa(false);
-		coreMenu.setIsReload(true);
-//		coreMenu.setTrangThai(true);
-//		coreMenu.setAppCode(FunctionUtils.removeXss(appCode));
-//		coreMenu.setChaId(chaId);
-//		coreMenu.setMa(FunctionUtils.removeXss(routerData.getName()));
-		coreMenu.setPath(FunctionUtils.removeXss(routerData.getPath()));
-		coreMenu.setRedirect(FunctionUtils.removeXss(routerData.getRedirect()));
-		coreMenu.setIsHidden(Boolean.TRUE.equals(routerData.getHidden()));
-		coreMenu.setIsAlwaysShow(Boolean.TRUE.equals(routerData.getAlwaysShow()));
-		coreMenu.setSortOrder(sapXep);
-		coreMenu.setProps(JsonUtils.toJsonString(routerData.getProps()));
-		
-		if (Objects.nonNull(routerData.getMeta())) {
-			MetaData metaData = routerData.getMeta();
-			coreMenu.setIcon(FunctionUtils.removeXss(metaData.getIcon()));
-//			coreMenu.setTen(FunctionUtils.removeXss(metaData.getTitle()));
-//			coreMenu.setMoTa(FunctionUtils.removeXss(metaData.getTitle()));
-			coreMenu.setActiveMenu(FunctionUtils.removeXss(metaData.getActiveMenu()));
-			coreMenu.setIsAffix(Boolean.TRUE.equals(metaData.getAffix()));
-			coreMenu.setIsBreadcrumb(Boolean.TRUE.equals(metaData.getBreadcrumb()));
-			coreMenu.setIsNoCache(Boolean.TRUE.equals(metaData.getNoCache()));
-			coreMenu.setComponent(FunctionUtils.removeXss(metaData.getComponent()));
-			coreMenu.setLink(FunctionUtils.removeXss(metaData.getLink()));
-		}
-		coreMenu = coreMenuService.save(coreMenu);
-		
-		int sapXepCon = 0;
-		if (CollUtil.isNotEmpty(routerData.getChildren())) {
-			for (RouterData children : routerData.getChildren()) {
-				sapXepCon++;
-				saveRouterData(children, coreMenu.getId(), sapXepCon, appCode);
-			}
-		}
+	public CoreMenuData create(CoreMenuData menuData) {
+		CoreMenu menu = coreMenuMapper.toEntity(menuData);
+		CoreMenu savedMenu = coreMenuService.save(menu);
+		return coreMenuMapper.toData(savedMenu);
 	}
 	
-	private List<CoreMenuData> setCoreMenuData(List<CoreMenu> cMenus, List<CoreMenu> coreMenus) {
-		List<CoreMenuData> coreMenuDatas = new ArrayList<>();
-		if (CollUtil.isNotEmpty(cMenus)) {
-			for (CoreMenu coreMenu : cMenus) {
-				CoreMenuData coreMenuData = new CoreMenuData();
-				coreMenuData.setId(coreMenu.getId());
-//				coreMenuData.setTen(coreMenu.getTen());
-//				coreMenuData.setMa(coreMenu.getMa());
-//				coreMenuData.setChaId(coreMenu.getChaId());
-//				coreMenuData.setMoTa(coreMenu.getMoTa());
-				coreMenuData.setPath(coreMenu.getPath());
-				coreMenuData.setComponent(coreMenu.getComponent());
-				coreMenuData.setRedirect(coreMenu.getRedirect());
-				coreMenuData.setIsHidden(coreMenu.getIsHidden());
-				coreMenuData.setIcon(coreMenu.getIcon());
-				coreMenuData.setIsAlwaysShow(coreMenu.getIsAlwaysShow());
-				coreMenuData.setIsNoCache(coreMenu.getIsNoCache());
-				coreMenuData.setIsAffix(coreMenu.getIsAffixTab());
-				coreMenuData.setIsBreadcrumb(coreMenu.getIsBreadcrumb());
-				coreMenuData.setLink(coreMenu.getLink());
-				coreMenuData.setActiveMenu(coreMenu.getActiveMenu());
-				coreMenuData.setProps(coreMenu.getProps());
-				coreMenuData.setIsReload(coreMenu.getIsReload());
-				//	coreMenuData.setTrangThai(coreMenu.getTrangThai());
-				coreMenuData.setSortOrder(coreMenu.getSortOrder());
-				coreMenuData.setAppCode(coreMenu.getAppCode());
-
-//				List<CoreMenu> children = coreMenus.stream()
-//						.filter(e -> Objects.nonNull(e.getChaId()))
-//						.filter(e -> e.getChaId().equals(coreMenu.getId()))
-//						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
-//						.toList();
-//				coreMenuData.setChildren(setCoreMenuData(children, coreMenus));
-				coreMenuDatas.add(coreMenuData);
-			}
-		}
-		return coreMenuDatas;
+	public CoreMenuData update(Long id, CoreMenuData menuData) {
+		CoreMenu menu = coreMenuService.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException(CoreMenu.class, id));
+		
+		coreMenuMapper.updateEntity(menuData, menu); // Dùng @MappingTarget
+		CoreMenu updatedMenu = coreMenuService.save(menu);
+		return coreMenuMapper.toData(updatedMenu);
 	}
 	
-	public void setRouterDatas(Object object, String appCode) {
-		log.info("Bắt đầu get dữ liệu router");
-		long start = System.currentTimeMillis();
-		if (Objects.nonNull(object)) {
-			ObjectMapper mapper = new ObjectMapper();
-			List<RouterData> routerDatas = mapper.convertValue(object, new TypeReference<>() {
-			});
-			coreMenuService.setFixedDaXoaAndAppCode(true, appCode);
-			if (CollUtil.isNotEmpty(routerDatas)) {
-				int sapXep = 0;
-				for (RouterData routerData : routerDatas) {
-					sapXep++;
-					saveRouterData(routerData, null, sapXep, appCode);
+	public void delete(Long id) {
+		if (coreMenuService.hasChildren(id)) {
+			throw new BaseException("Không thể xóa menu đang có các menu con. Vui lòng xóa các menu con trước.");
+		}
+		coreMenuService.delete(id);
+	}
+	
+	private List<CoreMenuData> buildTree(List<CoreMenuData> flatList) {
+		Map<Long, CoreMenuData> map = flatList.stream()
+				.collect(Collectors.toMap(CoreMenuData::getId, Function.identity()));
+		
+		List<CoreMenuData> roots = new ArrayList<>();
+		
+		for (CoreMenuData item : flatList) {
+			if (item.getParentId() == null) {
+				roots.add(item);
+			} else {
+				CoreMenuData parent = map.get(item.getParentId());
+				if (parent != null) {
+					if (parent.getChildren() == null) {
+						parent.setChildren(new ArrayList<>());
+					}
+					parent.getChildren().add(item);
 				}
-				
 			}
-			log.info("Đã hoàn thành get dữ liệu router, tổng thời gian save menu, {}", System.currentTimeMillis() - start);
 		}
-	}
-	
-	public CoreMenuData update(Long id, CoreMenuData coreMenuData) throws EntityNotFoundException {
-		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findById(id);
-		if (optionalCoreMenu.isEmpty()) {
-			throw new EntityNotFoundException(CoreMenu.class, id);
-		}
-		CoreMenu coreMenu = optionalCoreMenu.get();
-		return save(coreMenu, coreMenuData);
-	}
-	
-	public List<RouteRecordRawData> getRoutes(String appCode) {
-		LoginUser loginUser = LoginHelper.getLoginUser();
-		List<RouteRecordRawData> routeRecordRawDatas = new ArrayList<>();
-		if (Objects.nonNull(loginUser) && loginUser.getUserType().equals("sys_user")) {
-			Set<String> roles = loginUser.getRoleCodes();
-			String defaultRole = "ROLE_" + appCode + "_USER";
-			roles.add(defaultRole.toUpperCase());
-			List<CoreMenu> coreMenus;
-			//boolean isRoot = LoginHelper.isSuperAdmin();
-			//log.info("isRoot: {} - roles: {}", isRoot, roles);
-//			if (CollUtil.contains(roles, "ROLE_ADMIN")) {
-//				coreMenus = coreMenuService.findByTrangThaiTrueAndAppCodeAndDaXoaFalse(appCode);
-//			} else {
-//				List<Long> menuIds = coreRole2MenuService.getMenuIds(roles);
-//				log.info("getRoutes appCode: {} - menuIds: {}", appCode, menuIds);
-//				coreMenus = coreMenuService.findByIdInAndTrangThaiTrueAndAppCodeAndDaXoaFalse(menuIds, appCode);
-//			}
-//			if (CollUtil.isNotEmpty(coreMenus)) {
-//				List<CoreMenu> cMenus = coreMenus.stream()
-//						.filter(e -> Objects.isNull(e.getChaId()))
-//						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
-//						.toList();
-//				routeRecordRawDatas = setRouteRecordRawData(cMenus, coreMenus);
-//			}
-		}
-		return routeRecordRawDatas;
 		
+		// Sắp xếp các con trong mỗi nút theo displayOrder
+		roots.forEach(this::sortChildren);
+		return roots;
 	}
 	
-	private List<RouteRecordRawData> setRouteRecordRawData(List<CoreMenu> cMenus, List<CoreMenu> coreMenus) {
-		List<RouteRecordRawData> routeRecordRawDatas = new ArrayList<>();
-		if (CollUtil.isNotEmpty(cMenus)) {
-			for (CoreMenu coreMenu : cMenus) {
-				RouteRecordRawData routeRecordRawData = new RouteRecordRawData();
-				//	routeRecordRawData.setName(coreMenu.getMa());
-				routeRecordRawData.setPath(coreMenu.getPath());
-				routeRecordRawData.setComponent(coreMenu.getComponent());
-				routeRecordRawData.setRedirect(coreMenu.getRedirect());
-				routeRecordRawData.setProps(coreMenu.getProps());
-				
-				RouterMetaData routerMetaData = new RouterMetaData();
-				//	routerMetaData.setTitle(coreMenu.getTen());
-				routerMetaData.setLayout(coreMenu.getLayout());
-				routerMetaData.setNoBasicLayout(Boolean.TRUE.equals(coreMenu.getIsNoBasicLayout()));
-				routerMetaData.setIcon(coreMenu.getIcon());
-				routerMetaData.setLoaded(Boolean.TRUE.equals(coreMenu.getIsLoaded()));
-				routerMetaData.setKeepAlive(Boolean.TRUE.equals(coreMenu.getIsKeepAlive()));
-				routerMetaData.setAffixTab(coreMenu.getIsAffixTab());
-				routerMetaData.setAffixTabOrder(coreMenu.getAffixTabOrder());
-				routerMetaData.setQuery(coreMenu.getQuery());
-				
-				routerMetaData.setOpenInNewWindow(Boolean.TRUE.equals(coreMenu.getIsOpenInNewWindow()));
-				routerMetaData.setMenuVisibleWithForbidden(Boolean.TRUE.equals(coreMenu.getIsMenuVisibleWithForbidden()));
-				routerMetaData.setNoCache(Boolean.TRUE.equals(coreMenu.getIsNoCache()));
-				routerMetaData.setKeepAlive(Boolean.TRUE.equals(coreMenu.getIsKeepAlive()));
-				
-				routerMetaData.setHideInMenu(Boolean.TRUE.equals(coreMenu.getIsHideInMenu()));
-				routerMetaData.setHideInBreadcrumb(Boolean.TRUE.equals(coreMenu.getIsHideInBreadcrumb()));
-				routerMetaData.setHideChildrenInMenu(Boolean.TRUE.equals(coreMenu.getIsHideChildrenInMenu()));
-				routerMetaData.setHideInTab(Boolean.TRUE.equals(coreMenu.getIsHideInTab()));
-				
-				routerMetaData.setActiveMenu(coreMenu.getActiveMenu());
-				routerMetaData.setActiveIcon(coreMenu.getActiveIcon());
-				routerMetaData.setActivePath(coreMenu.getActivePath());
-				
-				routerMetaData.setLink(coreMenu.getLink());
-				routerMetaData.setIframeSrc(coreMenu.getIframeSrc());
-				routerMetaData.setOrder(coreMenu.getSortOrder());
-				routerMetaData.setMaxNumOfOpenTab(coreMenu.getMaxNumOfOpenTab());
-				routerMetaData.setMenuVisibleWithForbidden(Boolean.TRUE.equals(coreMenu.getIsMenuVisibleWithForbidden()));
-				routerMetaData.setIgnoreAccess(Boolean.TRUE.equals(coreMenu.getIsIgnoreAccess()));
-				
-				routerMetaData.setBadge(coreMenu.getBadge());
-				routerMetaData.setBadgeType(coreMenu.getBadgeType());
-				routerMetaData.setBadgeVariants(coreMenu.getBadgeVariants());
-				
-				routeRecordRawData.setMeta(routerMetaData);
-//				List<CoreMenu> children = coreMenus.stream()
-//						.filter(e -> Objects.nonNull(e.getChaId()))
-//						.filter(e -> e.getChaId().equals(coreMenu.getId()))
-//						.sorted(Comparator.comparingInt(CoreMenu::getSapXep))
-//						.toList();
-//				routeRecordRawData.setChildren(setRouteRecordRawData(children, coreMenus));
-				routeRecordRawDatas.add(routeRecordRawData);
+	private void sortChildren(CoreMenuData parent) {
+		if (parent.getChildren() != null && !parent.getChildren().isEmpty()) {
+			parent.getChildren().sort(Comparator.comparing(
+					CoreMenuData::getSortOrder,
+					Comparator.nullsLast(Integer::compareTo)
+			                                              ));
+			parent.getChildren().forEach(this::sortChildren);
+		}
+	}
+	
+	@Transactional(readOnly = true)
+	public List<RouteRecordRawData> getAccessibleRoutesForCurrentUser(String appCode) {
+		String username = LoginHelper.getUsername();
+		
+		Set<String> userPermissionCodes = corePermissionService.findAllCodesByUsernameAndAppCode(username, appCode);
+		
+		if (corePermissionService.isSuperAdmin(username)) {
+			// Super Admin lấy toàn bộ cây
+			List<CoreMenu> fullMenuTree = coreMenuService.findAllByAppCode(appCode);
+			List<RouteRecordRawData> fullRouteTree = fullMenuTree.stream()
+					.map(this::mapMenuEntityToRouteRecord)
+					.collect(Collectors.toList());
+			return buildRouteTree(fullRouteTree, fullMenuTree);
+		}
+		
+		if (userPermissionCodes.isEmpty()) {
+			return Collections.emptyList();
+		}
+		
+		List<CoreMenu> fullMenuTree = coreMenuService.findAllByAppCode(appCode);
+		if (fullMenuTree.isEmpty()) {
+			return Collections.emptyList();
+		}
+		
+		// Lọc ra các menu mà user có quyền
+		List<CoreMenu> accessibleMenus = filterMenuTree(fullMenuTree, userPermissionCodes);
+		
+		// Chuyển đổi danh sách đã lọc sang DTO RouteRecordRawData
+		List<RouteRecordRawData> accessibleRoutes = accessibleMenus.stream()
+				.map(this::mapMenuEntityToRouteRecord)
+				.collect(Collectors.toList());
+		
+		// Xây dựng lại cấu trúc cây từ danh sách DTO đã lọc và chuyển đổi
+		return buildRouteTree(accessibleRoutes, accessibleMenus);
+	}
+	
+	// --- CÁC HÀM HELPER ĐÃ ĐƯỢC CẬP NHẬT ---
+	
+	/**
+	 * Chuyển đổi một Entity CoreMenu sang DTO RouteRecordRawData.
+	 */
+	private RouteRecordRawData mapMenuEntityToRouteRecord(CoreMenu menu) {
+		RouteRecordRawData route = new RouteRecordRawData();
+		route.setName(menu.getCode());
+		route.setPath(menu.getPath());
+		route.setComponent(menu.getComponent());
+		route.setRedirect(menu.getRedirect());
+		
+		RouterMetaData meta = new RouterMetaData();
+		if (menu.getExtraMeta() != null && !menu.getExtraMeta().isBlank()) {
+			try {
+				meta = objectMapper.readValue(menu.getExtraMeta(), RouterMetaData.class);
+			} catch (JsonProcessingException e) {
+				log.error("Lỗi deserialize extra_meta cho menu: {}", menu.getCode(), e);
 			}
 		}
-		return routeRecordRawDatas;
+		
+		// Ghi đè các giá trị từ cột riêng lẻ (luôn là nguồn tin cậy nhất)
+		meta.setTitle(menu.getName());
+		meta.setIcon(menu.getIcon());
+		meta.setHideInMenu(menu.getIsHidden());
+		meta.setOrder(menu.getSortOrder());
+		
+		route.setMeta(meta);
+		return route;
 	}
 	
-	public void setRoutes(Object object, String appCode) {
-		log.info("Bắt đầu get dữ liệu router");
-		long start = System.currentTimeMillis();
-		if (Objects.nonNull(object)) {
-			ObjectMapper mapper = new ObjectMapper();
-			List<RouteRecordRawData> routeRecordRawDatas = mapper.convertValue(object, new TypeReference<>() {
-			});
-			coreMenuService.setFixedDaXoaAndAppCode(true, appCode);
-			if (CollUtil.isNotEmpty(routeRecordRawDatas)) {
-				int sapXep = 0;
-				for (RouteRecordRawData routeRecordRawData : routeRecordRawDatas) {
-					sapXep++;
-					saveRouteRecordRawData(routeRecordRawData, null, sapXep, appCode);
+	/**
+	 * Xây dựng cấu trúc cây cho danh sách RouteRecordRawData. Cần thêm tham số originalMenus để lấy parentId.
+	 */
+	private List<RouteRecordRawData> buildRouteTree(List<RouteRecordRawData> flatRoutes, List<CoreMenu> originalMenus) {
+		// Tạo map để tra cứu parentId từ originalMenus
+		Map<String, Long> parentIdMap = originalMenus.stream()
+				.filter(m -> m.getParentId() != null)
+				.collect(Collectors.toMap(CoreMenu::getCode, CoreMenu::getParentId));
+		
+		Map<Long, String> codeMapById = originalMenus.stream()
+				.collect(Collectors.toMap(CoreMenu::getId, CoreMenu::getCode));
+		
+		Map<String, RouteRecordRawData> mapByCode = flatRoutes.stream()
+				.collect(Collectors.toMap(RouteRecordRawData::getName, Function.identity()));
+		
+		List<RouteRecordRawData> roots = new ArrayList<>();
+		
+		for (RouteRecordRawData item : flatRoutes) {
+			Long parentId = parentIdMap.get(item.getName());
+			if (parentId == null) {
+				roots.add(item);
+			} else {
+				String parentCode = codeMapById.get(parentId);
+				if (parentCode != null) {
+					RouteRecordRawData parent = mapByCode.get(parentCode);
+					if (parent != null) {
+						if (parent.getChildren() == null) {
+							parent.setChildren(new ArrayList<>());
+						}
+						parent.getChildren().add(item);
+					}
 				}
-				
 			}
-			log.info("Đã hoàn thành get dữ liệu router, tổng thời gian save menu, {}", System.currentTimeMillis() - start);
+		}
+		
+		// Sắp xếp đệ quy
+		roots.forEach(this::sortRouteChildren);
+		return roots;
+	}
+	
+	private void sortRouteChildren(RouteRecordRawData parent) {
+		if (parent.getChildren() != null && !parent.getChildren().isEmpty()) {
+			parent.getChildren().sort(Comparator.comparing(
+					route -> (route.getMeta() != null && route.getMeta().getOrder() != null) ? route.getMeta().getOrder() : Integer.MAX_VALUE,
+					Comparator.nullsLast(Integer::compareTo)
+			                                              ));
+			parent.getChildren().forEach(this::sortRouteChildren);
 		}
 	}
 	
-	public void saveRouteRecordRawData(RouteRecordRawData routeRecordRawData, Long chaId, int sapXep, String appCode) {
-		log.info("RouteRecordRaw: {}", routeRecordRawData.getName());
-		Optional<CoreMenu> optionalCoreMenu = coreMenuService.findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(routeRecordRawData.getName(), appCode);
-		CoreMenu coreMenu = new CoreMenu();
-		if (optionalCoreMenu.isPresent()) {
-			coreMenu = optionalCoreMenu.get();
-		}
-		coreMenu.setDaXoa(false);
-		coreMenu.setIsReload(true);
-//		coreMenu.setTrangThai(true);
-//		coreMenu.setAppCode(FunctionUtils.removeXss(appCode));
-//		coreMenu.setChaId(chaId);
-//		coreMenu.setMa(FunctionUtils.removeXss(routeRecordRawData.getName()));
-		coreMenu.setPath(FunctionUtils.removeXss(routeRecordRawData.getPath()));
-		coreMenu.setRedirect(FunctionUtils.removeXss(routeRecordRawData.getRedirect()));
-		coreMenu.setComponent(FunctionUtils.removeXss(routeRecordRawData.getComponent()));
-		coreMenu.setSortOrder(sapXep);
-		coreMenu.setProps(JsonUtils.toJsonString(routeRecordRawData.getProps()));
+	private List<CoreMenu> filterMenuTree(List<CoreMenu> allMenus, Set<String> userPermissions) {
+		Map<Long, CoreMenu> menuMapById = allMenus.stream()
+				.collect(Collectors.toMap(CoreMenu::getId, Function.identity()));
 		
-		if (Objects.nonNull(routeRecordRawData.getMeta())) {
-			RouterMetaData routerMetaData = routeRecordRawData.getMeta();
-			coreMenu.setIcon(FunctionUtils.removeXss(routerMetaData.getIcon()));
-//			coreMenu.setTen(FunctionUtils.removeXss(routerMetaData.getTitle()));
-//			coreMenu.setMoTa(FunctionUtils.removeXss(routerMetaData.getTitle()));
-			coreMenu.setActiveMenu(FunctionUtils.removeXss(routerMetaData.getActiveMenu()));
-			coreMenu.setActiveIcon(FunctionUtils.removeXss(routerMetaData.getActiveIcon()));
-			coreMenu.setActivePath(FunctionUtils.removeXss(routerMetaData.getActivePath()));
-			coreMenu.setIsAffixTab(Boolean.TRUE.equals(routerMetaData.getAffixTab()));
-			coreMenu.setAffixTabOrder(routerMetaData.getAffixTabOrder());
-			coreMenu.setBadge(routerMetaData.getBadge());
-			coreMenu.setBadgeType(routerMetaData.getBadgeType());
-			coreMenu.setBadgeVariants(routerMetaData.getBadgeVariants());
-			coreMenu.setIsHideChildrenInMenu(Boolean.TRUE.equals(routerMetaData.getHideChildrenInMenu()));
-			coreMenu.setIsHideInTab(Boolean.TRUE.equals(routerMetaData.getHideInTab()));
-			coreMenu.setIsHideInBreadcrumb(Boolean.TRUE.equals(routerMetaData.getHideInBreadcrumb()));
-			coreMenu.setIsHideInMenu(Boolean.TRUE.equals(routerMetaData.getHideInMenu()));
-			coreMenu.setIframeSrc(routerMetaData.getIframeSrc());
-			coreMenu.setIsIgnoreAccess(Boolean.TRUE.equals(routerMetaData.getIgnoreAccess()));
-			coreMenu.setIsKeepAlive(Boolean.TRUE.equals(routerMetaData.getKeepAlive()));
-			coreMenu.setLayout(routerMetaData.getLayout());
-			coreMenu.setLink(FunctionUtils.removeXss(routerMetaData.getLink()));
-			coreMenu.setIsLoaded(Boolean.TRUE.equals(routerMetaData.getLoaded()));
-			coreMenu.setMaxNumOfOpenTab(routerMetaData.getMaxNumOfOpenTab());
-			coreMenu.setIsMenuVisibleWithForbidden(Boolean.TRUE.equals(routerMetaData.getMenuVisibleWithForbidden()));
-			coreMenu.setIsNoBasicLayout(Boolean.TRUE.equals(routerMetaData.getNoBasicLayout()));
-			coreMenu.setIsNoCache(Boolean.TRUE.equals(routerMetaData.getNoCache()));
-			coreMenu.setIsOpenInNewWindow(Boolean.TRUE.equals(routerMetaData.getOpenInNewWindow()));
-			coreMenu.setQuery(routerMetaData.getQuery());
-		}
-		coreMenu = coreMenuService.save(coreMenu);
+		Set<CoreMenu> accessibleSet = new HashSet<>();
 		
-		int sapXepCon = 0;
-		if (CollUtil.isNotEmpty(routeRecordRawData.getChildren())) {
-			for (RouteRecordRawData children : routeRecordRawData.getChildren()) {
-				sapXepCon++;
-				saveRouteRecordRawData(children, coreMenu.getId(), sapXepCon, appCode);
+		for (CoreMenu menu : allMenus) {
+			// Một menu được phép truy cập nếu:
+			// 1. Nó không yêu cầu quyền cụ thể (permission_code is null)
+			// 2. Hoặc người dùng có quyền đó
+			if (menu.getCode() == null || userPermissions.contains(menu.getCode())) {
+				// Nếu người dùng có quyền truy cập menu này,
+				// chúng ta cần đảm bảo tất cả các menu cha của nó cũng được thêm vào
+				// để cấu trúc cây không bị gãy.
+				addMenuAndItsParents(menu, menuMapById, accessibleSet);
 			}
+		}
+		return new ArrayList<>(accessibleSet);
+	}
+	
+	private void addMenuAndItsParents(CoreMenu menu, Map<Long, CoreMenu> menuMap, Set<CoreMenu> accessibleSet) {
+		CoreMenu current = menu;
+		while (current != null && !accessibleSet.contains(current)) {
+			accessibleSet.add(current);
+			current = (current.getParentId() != null) ? menuMap.get(current.getParentId()) : null;
 		}
 	}
 	

@@ -11,8 +11,8 @@
 
     <artifactId>tr-core-service</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.0</version>
-    <name>Core Service</name>
+    <version>${revision}</version>
+    <name>tr-core-service</name>
     <description>Core Service</description>
 
     <dependencies>

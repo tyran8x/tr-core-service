@@ -37,6 +37,8 @@ public class CoreUserServiceImpl implements CoreUserService {
 	private final CoreUserRepo repo;
 	private final CorePermissionService corePermissionService;
 	private final CoreUserRoleService coreUserRoleService;
+	private final CoreRoleService coreRoleService;
+	private final CoreUserGroupService coreUserGroupService;
 	@Value("${user.password.maxRetryCount}")
 	private Integer maxRetryCount;
 	@Value("${user.password.lockTime}")
@@ -60,6 +62,20 @@ public class CoreUserServiceImpl implements CoreUserService {
 	@Override
 	public void delete(Long id) {
 		repo.deleteById(id);
+	}
+	
+	@Override
+	public boolean existsById(Long id) {
+		return repo.existsById(id);
+	}
+	
+	@Override
+	@Transactional
+	public void deleteByIds(Set<Long> ids) {
+		if (ids.isEmpty()) {
+			return;
+		}
+		repo.softDeleteByIds(ids);
 	}
 	
 	@Override
@@ -93,20 +109,6 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
-	public boolean existsById(Long id) {
-		return repo.existsById(id);
-	}
-	
-	@Override
-	@Transactional
-	public void deleteByIds(Set<Long> ids) {
-		if (ids.isEmpty()) {
-			return;
-		}
-		repo.softDeleteByIds(ids);
-	}
-	
-	@Override
 	public void recordLoginInfo(String userName, String status, String message) {
 		LoginInfoEvent loginInfoEvent = new LoginInfoEvent();
 		loginInfoEvent.setUserName(userName);
@@ -117,25 +119,16 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
-	public LoginUser buildLoginUser(CoreUser coreUser) {
+	public LoginUser buildLoginUser(CoreUser coreUser, String appCode) {
 		LoginUser loginUser = new LoginUser();
 		loginUser.setUserId(coreUser.getId());
 		loginUser.setUsername(coreUser.getUsername());
 		loginUser.setFullName(coreUser.getFullName());
 //		loginUser.setUserType(coreUser.getUserType());
-//		loginUser.setMenuPermission(corePermissionService.getMenuPermission(coreUser.getUsername()));
-//		loginUser.setRolePermission(corePermissionService.getRolePermission(coreUser.getUsername()));
-//		loginUser.setRoles(coreUserRoleService.getRoleByUserName(coreUser.getUsername()));
-//		List<CoreUserConnect> coreUserConnects = coreUserConnectService.findByUserNameIgnoreCase(coreUser.getUsername());
-//		Map<String, String> connects = new HashMap<>();
-//		if (CollUtil.isNotEmpty(coreUserConnects)) {
-//			for (CoreUserConnect coreUserConnect : coreUserConnects) {
-//				connects.put(coreUserConnect.getAppName(), coreUserConnect.getAppUserId());
-//			}
-//		}
-		//	connects.putIfAbsent("mail", coreUser.getUsername());
+		loginUser.setPermissionCodes(corePermissionService.findAllCodesByUsernameAndAppCode(coreUser.getUsername(), appCode));
+		loginUser.setGroupCodes(coreUserGroupService.findGroupCodesByUsername(coreUser.getUsername()));
+		loginUser.setRoleCodes(coreUserRoleService.findRoleCodesByUsername(coreUser.getUsername()));
 		
-		//	loginUser.setConnects(connects);
 		return loginUser;
 	}
 	

@@ -2,6 +2,7 @@ package vn.tr.core.data.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,7 @@ public class CoreRoleData extends BaseData {
 	
 	private Integer sortOrder;
 	
+	@Builder.Default
 	private List<String> menus = new ArrayList<>();
 	
 }

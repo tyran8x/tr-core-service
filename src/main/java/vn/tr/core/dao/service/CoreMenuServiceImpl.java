@@ -1,5 +1,7 @@
 package vn.tr.core.dao.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -7,19 +9,17 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
+@Slf4j
 public class CoreMenuServiceImpl implements CoreMenuService {
 	
 	private final CoreMenuRepo repo;
-	
-	public CoreMenuServiceImpl(CoreMenuRepo repo) {
-		this.repo = repo;
-	}
 	
 	@Override
 	public void delete(Long id) {
@@ -52,11 +52,6 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	}
 	
 	@Override
-	public void setFixedDaXoaAndAppCode(boolean daXoa, String appCode) {
-		repo.setFixedDaXoaAndAppCode(daXoa, appCode);
-	}
-	
-	@Override
 	@Transactional
 	public void deleteByIds(Set<Long> ids) {
 		if (ids.isEmpty()) {
@@ -66,8 +61,69 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	}
 	
 	@Override
-	public Optional<CoreMenu> findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(String code, String appCode) {
-		return repo.findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(code, appCode);
+	@Transactional(readOnly = true)
+	public Optional<CoreMenu> findByCodeSafely(String appCode, String code) {
+		// Tìm kiếm không phân biệt hoa thường
+		List<CoreMenu> foundMenus = repo.findByAppCodeIgnoreCaseAndCodeIgnoreCase(appCode, code);
+		
+		if (foundMenus.isEmpty()) {
+			return Optional.empty(); // Không tìm thấy gì
+		}
+		
+		// Cố gắng tìm một bản ghi khớp chính xác cả kiểu chữ (ưu tiên cao nhất)
+		Optional<CoreMenu> exactMatch = foundMenus.stream()
+				.filter(menu -> menu.getAppCode().equals(appCode) && menu.getCode().equals(code))
+				.findFirst();
+		
+		if (exactMatch.isPresent()) {
+			// Nếu có một bản ghi khớp hoàn toàn, luôn ưu tiên nó
+			return exactMatch;
+		}
+		
+		// Nếu không có bản ghi nào khớp chính xác, nhưng lại tìm thấy nhiều hơn 1 bản ghi
+		// khi tìm kiếm không phân biệt hoa thường (ví dụ: 'userlist', 'USERLIST')
+		if (foundMenus.size() > 1) {
+			log.warn("Cảnh báo dữ liệu không nhất quán: Tìm thấy {} bản ghi cho menu code '{}' trong app '{}' " +
+							"khi tìm kiếm không phân biệt hoa thường, nhưng không có bản ghi nào khớp chính xác. " +
+							"Hệ thống sẽ ưu tiên bản ghi có ID nhỏ nhất.",
+					foundMenus.size(), code, appCode);
+			
+			// Quy tắc nhất quán: chọn bản ghi được tạo ra đầu tiên (ID nhỏ nhất)
+			return foundMenus.stream().min(Comparator.comparing(CoreMenu::getId));
+		}
+		
+		// Trường hợp cuối: Chỉ có 1 bản ghi được tìm thấy (ví dụ: tìm 'UserList' ra 'userlist')
+		return Optional.of(foundMenus.getFirst());
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public List<CoreMenu> findAllByAppCodeIncludingDeleted(String appCode) {
+		return repo.findAllByAppCodeIncludingDeleted(appCode);
+	}
+	
+	@Override
+	@Transactional
+	public void markAllAsPendingDeletionForApp(String appCode) {
+		repo.markAllAsPendingDeletionForApp(appCode);
+	}
+	
+	@Override
+	@Transactional
+	public int deletePendingMenusForApp(String appCode) {
+		return repo.softDeletePendingMenusForApp(appCode);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public List<CoreMenu> findAllByAppCode(String appCode) {
+		return repo.findAllByAppCode(appCode);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public boolean hasChildren(Long menuId) {
+		return repo.existsByParentId(menuId);
 	}
 	
 }

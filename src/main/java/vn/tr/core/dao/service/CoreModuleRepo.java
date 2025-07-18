@@ -9,6 +9,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreModule;
 
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -27,4 +28,12 @@ public interface CoreModuleRepo extends JpaRepository<CoreModule, Long>, JpaSpec
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreModule g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
 	void softDeleteByIds(@Param("ids") Set<Long> ids);
+	
+	@Query("SELECT p.code FROM CoreModule p WHERE p.appCode = :appCode")
+	Set<String> findAllCodesByAppCode(@Param("appCode") String appCode);
+	
+	List<CoreModule> findByAppCodeIgnoreCaseAndCodeIgnoreCase(String appCode, String code);
+	
+	List<CoreModule> findAllByAppCode(String appCode);
+	
 }

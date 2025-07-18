@@ -9,7 +9,6 @@ import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.utils.ValidatorUtils;
 import vn.tr.common.encrypt.annotation.ApiEncrypt;
-import vn.tr.common.json.utils.JsonUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.websocket.dto.WebSocketMessageDto;
 import vn.tr.common.websocket.utils.WebSocketUtils;
@@ -33,8 +32,7 @@ public class AuthController {
 	
 	@ApiEncrypt
 	@PostMapping("/login")
-	public R<LoginResult> login(@RequestBody String body) {
-		LoginBody loginBody = JsonUtils.parseObject(body, LoginBody.class);
+	public R<LoginResult> login(@RequestBody LoginBody loginBody) {
 		ValidatorUtils.validate(loginBody);
 		
 		String clientId = loginBody.getClientId();
@@ -46,7 +44,7 @@ public class AuthController {
 		//		} else if (!UserConstants.NORMAL.equals(client.getTrangThai())) {
 		//			return R.fail(MessageUtils.message("auth.grant.type.blocked"));
 		//		}
-		LoginResult loginResult = IAuthStrategy.login(body, coreClientData, grantType);
+		LoginResult loginResult = IAuthStrategy.login(loginBody, coreClientData, grantType);
 		
 		Long userId = LoginHelper.getUserId();
 		scheduledExecutorService.schedule(() -> {
@@ -60,11 +58,10 @@ public class AuthController {
 	
 	@ApiEncrypt
 	@PostMapping("/register")
-	public R<Void> register(@RequestBody String body) {
-		RegisterBody registerBody = JsonUtils.parseObject(body, RegisterBody.class);
+	public R<Void> register(@RequestBody RegisterBody registerBody) {
 		CoreClientData coreClientData = new CoreClientData();
 		String grantType = registerBody.getGrantType();
-		IAuthStrategy.register(body, coreClientData, grantType);
+		IAuthStrategy.register(registerBody, coreClientData, grantType);
 		return R.ok();
 	}
 	

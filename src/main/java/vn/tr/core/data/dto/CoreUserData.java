@@ -23,8 +23,6 @@ public class CoreUserData extends BaseData {
 	
 	private String avatarUrl;
 	
-	private String status;
-	
 	private String userTypeCode;
 	
 	// Danh sách các thông tin liên hệ khác

@@ -1,25 +1,26 @@
 package vn.tr.core.security.service.strategy;
 
-import cn.dev33.satoken.stp.SaLoginModel;
 import cn.dev33.satoken.stp.StpUtil;
+import cn.dev33.satoken.stp.parameter.SaLoginParameter;
 import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.tr.common.core.constant.Constants;
 import vn.tr.common.core.constant.GlobalConstants;
+import vn.tr.common.core.domain.model.LoginBody;
 import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.domain.model.PasswordLoginBody;
 import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.enums.LoginType;
 import vn.tr.common.core.enums.UserType;
+import vn.tr.common.core.exception.ServiceException;
 import vn.tr.common.core.exception.user.CaptchaException;
 import vn.tr.common.core.exception.user.CaptchaExpireException;
 import vn.tr.common.core.exception.user.UserException;
 import vn.tr.common.core.utils.MessageUtils;
 import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.core.utils.ValidatorUtils;
-import vn.tr.common.json.utils.JsonUtils;
 import vn.tr.common.redis.utils.RedisUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.config.properties.CaptchaProperties;
@@ -40,37 +41,37 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 	private final CoreUserService coreUserService;
 	
 	@Override
-	public LoginResult login(String body, CoreClientData coreClientData) {
-		PasswordLoginBody loginBody = JsonUtils.parseObject(body, PasswordLoginBody.class);
-		log.info("loginBody: {}", loginBody);
-		ValidatorUtils.validate(loginBody);
-		log.info("pass loginBody");
-		assert loginBody != null;
+	public LoginResult login(LoginBody loginBody, CoreClientData coreClientData) {
+		if (!(loginBody instanceof PasswordLoginBody passwordBody)) {
+			throw new ServiceException("Dữ liệu không hợp lệ cho grant type password.");
+		}
+		ValidatorUtils.validate(passwordBody);
 		
-		String userName = loginBody.getUsername();
-		String password = loginBody.getPassword();
+		String username = passwordBody.getUsername();
+		String password = passwordBody.getPassword();
+		String appCode = LoginHelper.getAppCode();
 		String code = loginBody.getCode();
 		String uuid = loginBody.getUuid();
-		log.info("userName: {}", userName);
+		log.info("username: {}", username);
 		log.info("password: {}", password);
 		boolean captchaEnabled = captchaProperties.getEnable();
 		if (captchaEnabled) {
-			validateCaptcha(userName, code, uuid);
+			validateCaptcha(username, code, uuid);
 		}
-		CoreUser coreUser = loadUserByUsername(userName);
-		coreUserService.checkLogin(LoginType.PASSWORD, userName, () -> !BCrypt.checkpw(password, coreUser.getHashedPassword()));
-		LoginUser loginUser = coreUserService.buildLoginUser(coreUser);
+		CoreUser coreUser = loadUserByUsername(username);
+		coreUserService.checkLogin(LoginType.PASSWORD, username, () -> !BCrypt.checkpw(password, coreUser.getHashedPassword()));
+		LoginUser loginUser = coreUserService.buildLoginUser(coreUser, appCode);
 		loginUser.setClientKey(coreClientData.getClientKey());
 		loginUser.setDeviceType(coreClientData.getDeviceType());
-		SaLoginModel saLoginModel = new SaLoginModel();
-		saLoginModel.setDevice(coreClientData.getDeviceType());
-		saLoginModel.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
-		saLoginModel.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
-		saLoginModel.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
-		saLoginModel.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
+		SaLoginParameter saLoginParameter = new SaLoginParameter();
+		saLoginParameter.setDeviceType(coreClientData.getDeviceType());
+		saLoginParameter.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
+		saLoginParameter.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
+		saLoginParameter.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
+		saLoginParameter.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
 		
 		// generate token
-		LoginHelper.login(loginUser, saLoginModel);
+		LoginHelper.login(loginUser, saLoginParameter);
 		
 		LoginResult loginResult = new LoginResult();
 		loginResult.setAccessToken(StpUtil.getTokenValue());
@@ -80,35 +81,61 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 		return loginResult;
 	}
 	
+	private void validateCaptcha(String username, String code, String uuid) {
+		String verifyKey = GlobalConstants.CAPTCHA_CODE_KEY + StringUtils.blankToDefault(uuid, "");
+		String captcha = RedisUtils.getCacheObject(verifyKey);
+		RedisUtils.deleteObject(verifyKey);
+		if (captcha == null) {
+			coreUserService.recordLoginInfo(username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire"));
+			throw new CaptchaExpireException();
+		}
+		if (!code.equalsIgnoreCase(captcha)) {
+			coreUserService.recordLoginInfo(username, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error"));
+			throw new CaptchaException();
+		}
+	}
+	
+	private CoreUser loadUserByUsername(String username) {
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameIgnoreCase(username);
+		if (optionalCoreUser.isEmpty()) {
+			log.info("Login user: {} does not exist.", username);
+			throw new UserException("user.not.exists", username);
+		}
+//		else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
+//			log.info("Logged in user: {} has been deactivated.", username);
+//			throw new UserException("user.blocked", username);
+//		}
+		return optionalCoreUser.get();
+	}
+	
 	@Override
-	public void register(String body, CoreClientData coreClientData) {
-		RegisterBody registerBody = JsonUtils.parseObject(body, RegisterBody.class);
+	public void register(RegisterBody registerBody, CoreClientData coreClientData) {
 		
 		assert registerBody != null;
-		String userName = registerBody.getUsername();
+		String username = registerBody.getUsername();
 		String password = registerBody.getPassword();
 		
 		String userType = UserType.getUserType(registerBody.getUserType()).getUserType();
 		
 		String code = registerBody.getCode();
 		String uuid = registerBody.getUuid();
-		log.info("userName register: {}", userName);
+		log.info("username register: {}", username);
 		log.info("password register: {}", password);
 		boolean captchaEnabled = captchaProperties.getEnable();
 		if (captchaEnabled) {
-			validateCaptcha(userName, code, uuid);
+			validateCaptcha(username, code, uuid);
 		}
 		CoreUser coreUser = new CoreUser();
-//		coreUser.setUserName(userName);
-//		coreUser.setNickName(userName);
-//		coreUser.setEmail(userName);
+//		coreUser.setUserName(username);
+//		coreUser.setNickName(username);
+//		coreUser.setEmail(username);
 //		coreUser.setPassword(BCrypt.hashpw(password));
 //		coreUser.setUserType(userType);
 //		coreUser.setIsEnabled(true);
 		
-		boolean exist = coreUserService.existsByUsernameIgnoreCase(userName);
+		boolean exist = coreUserService.existsByUsernameIgnoreCase(username);
 		if (exist) {
-			throw new UserException("user.register.save.error", userName);
+			throw new UserException("user.register.save.error", username);
 		}
 		try {
 			coreUserService.save(coreUser);
@@ -116,34 +143,7 @@ public class Password2CaptchaAuthStrategy implements IAuthStrategy {
 			throw new UserException("user.register.error");
 		}
 		
-		coreUserService.recordLoginInfo(userName, Constants.REGISTER, MessageUtils.message("user.register.success"));
-	}
-	
-	private void validateCaptcha(String userName, String code, String uuid) {
-		String verifyKey = GlobalConstants.CAPTCHA_CODE_KEY + StringUtils.blankToDefault(uuid, "");
-		String captcha = RedisUtils.getCacheObject(verifyKey);
-		RedisUtils.deleteObject(verifyKey);
-		if (captcha == null) {
-			coreUserService.recordLoginInfo(userName, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.expire"));
-			throw new CaptchaExpireException();
-		}
-		if (!code.equalsIgnoreCase(captcha)) {
-			coreUserService.recordLoginInfo(userName, Constants.LOGIN_FAIL, MessageUtils.message("user.jcaptcha.error"));
-			throw new CaptchaException();
-		}
-	}
-	
-	private CoreUser loadUserByUsername(String userName) {
-		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByUsernameIgnoreCase(userName);
-		if (optionalCoreUser.isEmpty()) {
-			log.info("Login user: {} does not exist.", userName);
-			throw new UserException("user.not.exists", userName);
-		}
-//		else if (!Boolean.TRUE.equals(optionalCoreUser.get().getIsEnabled())) {
-//			log.info("Logged in user: {} has been deactivated.", userName);
-//			throw new UserException("user.blocked", userName);
-//		}
-		return optionalCoreUser.get();
+		coreUserService.recordLoginInfo(username, Constants.REGISTER, MessageUtils.message("user.register.success"));
 	}
 	
 }

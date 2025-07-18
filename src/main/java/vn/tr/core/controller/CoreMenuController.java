@@ -2,40 +2,57 @@ package vn.tr.core.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
 import vn.tr.common.web.data.dto.DeleteData;
 import vn.tr.core.business.CoreMenuBusiness;
-import vn.tr.core.data.CoreDsMenuData;
-import vn.tr.core.data.RouteRecordRawData;
+import vn.tr.core.dao.service.CoreSyncService;
 import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 import vn.tr.core.data.dto.CoreMenuData;
+import vn.tr.core.data.dto.RouteRecordRawData;
+import vn.tr.core.data.validator.CoreMenuValidator;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/menus")
 @RequiredArgsConstructor
+@Slf4j
 public class CoreMenuController {
 	
 	private final CoreMenuBusiness coreMenuBusiness;
+	private final CoreMenuValidator coreMenuValidator;
+	private final CoreSyncService coreSyncService;
 	
-	@PostMapping(value = {""})
-	@Log(title = "create CoreMenu", businessType = BusinessType.DELETE)
-	public R<CoreMenuData> create(@Valid @RequestBody CoreMenuData coreMenuData) {
-		coreMenuData = coreMenuBusiness.create(coreMenuData);
-		return R.ok(coreMenuData);
+	@InitBinder("coreMenuData")
+	public void initBinder(WebDataBinder binder) {
+		binder.addValidators(coreMenuValidator);
 	}
 	
-	@DeleteMapping(value = {"/{id}"})
-	@Log(title = "Delete CoreMenu", businessType = BusinessType.DELETE)
-	public R<Void> delete(@PathVariable("id") Long id) {
-		coreMenuBusiness.delete(id);
-		return R.ok();
+	@GetMapping("/tree")
+	@Log(title = "Lấy cây Menu", businessType = BusinessType.LIST, isSaveRequestData = false)
+	public R<List<CoreMenuData>> getMenuTree(@RequestHeader(name = "X-App-Code") String appCode) {
+		List<CoreMenuData> menuTree = coreMenuBusiness.getMenuTreeForApp(appCode);
+		return R.ok(menuTree);
+	}
+	
+	@GetMapping("/flat-list")
+	@Log(title = "Lấy danh sách phẳng Menu", businessType = BusinessType.LIST, isSaveRequestData = false)
+	public R<List<CoreMenuData>> getFlatList(@RequestHeader(name = "X-App-Code") String appCode) {
+		List<CoreMenuData> menuList = coreMenuBusiness.getFlatListForApp(appCode);
+		return R.ok(menuList);
+	}
+	
+	@GetMapping("/{id}")
+	@Log(title = "Lấy chi tiết Menu", businessType = BusinessType.DETAIL, isSaveRequestData = false)
+	public R<CoreMenuData> getById(@PathVariable Long id) {
+		CoreMenuData menuData = coreMenuBusiness.findById(id);
+		return R.ok(menuData);
 	}
 	
 	@DeleteMapping(value = "")
@@ -62,58 +79,47 @@ public class CoreMenuController {
 		return R.ok(coreMenuDatas);
 	}
 	
-	@GetMapping(value = {"/{id}"})
-	@Log(title = "findById CoreMenu", businessType = BusinessType.DETAIL, isSaveRequestData = false)
-	public R<CoreMenuData> findById(@PathVariable("id") long id) {
-		CoreMenuData coreMenuData = coreMenuBusiness.findById(id);
-		return R.ok(coreMenuData);
+	@PostMapping
+	@Log(title = "Tạo Menu", businessType = BusinessType.INSERT)
+	public R<CoreMenuData> create(@Valid @RequestBody CoreMenuData menuData) {
+		CoreMenuData createdMenu = coreMenuBusiness.create(menuData);
+		return R.ok(createdMenu);
 	}
 	
-	@GetMapping(value = {"/get/{id}"})
-	public R<CoreMenuData> getById(@PathVariable("id") Long id) {
-		Optional<CoreMenuData> optionalCoreMenuData = coreMenuBusiness.getById(id);
-		return R.ok(optionalCoreMenuData.orElse(null));
+	@PutMapping("/{id}")
+	@Log(title = "Cập nhật Menu", businessType = BusinessType.UPDATE)
+	public R<CoreMenuData> update(@PathVariable Long id, @Valid @RequestBody CoreMenuData menuData) {
+		CoreMenuData updatedMenu = coreMenuBusiness.update(id, menuData);
+		return R.ok(updatedMenu);
 	}
 	
-	@PutMapping(value = {"/{id}"})
-	@Log(title = "update CoreMenu", businessType = BusinessType.UPDATE)
-	public R<CoreMenuData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreMenuData coreMenuData) {
-		coreMenuData = coreMenuBusiness.update(id, coreMenuData);
-		return R.ok(coreMenuData);
+	@DeleteMapping("/{id}")
+	@Log(title = "Xóa Menu", businessType = BusinessType.DELETE)
+	public R<Void> delete(@PathVariable Long id) {
+		coreMenuBusiness.delete(id);
+		return R.ok("Xóa menu thành công.");
 	}
 	
-	@GetMapping(value = "/getRouters")
-	public R<CoreDsMenuData> getRouters(@RequestHeader(name = "X-App-Code", required = false) String xAppCode) {
-		CoreDsMenuData coreDsMenuData = coreMenuBusiness.getRouterDatas(xAppCode);
-		return R.ok(coreDsMenuData);
+	@GetMapping("/routes")
+	public R<List<RouteRecordRawData>> getAccessibleRoutes(@RequestHeader(name = "X-App-Code") String appCode) {
+		List<RouteRecordRawData> accessibleRoutes = coreMenuBusiness.getAccessibleRoutesForCurrentUser(appCode);
+		return R.ok(accessibleRoutes);
 	}
 	
-	@PostMapping(value = {"/setRouters"})
-	public R<String> setRouters(@RequestHeader(name = "X-App-Code", required = false) String xAppCode, @Valid @RequestBody Object object) {
-		String thongBao = "Đang thực hiện get dữ liệu router, vui lòng chờ !";
-		
-		coreMenuBusiness.setRouterDatas(object, xAppCode);
-//		while (future.isDone()) {
-//			thongBao = "Đã hoàn thành get dữ liệu router";
-//		}
-		return R.ok(thongBao);
-	}
-	
-	@GetMapping(value = "/getRoutes")
-	public R<List<RouteRecordRawData>> getRoutes(@RequestHeader(name = "X-App-Code", required = false) String xAppCode) {
-		List<RouteRecordRawData> routeRecordRawDatas = coreMenuBusiness.getRoutes(xAppCode);
-		return R.ok(routeRecordRawDatas);
-	}
-	
-	@PostMapping(value = {"/setRoutes"})
-	public R<String> setRoutes(@RequestHeader(name = "X-App-Code", required = false) String xAppCode, @Valid @RequestBody Object object) {
-		String thongBao = "Đang thực hiện get dữ liệu router, vui lòng chờ !";
-		
-		coreMenuBusiness.setRoutes(object, xAppCode);
-//		while (future.isDone()) {
-//			thongBao = "Đã hoàn thành get dữ liệu router";
-//		}
-		return R.ok(thongBao);
+	@PostMapping("/routes")
+	@Log(title = "Đồng bộ hóa Routes từ Frontend", businessType = BusinessType.UPDATE)
+	// Cần một quyền đặc biệt để bảo vệ endpoint này, ví dụ: 'SystemSyncRoutes'
+	// @PreAuthorize("hasAuthority('SystemSyncRoutes')")
+	public R<Void> syncRoutes(@RequestHeader(name = "X-App-Code") String appCode, @RequestBody Object object) {
+		log.info("APP-CODE: {}", appCode);
+		try {
+			coreSyncService.syncRoutesFromFrontend(appCode, object);
+			return R.ok("Đồng bộ hóa routes thành công.");
+		} catch (Exception e) {
+			// Ghi log lỗi chi tiết
+			log.error("Lỗi khi đồng bộ hóa routes cho app {}: {}", appCode, e.getMessage());
+			return R.fail("Đồng bộ hóa routes thất bại. Vui lòng kiểm tra log.");
+		}
 	}
 	
 }

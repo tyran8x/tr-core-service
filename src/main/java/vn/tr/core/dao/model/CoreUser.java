@@ -45,6 +45,7 @@ public class CoreUser extends BaseEntity {
 	private LifecycleStatus status = LifecycleStatus.ACTIVE;
 	
 	@Column(name = "sort_order", columnDefinition = "INTEGER DEFAULT 0")
+	@Builder.Default
 	private Integer sortOrder = 0;
 	
 }

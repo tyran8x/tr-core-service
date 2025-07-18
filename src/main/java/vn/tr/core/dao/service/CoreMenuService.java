@@ -23,10 +23,18 @@ public interface CoreMenuService {
 	
 	CoreMenu save(CoreMenu coreMenu);
 	
-	void setFixedDaXoaAndAppCode(boolean daXoa, String appCode);
-	
 	void deleteByIds(Set<Long> ids);
 	
-	Optional<CoreMenu> findFirstByCodeIgnoreCaseAndAppCodeIgnoreCase(String code, String appCode);
+	Optional<CoreMenu> findByCodeSafely(String appCode, String code);
+	
+	List<CoreMenu> findAllByAppCodeIncludingDeleted(String appCode);
+	
+	void markAllAsPendingDeletionForApp(String appCode);
+	
+	int deletePendingMenusForApp(String appCode);
+	
+	List<CoreMenu> findAllByAppCode(String appCode);
+	
+	boolean hasChildren(Long menuId);
 	
 }

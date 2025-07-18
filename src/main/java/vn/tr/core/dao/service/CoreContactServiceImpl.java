@@ -37,6 +37,11 @@ public class CoreContactServiceImpl implements CoreContactService {
 	}
 	
 	@Override
+	public boolean existsById(Long id) {
+		return repo.existsById(id);
+	}
+	
+	@Override
 	public Page<CoreContact> findAll(CoreContactSearchCriteria coreContactSearchCriteria, Pageable pageable) {
 		return repo.findAll(CoreContactSpecifications.quickSearch(coreContactSearchCriteria), pageable);
 	}
@@ -48,11 +53,6 @@ public class CoreContactServiceImpl implements CoreContactService {
 	
 	@Override
 	public boolean existsById(long id) {
-		return repo.existsById(id);
-	}
-	
-	@Override
-	public boolean existsById(Long id) {
 		return repo.existsById(id);
 	}
 	
@@ -72,7 +72,7 @@ public class CoreContactServiceImpl implements CoreContactService {
 	
 	@Override
 	public List<CoreContact> findActiveByOwner(String ownerType, String ownerValue) {
-		return repo.findByOwnerTypeAndOwnerValueAndStatus(ownerType, ownerValue, LifecycleStatus.ACTIVE.getValue());
+		return repo.findByOwnerTypeAndOwnerValueAndStatus(ownerType, ownerValue, LifecycleStatus.ACTIVE);
 	}
 	
 	@Override
@@ -87,7 +87,7 @@ public class CoreContactServiceImpl implements CoreContactService {
 	
 	@Override
 	public void deleteByOwner(String ownerType, String ownerValue) {
-		List<CoreContact> toDelete = repo.findByOwnerTypeAndOwnerValueAndStatus(ownerType, ownerValue, LifecycleStatus.ACTIVE.getValue());
+		List<CoreContact> toDelete = repo.findByOwnerTypeAndOwnerValueAndStatus(ownerType, ownerValue, LifecycleStatus.ACTIVE);
 		if (!toDelete.isEmpty()) {
 			repo.deleteAll(toDelete);
 		}

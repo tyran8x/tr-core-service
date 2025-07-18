@@ -1,10 +1,13 @@
 package vn.tr.core.dao.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import vn.tr.common.jpa.entity.BaseCommonEntity;
 
 @Entity
@@ -153,7 +156,13 @@ public class CoreMenu extends BaseCommonEntity {
 	@Column(name = "app_code", length = 50)
 	private String appCode;
 	
+	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "extra_meta", columnDefinition = "JSONB")
 	private String extraMeta;
+	
+	@JsonIgnore
+	@Column(name = "is_pending_deletion")
+	@Builder.Default
+	private Boolean isPendingDeletion = false;
 	
 }

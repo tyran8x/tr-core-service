@@ -40,7 +40,7 @@ public interface CoreUserService {
 	
 	void recordLoginInfo(String userName, String status, String message);
 	
-	LoginUser buildLoginUser(CoreUser coreUser);
+	LoginUser buildLoginUser(CoreUser coreUser, String appCode);
 	
 	void checkLogin(LoginType loginType, String userName, Supplier<Boolean> supplier);
 	

@@ -35,4 +35,12 @@ public interface CoreModuleService {
 	
 	void deleteByIds(Set<Long> ids);
 	
+	Set<String> findAllCodesByAppCode(String appCode);
+	
+	CoreModule findOrCreate(String code, String name, String appCode);
+	
+	Optional<CoreModule> findByCodeSafely(String appCode, String code);
+	
+	List<CoreModule> findAllByAppCode(String appCode);
+	
 }

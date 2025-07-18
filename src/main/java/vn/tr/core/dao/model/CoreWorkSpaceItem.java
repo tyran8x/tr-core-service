@@ -5,8 +5,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import vn.tr.common.jpa.entity.BaseCommonEntity;
 
 @Entity
@@ -44,6 +46,7 @@ public class CoreWorkSpaceItem extends BaseCommonEntity {
 	@Column(name = "item_type", length = 50)
 	private String itemType;
 	
+	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "item_config", columnDefinition = "jsonb")
 	private String itemConfig;
 	

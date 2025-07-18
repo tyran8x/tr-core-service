@@ -1,127 +1,42 @@
 package vn.tr.core.data.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import vn.tr.common.json.handler.XssPlainTextJsonDeserializer;
 import vn.tr.common.web.data.dto.BaseData;
+
+import java.util.List;
+import java.util.Map;
 
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CoreMenuData extends BaseData {
 	
 	private Long parentId;
 	
-	@JsonIgnore
+	@NotEmpty(message = "Mã ứng dụng không được để trống")
 	private String appCode;
 	
-	@Builder.Default
-	private BaseData parent = new BaseData();
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String description;
-	
-	private Integer sortOrder;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
+	private String permissionCode;
 	private String path;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
 	private String component;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String components;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String alias;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String props;
-	
-	// Các trường meta
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String redirect;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
 	private String icon;
 	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String activeMenu;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String link;
+	@Builder.Default
+	private Integer sortOrder = 0;
 	
 	private Boolean isHidden;
 	
-	private Boolean isAlwaysShow;
+	// Cho phép admin cấu hình các thuộc tính meta nâng cao nếu cần
+	private Map<String, Object> extraMeta;
 	
-	private Boolean isNoCache;
-	
-	private Boolean isAffix;
-	
-	private Boolean isBreadcrumb;
-	
-	private Boolean isLoaded;
-	
-	private String layout;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String extra;
-	
-	private Boolean isAffixTab;
-	
-	private Integer affixTabOrder;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String activeIcon;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String activePath;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String badge;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String badgeType;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String badgeVariants;
-	
-	private Boolean isIgnoreAccess;
-	
-	private Boolean isHideChildrenInMenu;
-	
-	private Boolean isHideInMenu;
-	
-	private Boolean isHideInBreadcrumb;
-	
-	private Boolean isHideInTab;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String iframeSrc;
-	
-	private Boolean isKeepAlive;
-	
-	private Integer maxNumOfOpenTab;
-	
-	private Boolean isMenuVisibleWithForbidden;
-	
-	private Boolean isNoBasicLayout;
-	
-	private Boolean isOpenInNewWindow;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String query;
-	
-	private Boolean isReload;
-	
-	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
-	private String extraMeta;
-	
+	// Dùng để trả về cấu trúc cây
+	private List<CoreMenuData> children;
 }

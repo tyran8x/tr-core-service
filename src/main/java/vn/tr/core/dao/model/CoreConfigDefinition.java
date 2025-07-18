@@ -1,10 +1,12 @@
 package vn.tr.core.dao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.jpa.entity.BaseEntity;
 
 @Entity
@@ -12,7 +14,11 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@SQLDelete(sql = "UPDATE core_config_definition SET deleted_at = NOW() WHERE id = ?")
+@SQLRestriction(value = "deleted_at IS NULL")
 public class CoreConfigDefinition extends BaseEntity {
 	
 	@Id
@@ -31,8 +37,10 @@ public class CoreConfigDefinition extends BaseEntity {
 	
 	@Column(name = "data_type", nullable = false, length = 50)
 	//  ENUM: 'STRING', 'TEXT', 'INTEGER', 'NUMBER', 'BOOLEAN', 'JSON', 'SECRET'
+	@Builder.Default
 	private String dataType = "STRING";
 	
+	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "validation_rules", columnDefinition = "JSONB")
 	private String validationRules;
 	
@@ -48,7 +56,13 @@ public class CoreConfigDefinition extends BaseEntity {
 	@Column(name = "is_encrypted", columnDefinition = "boolean default 'false'")
 	private Boolean isEncrypted;
 	
-	@Column(name = "status", nullable = false, length = 50, columnDefinition = "VARCHAR(50) DEFAULT 'ACTIVE'")
-	private String status = "ACTIVE";
+	@Column(name = "status", nullable = false, length = 50)
+	@Enumerated(EnumType.STRING)
+	@Builder.Default
+	private LifecycleStatus status = LifecycleStatus.ACTIVE;
+	
+	@Column(name = "sort_order", columnDefinition = "INTEGER DEFAULT 0")
+	@Builder.Default
+	private Integer sortOrder = 0;
 	
 }
