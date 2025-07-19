@@ -14,7 +14,7 @@ public interface CoreModuleMapper {
 	CoreModule toEntity(CoreModuleData data);
 	
 	default void save(CoreModuleData data, CoreModule entity) {
-		updateEntity(data, entity);
+		updateEntityFromData(data, entity);
 		
 		if (entity.getStatus() == null) {
 			entity.setStatus(LifecycleStatus.ACTIVE);
@@ -33,6 +33,6 @@ public interface CoreModuleMapper {
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void updateEntity(CoreModuleData data, @MappingTarget CoreModule entity);
+	void updateEntityFromData(CoreModuleData data, @MappingTarget CoreModule entity);
 	
 }

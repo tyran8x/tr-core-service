@@ -19,7 +19,7 @@ public interface CoreGroupMapper {
 	CoreGroup toEntity(CoreGroupData data);
 	
 	default void save(CoreGroupData data, CoreGroup entity) {
-		updateEntity(data, entity);
+		updateEntityFromData(data, entity);
 		
 		if (entity.getStatus() == null) {
 			entity.setStatus(LifecycleStatus.ACTIVE);
@@ -39,6 +39,6 @@ public interface CoreGroupMapper {
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void updateEntity(CoreGroupData data, @MappingTarget CoreGroup entity);
+	void updateEntityFromData(CoreGroupData data, @MappingTarget CoreGroup entity);
 	
 }

@@ -33,4 +33,7 @@ public interface CoreRoleRepo extends JpaRepository<CoreRole, Long>, JpaSpecific
 	
 	Optional<CoreRole> findFirstByAppCodeAndCodeIgnoreCase(String appCode, String code);
 	
+	@Query("SELECT r FROM CoreRole r WHERE r.code = :code AND r.appCode = :appCode")
+	Optional<CoreRole> findByCodeAndAppCodeEvenIfDeleted(@Param("code") String code, @Param("appCode") String appCode);
+	
 }

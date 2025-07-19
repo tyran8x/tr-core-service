@@ -14,7 +14,7 @@ public interface CoreContactMapper {
 	CoreContact toEntity(CoreContactData data);
 	
 	default void save(CoreContactData data, CoreContact entity) {
-		updateEntity(data, entity);
+		updateEntityFromData(data, entity);
 		
 		if (entity.getStatus() == null) {
 			entity.setStatus(LifecycleStatus.ACTIVE);
@@ -29,6 +29,6 @@ public interface CoreContactMapper {
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void updateEntity(CoreContactData data, @MappingTarget CoreContact entity);
+	void updateEntityFromData(CoreContactData data, @MappingTarget CoreContact entity);
 	
 }

@@ -86,7 +86,7 @@ public class CoreMenuBusiness {
 		CoreMenu menu = coreMenuService.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException(CoreMenu.class, id));
 		
-		coreMenuMapper.updateEntity(menuData, menu); // Dùng @MappingTarget
+		coreMenuMapper.updateEntityFromData(menuData, menu); // Dùng @MappingTarget
 		CoreMenu updatedMenu = coreMenuService.save(menu);
 		return coreMenuMapper.toData(updatedMenu);
 	}

@@ -28,6 +28,6 @@ public class CoreRoleData extends BaseData {
 	private Integer sortOrder;
 	
 	@Builder.Default
-	private List<String> menus = new ArrayList<>();
+	private List<String> permissionCodes = new ArrayList<>();
 	
 }

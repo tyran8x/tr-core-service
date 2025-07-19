@@ -92,7 +92,7 @@ public class CoreUserBusiness {
 				.filter(dto -> dto.getId() != null && existingContactsMapById.containsKey(dto.getId()))
 				.forEach(dto -> {
 					CoreContact existingContact = existingContactsMapById.get(dto.getId());
-					coreContactMapper.updateEntity(dto, existingContact);
+					coreContactMapper.updateEntityFromData(dto, existingContact);
 					existingContact.setDeletedAt(null); // Khôi phục nếu cần
 					toSave.add(existingContact);
 					processedIds.add(dto.getId());
@@ -219,7 +219,7 @@ public class CoreUserBusiness {
 	
 	public CoreUserData update(Long id, CoreUserData userData) {
 		CoreUser user = coreUserService.findById(id).orElseThrow(() -> new EntityNotFoundException(CoreUser.class, id));
-		coreUserMapper.updateEntity(userData, user);
+		coreUserMapper.updateEntityFromData(userData, user);
 		return save(user, userData);
 	}
 	

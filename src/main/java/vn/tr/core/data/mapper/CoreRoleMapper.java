@@ -14,7 +14,7 @@ public interface CoreRoleMapper {
 	CoreRole toEntity(CoreRoleData data);
 	
 	default void save(CoreRoleData data, CoreRole entity) {
-		updateEntity(data, entity);
+		updateEntityFromData(data, entity);
 		
 		if (entity.getStatus() == null) {
 			entity.setStatus(LifecycleStatus.ACTIVE);
@@ -27,12 +27,12 @@ public interface CoreRoleMapper {
 	
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "appCode", ignore = true) // Luôn luôn ignore ở đây
+	@Mapping(target = "appCode", ignore = true)
 	@Mapping(target = "createdBy", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void updateEntity(CoreRoleData data, @MappingTarget CoreRole entity);
+	void updateEntityFromData(CoreRoleData data, @MappingTarget CoreRole entity);
 	
 }

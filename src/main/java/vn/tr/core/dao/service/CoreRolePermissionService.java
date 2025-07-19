@@ -14,8 +14,6 @@ public interface CoreRolePermissionService {
 	
 	CoreRolePermission save(CoreRolePermission coreRolePermission);
 	
-	void setFixedDaXoaForRoleCode(boolean daXoa, String roleCode);
-	
 	void refreshRolePermsCache();
 	
 	void refreshRolePermsCache(String roleMa);

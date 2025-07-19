@@ -53,11 +53,6 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	}
 	
 	@Override
-	public void setFixedDaXoaForRoleCode(boolean daXoa, String roleCode) {
-		repo.setFixedDaXoaForRoleCode(daXoa, roleCode);
-	}
-	
-	@Override
 	public void refreshRolePermsCache() {
 		RedisUtils.deleteKeys(CoreRolePermission.class.getSimpleName() + "*");
 		

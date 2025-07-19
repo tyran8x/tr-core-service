@@ -17,7 +17,7 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE core_tag_assignment SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreTagAssignment extends BaseEntity {
+public class CoreTagAssignment extends BaseEntity<Long> {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)

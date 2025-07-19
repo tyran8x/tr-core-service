@@ -28,7 +28,7 @@ public interface CoreMenuMapper {
 	CoreMenu toEntity(CoreMenuData data);
 	
 	default void save(CoreMenuData data, CoreMenu entity) {
-		updateEntity(data, entity);
+		updateEntityFromData(data, entity);
 		
 		if (entity.getStatus() == null) {
 			entity.setStatus(LifecycleStatus.ACTIVE);
@@ -47,7 +47,7 @@ public interface CoreMenuMapper {
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void updateEntity(CoreMenuData data, @MappingTarget CoreMenu entity);
+	void updateEntityFromData(CoreMenuData data, @MappingTarget CoreMenu entity);
 	
 	default Map<String, Object> mapExtraMetaFromJsonString(String jsonString) {
 		if (jsonString == null || jsonString.isBlank()) {

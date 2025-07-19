@@ -27,6 +27,6 @@ public interface CoreUserMapper {
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "username", ignore = true) // Không cho phép đổi username
 	@Mapping(target = "hashedPassword", ignore = true)
-	void updateEntity(CoreUserData data, @MappingTarget CoreUser entity);
+	void updateEntityFromData(CoreUserData data, @MappingTarget CoreUser entity);
 	
 }

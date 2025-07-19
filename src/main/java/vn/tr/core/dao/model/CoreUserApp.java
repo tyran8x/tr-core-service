@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE core_user_app SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreUserApp extends BaseEntity {
+public class CoreUserApp extends BaseEntity<Long> {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)

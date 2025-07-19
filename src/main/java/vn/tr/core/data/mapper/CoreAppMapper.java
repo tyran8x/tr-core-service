@@ -14,7 +14,7 @@ public interface CoreAppMapper {
 	CoreApp toEntity(CoreAppData data);
 	
 	default void save(CoreAppData data, CoreApp entity) {
-		updateEntity(data, entity);
+		updateEntityFromData(data, entity);
 		
 		if (entity.getStatus() == null) {
 			entity.setStatus(LifecycleStatus.ACTIVE);
@@ -29,6 +29,6 @@ public interface CoreAppMapper {
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void updateEntity(CoreAppData data, @MappingTarget CoreApp entity);
+	void updateEntityFromData(CoreAppData data, @MappingTarget CoreApp entity);
 	
 }

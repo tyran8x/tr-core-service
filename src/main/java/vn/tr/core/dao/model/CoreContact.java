@@ -18,7 +18,7 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE core_contact SET deleted_at = NOW() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreContact extends BaseEntity {
+public class CoreContact extends BaseEntity<Long> {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
