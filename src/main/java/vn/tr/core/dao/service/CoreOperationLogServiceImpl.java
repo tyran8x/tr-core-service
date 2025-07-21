@@ -1,5 +1,6 @@
 package vn.tr.core.dao.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,13 +13,10 @@ import vn.tr.core.dao.model.CoreOperationLog;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CoreOperationLogServiceImpl implements CoreOperationLogService {
 	
-	private final CoreOperationLogRepo repo;
-	
-	public CoreOperationLogServiceImpl(CoreOperationLogRepo repo) {
-		this.repo = repo;
-	}
+	private final CoreOperationLogRepo coreOperationLogRepo;
 	
 	@Async("scheduledExecutorService")
 	@EventListener
@@ -46,27 +44,27 @@ public class CoreOperationLogServiceImpl implements CoreOperationLogService {
 	
 	@Override
 	public Optional<CoreOperationLog> findById(Long id) {
-		return repo.findById(id);
+		return coreOperationLogRepo.findById(id);
 	}
 	
 	@Override
 	public CoreOperationLog save(CoreOperationLog coreOperationLog) {
-		return repo.save(coreOperationLog);
+		return coreOperationLogRepo.save(coreOperationLog);
 	}
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
-	}
-	
-	@Override
-	public Page<CoreOperationLog> findAll(String search, Boolean trangThai, String appCode, Pageable pageable) {
-		return repo.findAll(CoreOperationLogSpecifications.quickSearch(search, trangThai, appCode), pageable);
+		coreOperationLogRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreOperationLogRepo.existsById(id);
+	}
+	
+	@Override
+	public Page<CoreOperationLog> findAll(String search, Boolean trangThai, String appCode, Pageable pageable) {
+		return coreOperationLogRepo.findAll(CoreOperationLogSpecifications.quickSearch(search, trangThai, appCode), pageable);
 	}
 	
 }

@@ -10,31 +10,31 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CoreTagAssignmentServiceImpl implements CoreTagAssignmentService {
 	
-	private final CoreTagAssignmentRepo repo;
+	private final CoreTagAssignmentRepo coreTagAssignmentRepo;
 	
 	@Override
 	public void deleteById(Long id) {
-		repo.deleteById(id);
+		coreTagAssignmentRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreTagAssignmentRepo.existsById(id);
 	}
 	
 	@Override
 	public Optional<CoreTagAssignment> findById(Long id) {
-		return repo.findById(id);
+		return coreTagAssignmentRepo.findById(id);
 	}
 	
 	@Override
 	public CoreTagAssignment save(CoreTagAssignment coreUserApp) {
-		return repo.save(coreUserApp);
+		return coreTagAssignmentRepo.save(coreUserApp);
 	}
 	
 	@Override
 	public Optional<CoreTagAssignment> findFirstByTagIdAndTaggableValueAndTaggableType(Long tagId, String taggableValue, String taggableType) {
-		return repo.findFirstByTagIdAndTaggableValueAndTaggableType(tagId, taggableValue, taggableType);
+		return coreTagAssignmentRepo.findFirstByTagIdAndTaggableValueAndTaggableType(tagId, taggableValue, taggableType);
 	}
 	
 }

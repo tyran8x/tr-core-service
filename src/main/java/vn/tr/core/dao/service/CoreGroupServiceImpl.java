@@ -1,5 +1,6 @@
 package vn.tr.core.dao.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,67 +13,64 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class CoreGroupServiceImpl implements CoreGroupService {
 	
-	private final CoreGroupRepo repo;
-	
-	public CoreGroupServiceImpl(CoreGroupRepo repo) {
-		this.repo = repo;
-	}
+	private final CoreGroupRepo coreGroupRepo;
 	
 	@Override
 	public Optional<CoreGroup> findById(Long id) {
-		return repo.findById(id);
+		return coreGroupRepo.findById(id);
 	}
 	
 	@Override
 	public CoreGroup save(CoreGroup coreGroup) {
-		return repo.save(coreGroup);
+		return coreGroupRepo.save(coreGroup);
 	}
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
-	}
-	
-	@Override
-	public Page<CoreGroup> findAll(CoreGroupSearchCriteria coreGroupSearchCriteria, Pageable pageable) {
-		return repo.findAll(CoreGroupSpecifications.quickSearch(coreGroupSearchCriteria), pageable);
-	}
-	
-	@Override
-	public List<CoreGroup> findAll(CoreGroupSearchCriteria coreGroupSearchCriteria) {
-		return repo.findAll(CoreGroupSpecifications.quickSearch(coreGroupSearchCriteria));
-	}
-	
-	@Override
-	public boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode) {
-		return repo.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, code, appCode);
-	}
-	
-	@Override
-	public boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode) {
-		return repo.existsByIdNotAndNameIgnoreCaseAndAppCode(id, name, appCode);
-	}
-	
-	@Override
-	public boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode) {
-		return repo.existsByCodeIgnoreCaseAndAppCode(code, appCode);
-	}
-	
-	@Override
-	public boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode) {
-		return repo.existsByNameIgnoreCaseAndAppCode(name, appCode);
-	}
-	
-	@Override
-	public boolean existsByIdAndAppCode(long id, String appCode) {
-		return repo.existsByIdAndAppCode(id, appCode);
+		coreGroupRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreGroupRepo.existsById(id);
+	}
+	
+	@Override
+	public Page<CoreGroup> findAll(CoreGroupSearchCriteria coreGroupSearchCriteria, Pageable pageable) {
+		return coreGroupRepo.findAll(CoreGroupSpecifications.quickSearch(coreGroupSearchCriteria), pageable);
+	}
+	
+	@Override
+	public List<CoreGroup> findAll(CoreGroupSearchCriteria coreGroupSearchCriteria) {
+		return coreGroupRepo.findAll(CoreGroupSpecifications.quickSearch(coreGroupSearchCriteria));
+	}
+	
+	@Override
+	public boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode) {
+		return coreGroupRepo.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, code, appCode);
+	}
+	
+	@Override
+	public boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode) {
+		return coreGroupRepo.existsByIdNotAndNameIgnoreCaseAndAppCode(id, name, appCode);
+	}
+	
+	@Override
+	public boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode) {
+		return coreGroupRepo.existsByCodeIgnoreCaseAndAppCode(code, appCode);
+	}
+	
+	@Override
+	public boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode) {
+		return coreGroupRepo.existsByNameIgnoreCaseAndAppCode(name, appCode);
+	}
+	
+	@Override
+	public boolean existsByIdAndAppCode(long id, String appCode) {
+		return coreGroupRepo.existsByIdAndAppCode(id, appCode);
 	}
 	
 	@Override
@@ -81,7 +79,7 @@ public class CoreGroupServiceImpl implements CoreGroupService {
 		if (ids.isEmpty()) {
 			return;
 		}
-		repo.softDeleteByIds(ids);
+		coreGroupRepo.softDeleteByIds(ids);
 	}
 	
 }

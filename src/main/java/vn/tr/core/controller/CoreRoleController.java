@@ -2,13 +2,13 @@ package vn.tr.core.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
 import vn.tr.common.web.data.dto.DeleteData;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.business.CoreRoleBusiness;
 import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 import vn.tr.core.data.dto.CoreRoleData;
@@ -56,8 +56,8 @@ public class CoreRoleController {
 	
 	@GetMapping(value = {"/", ""})
 	@Log(title = "FindAll CoreRole", businessType = BusinessType.FINDALL, isSaveRequestData = false)
-	public R<Page<CoreRoleData>> findAll(CoreRoleSearchCriteria criteria) {
-		Page<CoreRoleData> pageCoreRoleData = coreRoleBusiness.findAll(criteria);
+	public R<PagedResult<CoreRoleData>> findAll(CoreRoleSearchCriteria criteria) {
+		PagedResult<CoreRoleData> pageCoreRoleData = coreRoleBusiness.findAll(criteria);
 		return R.ok(pageCoreRoleData);
 	}
 	

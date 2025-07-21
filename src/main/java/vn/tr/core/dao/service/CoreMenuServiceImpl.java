@@ -19,36 +19,36 @@ import java.util.Set;
 @Slf4j
 public class CoreMenuServiceImpl implements CoreMenuService {
 	
-	private final CoreMenuRepo repo;
+	private final CoreMenuRepo coreMenuRepo;
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
+		coreMenuRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreMenuRepo.existsById(id);
 	}
 	
 	@Override
 	public Page<CoreMenu> findAll(CoreMenuSearchCriteria coreMenuSearchCriteria, Pageable pageable) {
-		return repo.findAll(CoreMenuSpecifications.quickSearch(coreMenuSearchCriteria), pageable);
+		return coreMenuRepo.findAll(CoreMenuSpecifications.quickSearch(coreMenuSearchCriteria), pageable);
 	}
 	
 	@Override
 	public List<CoreMenu> findAll(CoreMenuSearchCriteria coreMenuSearchCriteria) {
-		return repo.findAll(CoreMenuSpecifications.quickSearch(coreMenuSearchCriteria));
+		return coreMenuRepo.findAll(CoreMenuSpecifications.quickSearch(coreMenuSearchCriteria));
 	}
 	
 	@Override
 	public Optional<CoreMenu> findById(Long id) {
-		return repo.findById(id);
+		return coreMenuRepo.findById(id);
 	}
 	
 	@Override
 	public CoreMenu save(CoreMenu coreMenu) {
-		return repo.save(coreMenu);
+		return coreMenuRepo.save(coreMenu);
 	}
 	
 	@Override
@@ -57,14 +57,14 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 		if (ids.isEmpty()) {
 			return;
 		}
-		repo.softDeleteByIds(ids);
+		coreMenuRepo.softDeleteByIds(ids);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
 	public Optional<CoreMenu> findByCodeSafely(String appCode, String code) {
 		// Tìm kiếm không phân biệt hoa thường
-		List<CoreMenu> foundMenus = repo.findByAppCodeIgnoreCaseAndCodeIgnoreCase(appCode, code);
+		List<CoreMenu> foundMenus = coreMenuRepo.findByAppCodeIgnoreCaseAndCodeIgnoreCase(appCode, code);
 		
 		if (foundMenus.isEmpty()) {
 			return Optional.empty(); // Không tìm thấy gì
@@ -99,31 +99,31 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<CoreMenu> findAllByAppCodeIncludingDeleted(String appCode) {
-		return repo.findAllByAppCodeIncludingDeleted(appCode);
+		return coreMenuRepo.findAllByAppCodeIncludingDeleted(appCode);
 	}
 	
 	@Override
 	@Transactional
 	public void markAllAsPendingDeletionForApp(String appCode) {
-		repo.markAllAsPendingDeletionForApp(appCode);
+		coreMenuRepo.markAllAsPendingDeletionForApp(appCode);
 	}
 	
 	@Override
 	@Transactional
 	public int deletePendingMenusForApp(String appCode) {
-		return repo.softDeletePendingMenusForApp(appCode);
+		return coreMenuRepo.softDeletePendingMenusForApp(appCode);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
 	public List<CoreMenu> findAllByAppCode(String appCode) {
-		return repo.findAllByAppCode(appCode);
+		return coreMenuRepo.findAllByAppCode(appCode);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
 	public boolean hasChildren(Long menuId) {
-		return repo.existsByParentId(menuId);
+		return coreMenuRepo.existsByParentId(menuId);
 	}
 	
 }

@@ -4,10 +4,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import vn.tr.core.dao.model.CoreContact;
 import vn.tr.core.data.criteria.CoreContactSearchCriteria;
+import vn.tr.core.data.dto.CoreContactData;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface CoreContactService {
 	
@@ -25,16 +25,13 @@ public interface CoreContactService {
 	
 	boolean existsById(long id);
 	
-	void deleteByIds(Set<Long> ids);
-	
-	List<CoreContact> findAllByOwnerIncludingDeleted(String ownerType, String ownerValue);
-	
-	List<CoreContact> findActiveByOwner(String ownerType, String ownerValue);
-	
-	Optional<CoreContact> findPrimaryEmailByOwner(String ownerType, String ownerValue);
-	
 	void saveAll(Iterable<CoreContact> coreContacts);
 	
-	void deleteByOwner(String ownerType, String ownerValue);
+	void synchronizeContactsForOwnerInApp(String ownerType, String ownerValue, String appCode, String primaryEmail,
+			List<CoreContactData> newContactDtos);
+	
+	List<CoreContact> findActiveByOwnerInApp(String ownerType, String ownerValue, String appCode);
+	
+	List<CoreContact> findAllActiveByOwner(String ownerType, String ownerValue);
 	
 }

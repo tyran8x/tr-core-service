@@ -76,8 +76,8 @@ public class CoreAppInitializationService {
 		CoreUser rootUser = coreUserService.findOrCreate("root", "Root Super Admin", "root@system.local", "Admin@123");
 		
 		// 6. Gán cho 'root' quyền truy cập app SYSTEM và vai trò SUPER_ADMIN
-		coreUserAppService.assignUserToAppIfNotExists(rootUser.getUsername(), systemApp.getCode());
-		coreUserRoleService.assignRoleToUserIfNotExists(rootUser.getUsername(), systemApp.getCode(), superAdminRole.getCode());
+		coreUserAppService.assignUserToApp(rootUser.getUsername(), systemApp.getCode(), UserType.INTERNAL.getUserType());
+		coreUserRoleService.assignRoleToUserInApp(rootUser.getUsername(), systemApp.getCode(), superAdminRole.getCode());
 	}
 	
 	@Transactional
@@ -102,7 +102,7 @@ public class CoreAppInitializationService {
 		CoreUser appAdminUser = coreUserService.findOrCreate(adminUsername, "Admin " + app.getName(), adminUsername + "@system.local", "Admin@123");
 		
 		// 5. Gán quyền truy cập App và vai trò Admin cho tài khoản admin
-		coreUserAppService.assignUserToAppIfNotExists(appAdminUser.getUsername(), app.getCode());
-		coreUserRoleService.assignRoleToUserIfNotExists(appAdminUser.getUsername(), app.getCode(), appAdminRole.getCode());
+		coreUserAppService.assignUserToApp(appAdminUser.getUsername(), app.getCode(), UserType.INTERNAL.getUserType());
+		coreUserRoleService.assignRoleToUserInApp(appAdminUser.getUsername(), app.getCode(), appAdminRole.getCode());
 	}
 }

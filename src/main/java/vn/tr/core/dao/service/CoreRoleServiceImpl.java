@@ -6,7 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.tr.common.core.enums.LifecycleStatus;
+import vn.tr.common.jpa.helper.AssociationSyncHelper;
+import vn.tr.common.jpa.helper.GenericUpsertHelper;
 import vn.tr.core.dao.model.CoreApp;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreRolePermission;
@@ -14,78 +15,79 @@ import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 import vn.tr.core.data.dto.CoreRoleData;
 import vn.tr.core.data.mapper.CoreRoleMapper;
 
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CoreRoleServiceImpl implements CoreRoleService {
 	
-	private final CoreRoleRepo repo;
+	private final CoreRoleRepo coreRoleRepo;
 	private final CoreRolePermissionRepo coreRolePermissionRepo;
 	private final CoreRoleMapper coreRoleMapper;
+	private final GenericUpsertHelper genericUpsertHelper;
+	private final AssociationSyncHelper associationSyncHelper;
 	
 	@Override
 	public Optional<CoreRole> findById(Long id) {
-		return repo.findById(id);
+		return coreRoleRepo.findById(id);
 	}
 	
 	@Override
 	public CoreRole save(CoreRole coreRole) {
-		return repo.save(coreRole);
+		return coreRoleRepo.save(coreRole);
 	}
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
+		coreRoleRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreRoleRepo.existsById(id);
 	}
 	
 	@Override
 	public Page<CoreRole> findAll(CoreRoleSearchCriteria coreRoleSearchCriteria, Pageable pageable) {
-		return repo.findAll(CoreRoleSpecifications.quickSearch(coreRoleSearchCriteria), pageable);
+		return coreRoleRepo.findAll(CoreRoleSpecifications.quickSearch(coreRoleSearchCriteria), pageable);
 	}
 	
 	@Override
 	public List<CoreRole> findAll(CoreRoleSearchCriteria coreRoleSearchCriteria) {
-		return repo.findAll(CoreRoleSpecifications.quickSearch(coreRoleSearchCriteria));
+		return coreRoleRepo.findAll(CoreRoleSpecifications.quickSearch(coreRoleSearchCriteria));
 	}
 	
 	@Override
 	public boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode) {
-		return repo.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, code, appCode);
+		return coreRoleRepo.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, code, appCode);
 	}
 	
 	@Override
 	public boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode) {
-		return repo.existsByIdNotAndNameIgnoreCaseAndAppCode(id, name, appCode);
+		return coreRoleRepo.existsByIdNotAndNameIgnoreCaseAndAppCode(id, name, appCode);
 	}
 	
 	@Override
 	public boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode) {
-		return repo.existsByCodeIgnoreCaseAndAppCode(code, appCode);
+		return coreRoleRepo.existsByCodeIgnoreCaseAndAppCode(code, appCode);
 	}
 	
 	@Override
 	public boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode) {
-		return repo.existsByNameIgnoreCaseAndAppCode(name, appCode);
+		return coreRoleRepo.existsByNameIgnoreCaseAndAppCode(name, appCode);
 	}
 	
 	@Override
 	public boolean existsByIdAndAppCode(long id, String appCode) {
-		return repo.existsByIdAndAppCode(id, appCode);
+		return coreRoleRepo.existsByIdAndAppCode(id, appCode);
 	}
 	
 	@Override
 	public boolean existsByCodeIgnoreCase(String code) {
-		return repo.existsByCodeIgnoreCase(code);
+		return coreRoleRepo.existsByCodeIgnoreCase(code);
 	}
 	
 	@Override
@@ -94,113 +96,94 @@ public class CoreRoleServiceImpl implements CoreRoleService {
 		if (ids.isEmpty()) {
 			return;
 		}
-		repo.softDeleteByIds(ids);
+		coreRoleRepo.softDeleteByIds(ids);
 	}
 	
 	@Override
 	@Transactional
 	public CoreRole findOrCreate(CoreApp coreApp, String roleCode, String roleName) {
-		return repo.findFirstByAppCodeAndCodeIgnoreCase(coreApp.getCode(), roleCode)
-				.orElseGet(() -> {
+		log.debug("Đang tìm hoặc tạo vai trò: code='{}', name='{}' trong app='{}'",
+				roleCode, roleName, coreApp.getCode());
+		
+		// 1. Đóng gói dữ liệu đầu vào
+		var seedData = new CoreRoleSeedData(coreApp.getCode(), roleCode, roleName);
+		
+		// 2. Gọi Upsert Helper
+		return genericUpsertHelper.upsert(
+				seedData,
+				// Hàm tìm kiếm: Luôn tìm cả bản ghi đã xóa mềm
+				() -> coreRoleRepo.findByCodeAndAppCodeEvenIfDeleted(seedData.roleCode(), seedData.appCode()),
+				
+				// Hàm tạo mới: Chỉ được gọi nếu không tìm thấy
+				() -> {
 					CoreRole newRole = new CoreRole();
-					newRole.setAppCode(coreApp.getCode());
-					newRole.setCode(roleCode);
-					newRole.setName(roleName);
-					return repo.save(newRole);
-				});
+					newRole.setAppCode(seedData.appCode());
+					newRole.setCode(seedData.roleCode());
+					// Các giá trị mặc định khác có thể được set ở đây
+					return newRole;
+				},
+				
+				// Hàm cập nhật: Sẽ được gọi trong cả hai trường hợp (tìm thấy hoặc tạo mới)
+				// Trong trường hợp này, chúng ta chỉ muốn cập nhật/gán 'name'.
+				(data, entity) -> {
+					// Chỉ cập nhật 'name' nếu nó chưa có hoặc khác với giá trị mới.
+					// Điều này tránh ghi đè tên đã được admin tùy chỉnh.
+					if (entity.getName() == null || entity.getName().isBlank()) {
+						entity.setName(data.roleName());
+					}
+				},
+				
+				coreRoleRepo
+		                                 );
 	}
 	
+	@Override
 	@Transactional
 	public CoreRoleData createOrUpdateRole(CoreRoleData roleData) {
 		log.info("Bắt đầu xử lý vai trò với mã: {} trong app: {}", roleData.getCode(), roleData.getAppCode());
 		
-		// 1. Tìm vai trò (kể cả đã xóa mềm), sau đó quyết định cập nhật hay tạo mới.
-		CoreRole roleEntity = repo.findByCodeAndAppCodeEvenIfDeleted(roleData.getCode(), roleData.getAppCode())
-				.map(existingRole -> {
-					// TRƯỜNG HỢP 1: TÌM THẤY VAI TRÒ (Dù đang hoạt động hay đã bị xóa mềm)
-					log.info("Tìm thấy vai trò đã tồn tại (ID: {}). Sẽ cập nhật và kích hoạt lại.", existingRole.getId());
-					
-					// Kích hoạt lại vai trò nếu nó đã bị xóa mềm
-					if (existingRole.getDeletedAt() != null) {
-						existingRole.setDeletedAt(null);
-					}
-					// Đảm bảo trạng thái là ACTIVE khi cập nhật
-					existingRole.setStatus(LifecycleStatus.ACTIVE);
-					
-					// Áp dụng các thay đổi từ DTO
-					coreRoleMapper.updateEntityFromData(roleData, existingRole);
-					return existingRole;
-				})
-				.orElseGet(() -> {
-					// TRƯỜNG HỢP 2: KHÔNG TÌM THẤY -> TẠO MỚI HOÀN TOÀN
-					log.info("Không tìm thấy vai trò, tiến hành tạo mới.");
+		// 1. SỬ DỤNG UPSERT HELPER để xử lý logic tạo mới hoặc cập nhật/kích hoạt lại CoreRole
+		CoreRole savedRole = genericUpsertHelper.upsert(
+				roleData,
+				() -> coreRoleRepo.findByCodeAndAppCodeEvenIfDeleted(roleData.getCode(), roleData.getAppCode()),
+				() -> { // Logic để tạo mới một CoreRole
 					CoreRole newRole = new CoreRole();
-					newRole.setAppCode(roleData.getAppCode()); // Bắt buộc gán appCode khi tạo mới
-					// Áp dụng các thay đổi từ DTO
-					coreRoleMapper.updateEntityFromData(roleData, newRole);
+					newRole.setAppCode(roleData.getAppCode()); // Gán các giá trị không thể null
 					return newRole;
-				});
+				},
+				coreRoleMapper::updateEntityFromData, // Logic để cập nhật từ DTO
+				coreRoleRepo
+		                                               );
 		
-		// 2. Lưu thông tin cơ bản của vai trò để có ID (nếu là vai trò mới)
-		CoreRole savedRole = repo.save(roleEntity);
-		log.info("Đã lưu thông tin cơ bản cho vai trò ID: {}", savedRole.getId());
+		// 2. SỬ DỤNG ASSOCIATION SYNC HELPER để đồng bộ hóa các quyền
+		if (roleData.getPermissionCodes() != null) {
+			var ownerContext = new CoreRoleContext(savedRole.getCode(), savedRole.getAppCode());
+			
+			List<CoreRolePermission> existingPermissions = coreRolePermissionRepo.findAllByRoleCodeAndAppCodeEvenIfDeleted(
+					ownerContext.roleCode(), ownerContext.appCode());
+			
+			associationSyncHelper.synchronize(
+					ownerContext,
+					existingPermissions,
+					roleData.getPermissionCodes(),
+					CoreRolePermission::getPermissionCode,
+					CoreRolePermission::new,
+					(association, context) -> {
+						association.setRoleCode(context.roleCode());
+						association.setAppCode(context.appCode());
+					},
+					CoreRolePermission::setPermissionCode,
+					coreRolePermissionRepo);
+		}
 		
-		// 3. Đồng bộ hóa danh sách quyền (logic này không đổi)
-		synchronizePermissionsForRole(savedRole, roleData.getPermissionCodes());
-		
-		// 4. Trả về DTO
+		// 3. Trả về DTO
 		return coreRoleMapper.toData(savedRole);
 	}
 	
-	private void synchronizePermissionsForRole(CoreRole role, List<String> newPermissionCodes) {
-		String roleCode = role.getCode();
-		String appCode = role.getAppCode();
-		log.info("Bắt đầu đồng bộ hóa quyền cho vai trò '{}' trong app '{}'", roleCode, appCode);
-		
-		// 1. Lấy trạng thái hiện tại từ DB (bao gồm cả đã xóa mềm)
-		List<CoreRolePermission> existingPermissions = coreRolePermissionRepo.findAllByRoleCodeAndAppCodeEvenIfDeleted(roleCode, appCode);
-		Map<String, CoreRolePermission> existingMap = existingPermissions.stream()
-				.collect(Collectors.toMap(CoreRolePermission::getPermissionCode, Function.identity()));
-		
-		// 2. Chuyển danh sách mới thành Set để tối ưu việc tìm kiếm (O(1))
-		Set<String> newCodeSet = new HashSet<>(newPermissionCodes);
-		
-		List<CoreRolePermission> permissionsToSave = new ArrayList<>();
-		
-		// 3. Xử lý các quyền đang có trong DB
-		for (CoreRolePermission existingPerm : existingPermissions) {
-			boolean shouldBeActive = newCodeSet.contains(existingPerm.getPermissionCode());
-			
-			if (!shouldBeActive && existingPerm.getDeletedAt() == null) {
-				log.debug("Xóa mềm quyền: {}", existingPerm.getPermissionCode());
-				existingPerm.setDeletedAt(LocalDateTime.now());
-				permissionsToSave.add(existingPerm);
-			} else if (shouldBeActive && existingPerm.getDeletedAt() != null) {
-				log.debug("Kích hoạt lại quyền: {}", existingPerm.getPermissionCode());
-				existingPerm.setDeletedAt(null);
-				permissionsToSave.add(existingPerm);
-			}
-		}
-		
-		// 4. Xử lý các quyền mới cần thêm
-		for (String newPermCode : newCodeSet) {
-			if (!existingMap.containsKey(newPermCode)) {
-				log.debug("Thêm mới quyền: {}", newPermCode);
-				CoreRolePermission newAssociation = new CoreRolePermission();
-				newAssociation.setRoleCode(roleCode);
-				newAssociation.setPermissionCode(newPermCode);
-				newAssociation.setAppCode(appCode);
-				permissionsToSave.add(newAssociation);
-			}
-		}
-		
-		// 5. Lưu tất cả thay đổi vào DB
-		if (!permissionsToSave.isEmpty()) {
-			log.info("Lưu {} thay đổi về quyền.", permissionsToSave.size());
-			coreRolePermissionRepo.saveAll(permissionsToSave);
-		} else {
-			log.info("Không có thay đổi nào về quyền cần lưu.");
-		}
+	private record CoreRoleSeedData(String appCode, String roleCode, String roleName) {
+	}
+	
+	private record CoreRoleContext(String roleCode, String appCode) {
 	}
 	
 }

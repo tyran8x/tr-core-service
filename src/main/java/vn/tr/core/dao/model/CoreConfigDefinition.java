@@ -8,6 +8,8 @@ import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.jpa.entity.BaseEntity;
+import vn.tr.common.jpa.entity.Identifiable;
+import vn.tr.common.jpa.entity.SoftDeletable;
 
 @Entity
 @Table(name = "core_config_definition")
@@ -17,9 +19,9 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@SQLDelete(sql = "UPDATE core_config_definition SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_config_definition SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreConfigDefinition extends BaseEntity {
+public class CoreConfigDefinition extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)

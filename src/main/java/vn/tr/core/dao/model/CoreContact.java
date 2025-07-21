@@ -7,6 +7,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.jpa.entity.BaseEntity;
+import vn.tr.common.jpa.entity.Identifiable;
+import vn.tr.common.jpa.entity.SoftDeletable;
 
 @Entity
 @Table(name = "core_contact")
@@ -16,9 +18,9 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATE core_contact SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_contact SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreContact extends BaseEntity<Long> {
+public class CoreContact extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
@@ -50,6 +52,9 @@ public class CoreContact extends BaseEntity<Long> {
 	@Enumerated(EnumType.STRING)
 	@Builder.Default
 	private LifecycleStatus status = LifecycleStatus.ACTIVE;
+	
+	@Column(name = "app_code", length = 50)
+	private String appCode;
 	
 	@Column(name = "sort_order", columnDefinition = "INTEGER DEFAULT 0")
 	@Builder.Default

@@ -31,8 +31,6 @@ public interface CoreRoleRepo extends JpaRepository<CoreRole, Long>, JpaSpecific
 	@Query("UPDATE CoreRole g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
 	void softDeleteByIds(@Param("ids") Set<Long> ids);
 	
-	Optional<CoreRole> findFirstByAppCodeAndCodeIgnoreCase(String appCode, String code);
-	
 	@Query("SELECT r FROM CoreRole r WHERE r.code = :code AND r.appCode = :appCode")
 	Optional<CoreRole> findByCodeAndAppCodeEvenIfDeleted(@Param("code") String code, @Param("appCode") String appCode);
 	

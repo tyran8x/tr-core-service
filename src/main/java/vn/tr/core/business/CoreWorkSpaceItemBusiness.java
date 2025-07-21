@@ -9,6 +9,7 @@ import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.dao.model.CoreWorkSpaceItem;
 import vn.tr.core.dao.service.CoreWorkSpaceItemService;
 import vn.tr.core.data.criteria.CoreWorkSpaceItemSearchCriteria;
@@ -71,10 +72,10 @@ public class CoreWorkSpaceItemBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public Page<CoreWorkSpaceItemData> findAll(CoreWorkSpaceItemSearchCriteria criteria) {
+	public PagedResult<CoreWorkSpaceItemData> findAll(CoreWorkSpaceItemSearchCriteria criteria) {
 		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
 		Page<CoreWorkSpaceItem> pageCoreWorkSpaceItem = coreWorkSpaceItemService.findAll(criteria, pageable);
-		return pageCoreWorkSpaceItem.map(coreWorkSpaceItemMapper::toData);
+		return PagedResult.from(pageCoreWorkSpaceItem, coreWorkSpaceItemMapper::toData);
 	}
 	
 	@Transactional(readOnly = true)

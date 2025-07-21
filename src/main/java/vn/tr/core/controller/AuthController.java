@@ -36,7 +36,6 @@ public class AuthController {
 		ValidatorUtils.validate(loginBody);
 		
 		String clientId = loginBody.getClientId();
-		String grantType = loginBody.getGrantType();
 		CoreClientData coreClientData = new CoreClientData();
 		//		// client grantType
 		//		if (ObjectUtil.isNull(client) || !StringUtils.contains(client.getGrantType(), grantType)) {
@@ -44,7 +43,7 @@ public class AuthController {
 		//		} else if (!UserConstants.NORMAL.equals(client.getTrangThai())) {
 		//			return R.fail(MessageUtils.message("auth.grant.type.blocked"));
 		//		}
-		LoginResult loginResult = IAuthStrategy.login(loginBody, coreClientData, grantType);
+		LoginResult loginResult = IAuthStrategy.executeLogin(loginBody, coreClientData);
 		
 		Long userId = LoginHelper.getUserId();
 		scheduledExecutorService.schedule(() -> {
@@ -60,8 +59,7 @@ public class AuthController {
 	@PostMapping("/register")
 	public R<Void> register(@RequestBody RegisterBody registerBody) {
 		CoreClientData coreClientData = new CoreClientData();
-		String grantType = registerBody.getGrantType();
-		IAuthStrategy.register(registerBody, coreClientData, grantType);
+		IAuthStrategy.executeRegister(registerBody, coreClientData);
 		return R.ok();
 	}
 	

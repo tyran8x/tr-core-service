@@ -1,125 +1,102 @@
 package vn.tr.core.dao.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.tr.common.jpa.helper.AssociationSyncHelper;
 import vn.tr.core.dao.model.CoreUserRole;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CoreUserRoleServiceImpl implements CoreUserRoleService {
 	
-	private final CoreUserRoleRepo repo;
+	private final CoreUserRoleRepo coreUserRoleRepo;
+	private final AssociationSyncHelper associationSyncHelper;
 	
 	@Override
 	public void deleteById(Long id) {
-		repo.deleteById(id);
+		coreUserRoleRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreUserRoleRepo.existsById(id);
 	}
 	
 	@Override
 	public Optional<CoreUserRole> findById(Long id) {
-		return repo.findById(id);
+		return coreUserRoleRepo.findById(id);
 	}
 	
 	@Override
 	public CoreUserRole save(CoreUserRole coreUserRole) {
-		return repo.save(coreUserRole);
+		return coreUserRoleRepo.save(coreUserRole);
 	}
 	
 	@Override
 	@Transactional
-	public void replaceUserRolesForApp(String username, String appCode, Set<String> newRoleCodesInApp) {
-		List<CoreUserRole> allCurrentAssignmentsInApp = repo.findAllByUsernameAndAppCodeIncludingDeleted(username, appCode);
+	public void synchronizeUserRolesInApp(String username, String appCode, Set<String> newRoleCodes) {
+		log.info("Bắt đầu đồng bộ hóa các vai trò cho người dùng '{}' trong ứng dụng '{}'", username, appCode);
 		
-		Function<CoreUserRole, String> toRoleCode = CoreUserRole::getRoleCode;
+		var ownerContext = new CoreUserRoleContext(username.toLowerCase(), appCode);
 		
-		Set<String> currentlyActiveRoleCodes = allCurrentAssignmentsInApp.stream()
-				.filter(a -> a.getDeletedAt() == null)
-				.map(toRoleCode)
-				.collect(Collectors.toSet());
+		List<CoreUserRole> existingAssignments = coreUserRoleRepo.findAllByUsernameAndAppCodeIncludingDeleted(
+				ownerContext.username(), ownerContext.appCode());
 		
-		if (currentlyActiveRoleCodes.equals(newRoleCodesInApp)) {
-			return;
-		}
+		associationSyncHelper.synchronize(
+				ownerContext,
+				existingAssignments,
+				newRoleCodes,
+				CoreUserRole::getRoleCode,
+				CoreUserRole::new,
+				(association, context) -> {
+					association.setUsername(context.username());
+					association.setAppCode(context.appCode());
+				},
+				CoreUserRole::setRoleCode,
+				coreUserRoleRepo);
+	}
+	
+	@Override
+	@Transactional
+	public void assignRoleToUserInApp(String username, String appCode, String roleCode) {
+		// Lấy danh sách các vai trò hiện tại của người dùng trong app đó
+		Set<String> currentRoles = this.findActiveRoleCodesByUsernameAndAppCode(username, appCode);
 		
-		Map<String, CoreUserRole> existingMap = allCurrentAssignmentsInApp.stream()
-				.collect(Collectors.toMap(CoreUserRole::getRoleCode, Function.identity()));
-		
-		List<CoreUserRole> toSaveOrUpdate = new ArrayList<>();
-		List<CoreUserRole> toSoftDelete = new ArrayList<>();
-		
-		newRoleCodesInApp.stream()
-				.filter(existingMap::containsKey)
-				.map(existingMap::get)
-				.filter(assignment -> assignment.getDeletedAt() != null)
-				.forEach(assignment -> {
-					assignment.setDeletedAt(null);
-					toSaveOrUpdate.add(assignment);
-				});
-		
-		// Thêm các vai trò hoàn toàn mới.
-		newRoleCodesInApp.stream()
-				.filter(newRoleCode -> !existingMap.containsKey(newRoleCode))
-				.map(newRoleCode -> CoreUserRole.builder()
-						.username(username)
-						.appCode(appCode)
-						.roleCode(newRoleCode)
-						.build())
-				.forEach(toSaveOrUpdate::add);
-		
-		// Tìm các vai trò cần xóa mềm.
-		allCurrentAssignmentsInApp.stream()
-				.filter(assignment -> assignment.getDeletedAt() == null && !newRoleCodesInApp.contains(assignment.getRoleCode()))
-				.forEach(toSoftDelete::add);
-		
-		// Bước 6: Thực thi các thay đổi trên CSDL.
-		if (!toSaveOrUpdate.isEmpty()) {
-			repo.saveAll(toSaveOrUpdate);
-		}
-		if (!toSoftDelete.isEmpty()) {
-			repo.deleteAll(toSoftDelete);
+		// Nếu vai trò chưa tồn tại, thêm nó vào và gọi lại hàm đồng bộ
+		if (!currentRoles.contains(roleCode)) {
+			currentRoles.add(roleCode);
+			synchronizeUserRolesInApp(username, appCode, currentRoles);
 		}
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
-	public Set<String> findRoleCodesByUsername(String username) {
-		if (username.isBlank()) {
+	public Set<String> findActiveRoleCodesByUsernameAndAppCode(String username, String appCode) {
+		// Không cần kiểm tra null vì đã có @NonNull ở interface
+		if (username.isBlank() || appCode.isBlank()) {
 			return Collections.emptySet();
 		}
-		return repo.findRoleCodesByUsername(username.toLowerCase());
+		return coreUserRoleRepo.findActiveRoleCodesByUsernameAndAppCode(username.toLowerCase(), appCode);
 	}
 	
 	@Override
-	@Transactional
-	public void assignRoleToUserIfNotExists(String username, String appCode, String roleCode) {
-		String normalizedUsername = username.toLowerCase();
-		
-		Optional<CoreUserRole> existingAssignment = repo.findFirstByUsernameAndAppCodeAndRoleCode(normalizedUsername, appCode, roleCode);
-		
-		if (existingAssignment.isPresent()) {
-			CoreUserRole assignment = existingAssignment.get();
-			if (assignment.getDeletedAt() != null) {
-				assignment.setDeletedAt(null);
-				repo.save(assignment);
-			}
-		} else {
-			CoreUserRole newAssignment = CoreUserRole.builder()
-					.username(normalizedUsername)
-					.appCode(appCode)
-					.roleCode(roleCode)
-					.build();
-			repo.save(newAssignment);
+	@Transactional(readOnly = true)
+	public Set<String> findAllActiveRoleCodesByUsername(String username) {
+		if (username.isBlank()) {
+			return Collections.emptySet();
 		}
+		return coreUserRoleRepo.findAllActiveRoleCodesByUsername(username.toLowerCase());
+	}
+	
+	private record CoreUserRoleContext(String username, String appCode) {
 	}
 	
 }

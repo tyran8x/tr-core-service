@@ -2,13 +2,13 @@ package vn.tr.core.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
 import vn.tr.common.web.data.dto.DeleteData;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.business.CoreAppBusiness;
 import vn.tr.core.data.criteria.CoreAppSearchCriteria;
 import vn.tr.core.data.dto.CoreAppData;
@@ -56,8 +56,8 @@ public class CoreAppController {
 	
 	@GetMapping(value = {"/", ""})
 	@Log(title = "FindAll CoreApp", businessType = BusinessType.FINDALL, isSaveRequestData = false)
-	public R<Page<CoreAppData>> findAll(CoreAppSearchCriteria criteria) {
-		Page<CoreAppData> pageCoreAppData = coreAppBusiness.findAll(criteria);
+	public R<PagedResult<CoreAppData>> findAll(CoreAppSearchCriteria criteria) {
+		PagedResult<CoreAppData> pageCoreAppData = coreAppBusiness.findAll(criteria);
 		return R.ok(pageCoreAppData);
 	}
 	

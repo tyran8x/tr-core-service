@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import vn.tr.common.jpa.entity.BaseEntity;
+import vn.tr.common.jpa.entity.Identifiable;
+import vn.tr.common.jpa.entity.SoftDeletable;
 
 @Entity
 @Table(name = "core_user_manual")
@@ -13,7 +15,7 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class CoreUserManual extends BaseEntity {
+public class CoreUserManual extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)

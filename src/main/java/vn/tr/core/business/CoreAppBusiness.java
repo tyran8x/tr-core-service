@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.web.utils.CoreUtils;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.dao.model.CoreApp;
 import vn.tr.core.dao.service.CoreAppService;
 import vn.tr.core.data.criteria.CoreAppSearchCriteria;
@@ -56,10 +57,10 @@ public class CoreAppBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public Page<CoreAppData> findAll(CoreAppSearchCriteria criteria) {
+	public PagedResult<CoreAppData> findAll(CoreAppSearchCriteria criteria) {
 		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
 		Page<CoreApp> pageCoreApp = coreAppService.findAll(criteria, pageable);
-		return pageCoreApp.map(coreAppMapper::toData);
+		return PagedResult.from(pageCoreApp, coreAppMapper::toData);
 	}
 	
 	@Transactional(readOnly = true)

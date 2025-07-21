@@ -13,9 +13,13 @@ import java.util.Set;
 @Repository
 public interface CoreUserGroupRepo extends JpaRepository<CoreUserGroup, Long>, JpaSpecificationExecutor<CoreUserGroup> {
 	
-	List<CoreUserGroup> findByUsernameIgnoreCase(String username);
+	@Query("SELECT cug FROM CoreUserGroup cug WHERE cug.username = :username AND cug.appCode = :appCode")
+	List<CoreUserGroup> findAllByUsernameAndAppCodeIncludingDeleted(@Param("username") String username, @Param("appCode") String appCode);
+	
+	@Query("SELECT cug.groupCode FROM CoreUserGroup cug WHERE cug.username = :username AND cug.appCode = :appCode")
+	Set<String> findActiveGroupCodesByUsernameAndAppCode(@Param("username") String username, @Param("appCode") String appCode);
 	
 	@Query("SELECT cug.groupCode FROM CoreUserGroup cug WHERE cug.username = :username")
-	Set<String> findGroupCodesByUsername(@Param("username") String username);
+	Set<String> findAllActiveGroupCodesByUsername(@Param("username") String username);
 	
 }

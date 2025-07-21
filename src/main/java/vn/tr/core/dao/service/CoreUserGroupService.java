@@ -15,8 +15,12 @@ public interface CoreUserGroupService {
 	
 	Optional<CoreUserGroup> findById(Long id);
 	
-	void replaceUserGroups(String username, Set<String> newGroupCodes);
+	void synchronizeUserGroupsInApp(String username, String appCode, Set<String> newGroupCodes);
 	
-	Set<String> findGroupCodesByUsername(String username);
+	void assignUserToGroupInApp(String username, String appCode, String groupCode);
+	
+	Set<String> findActiveGroupCodesByUsernameAndAppCode(String username, String appCode);
+	
+	Set<String> findAllActiveGroupCodesByUsername(String username);
 	
 }

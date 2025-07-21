@@ -2,9 +2,11 @@ package vn.tr.core.dao.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.query.Param;
 import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.enums.LoginType;
 import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
 import java.util.List;
@@ -32,6 +34,8 @@ public interface CoreUserService {
 	
 	boolean existsByUsernameIgnoreCase(String username);
 	
+	boolean existsByEmailIgnoreCase(String email);
+	
 	boolean existsByIdNotAndUsernameIgnoreCase(long id, String username);
 	
 	Optional<CoreUser> findFirstByUsernameIgnoreCase(String username);
@@ -40,12 +44,16 @@ public interface CoreUserService {
 	
 	void recordLoginInfo(String userName, String status, String message);
 	
-	LoginUser buildLoginUser(CoreUser coreUser, String appCode);
+	LoginUser buildLoginUser(CoreUser user, CoreUserApp userAppAccess);
+	
+	void checkUserAppStatus(CoreUserApp coreUserApp);
 	
 	void checkLogin(LoginType loginType, String userName, Supplier<Boolean> supplier);
 	
 	void logout();
 	
 	CoreUser findOrCreate(String username, String fullName, String email, String rawPassword);
+	
+	Optional<CoreUser> findByIdEvenIfDeleted(@Param("id") Long id);
 	
 }

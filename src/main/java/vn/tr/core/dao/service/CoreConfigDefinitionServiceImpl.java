@@ -14,26 +14,26 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CoreConfigDefinitionServiceImpl implements CoreConfigDefinitionService {
 	
-	private final CoreConfigDefinitionRepo repo;
+	private final CoreConfigDefinitionRepo coreConfigDefinitionRepo;
 	
 	@Override
 	public void deleteById(Long id) {
-		repo.deleteById(id);
+		coreConfigDefinitionRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreConfigDefinitionRepo.existsById(id);
 	}
 	
 	@Override
 	public Page<CoreConfigDefinition> findAll(String maUngDung, String code, Boolean trangThai, Pageable pageable) {
-		return repo.findAll(CoreConfigDefinitionSpecifications.quickSearch(maUngDung, code, trangThai), pageable);
+		return coreConfigDefinitionRepo.findAll(CoreConfigDefinitionSpecifications.quickSearch(maUngDung, code, trangThai), pageable);
 	}
 	
 	@Override
 	public Optional<CoreConfigDefinition> findById(Long id) {
-		return repo.findById(id);
+		return coreConfigDefinitionRepo.findById(id);
 	}
 	
 }

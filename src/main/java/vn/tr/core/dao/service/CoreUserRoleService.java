@@ -15,10 +15,12 @@ public interface CoreUserRoleService {
 	
 	CoreUserRole save(CoreUserRole coreUserRole);
 	
-	void replaceUserRolesForApp(String username, String appCode, Set<String> newRoleCodesInApp);
+	void synchronizeUserRolesInApp(String username, String appCode, Set<String> newRoleCodes);
 	
-	Set<String> findRoleCodesByUsername(String username);
+	void assignRoleToUserInApp(String username, String appCode, String roleCode);
 	
-	void assignRoleToUserIfNotExists(String username, String appCode, String roleCode);
+	Set<String> findActiveRoleCodesByUsernameAndAppCode(String username, String appCode);
+	
+	Set<String> findAllActiveRoleCodesByUsername(String username);
 	
 }

@@ -5,6 +5,8 @@ import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import vn.tr.common.jpa.entity.BaseEntity;
+import vn.tr.common.jpa.entity.Identifiable;
+import vn.tr.common.jpa.entity.SoftDeletable;
 
 @Entity
 @Table(name = "core_user_group")
@@ -14,9 +16,9 @@ import vn.tr.common.jpa.entity.BaseEntity;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATE core_user_group SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_user_group SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreUserGroup extends BaseEntity {
+public class CoreUserGroup extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)

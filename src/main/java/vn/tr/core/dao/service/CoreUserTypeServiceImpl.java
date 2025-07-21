@@ -1,5 +1,6 @@
 package vn.tr.core.dao.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,67 +13,64 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class CoreUserTypeServiceImpl implements CoreUserTypeService {
 	
-	private final CoreUserTypeRepo repo;
-	
-	public CoreUserTypeServiceImpl(CoreUserTypeRepo repo) {
-		this.repo = repo;
-	}
+	private final CoreUserTypeRepo coreUserTypeRepo;
 	
 	@Override
 	public Optional<CoreUserType> findById(Long id) {
-		return repo.findById(id);
+		return coreUserTypeRepo.findById(id);
 	}
 	
 	@Override
 	public CoreUserType save(CoreUserType coreUserType) {
-		return repo.save(coreUserType);
+		return coreUserTypeRepo.save(coreUserType);
 	}
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
+		coreUserTypeRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreUserTypeRepo.existsById(id);
 	}
 	
 	@Override
 	public Page<CoreUserType> findAll(CoreUserTypeSearchCriteria coreUserTypeSearchCriteria, Pageable pageable) {
-		return repo.findAll(CoreUserTypeSpecifications.quickSearch(coreUserTypeSearchCriteria), pageable);
+		return coreUserTypeRepo.findAll(CoreUserTypeSpecifications.quickSearch(coreUserTypeSearchCriteria), pageable);
 	}
 	
 	@Override
 	public List<CoreUserType> findAll(CoreUserTypeSearchCriteria coreUserTypeSearchCriteria) {
-		return repo.findAll(CoreUserTypeSpecifications.quickSearch(coreUserTypeSearchCriteria));
+		return coreUserTypeRepo.findAll(CoreUserTypeSpecifications.quickSearch(coreUserTypeSearchCriteria));
 	}
 	
 	@Override
 	public boolean existsByIdNotAndCodeIgnoreCase(long id, String code) {
-		return repo.existsByIdNotAndCodeIgnoreCase(id, code);
+		return coreUserTypeRepo.existsByIdNotAndCodeIgnoreCase(id, code);
 	}
 	
 	@Override
 	public boolean existsByIdNotAndNameIgnoreCase(long id, String name) {
-		return repo.existsByIdNotAndNameIgnoreCase(id, name);
+		return coreUserTypeRepo.existsByIdNotAndNameIgnoreCase(id, name);
 	}
 	
 	@Override
 	public boolean existsByCodeIgnoreCase(String code) {
-		return repo.existsByCodeIgnoreCase(code);
+		return coreUserTypeRepo.existsByCodeIgnoreCase(code);
 	}
 	
 	@Override
 	public boolean existsByNameIgnoreCase(String name) {
-		return repo.existsByNameIgnoreCase(name);
+		return coreUserTypeRepo.existsByNameIgnoreCase(name);
 	}
 	
 	@Override
 	public boolean existsById(long id) {
-		return repo.existsById(id);
+		return coreUserTypeRepo.existsById(id);
 	}
 	
 	@Override
@@ -81,18 +79,18 @@ public class CoreUserTypeServiceImpl implements CoreUserTypeService {
 		if (ids.isEmpty()) {
 			return;
 		}
-		repo.softDeleteByIds(ids);
+		coreUserTypeRepo.softDeleteByIds(ids);
 	}
 	
 	@Override
 	@Transactional
 	public CoreUserType findOrCreate(String code, String name) {
-		return repo.findFirstByCodeIgnoreCase(code)
+		return coreUserTypeRepo.findFirstByCodeIgnoreCase(code)
 				.orElseGet(() -> {
 					CoreUserType newApp = new CoreUserType();
 					newApp.setCode(code);
 					newApp.setName(name);
-					return repo.save(newApp);
+					return coreUserTypeRepo.save(newApp);
 				});
 	}
 	

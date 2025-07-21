@@ -1,5 +1,6 @@
 package vn.tr.core.dao.service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CorePermission;
@@ -9,32 +10,29 @@ import java.util.Optional;
 import java.util.Set;
 
 @Service
+@RequiredArgsConstructor
 public class CorePermissionServiceImpl implements CorePermissionService {
 	
-	private final CorePermissionRepo repo;
-	
-	public CorePermissionServiceImpl(CorePermissionRepo repo) {
-		this.repo = repo;
-	}
+	private final CorePermissionRepo corePermissionRepo;
 	
 	@Override
 	public Optional<CorePermission> findById(Long id) {
-		return repo.findById(id);
+		return corePermissionRepo.findById(id);
 	}
 	
 	@Override
 	public CorePermission save(CorePermission corePermission) {
-		return repo.save(corePermission);
+		return corePermissionRepo.save(corePermission);
 	}
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
+		corePermissionRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return corePermissionRepo.existsById(id);
 	}
 	
 	@Override
@@ -43,36 +41,36 @@ public class CorePermissionServiceImpl implements CorePermissionService {
 		if (ids.isEmpty()) {
 			return;
 		}
-		repo.softDeleteByIds(ids);
+		corePermissionRepo.softDeleteByIds(ids);
 	}
 	
 	@Override
 	public void saveAll(Iterable<CorePermission> corePermissions) {
-		repo.saveAll(corePermissions);
+		corePermissionRepo.saveAll(corePermissions);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
 	public Set<String> findAllCodesByAppCode(String appCode) {
-		return repo.findAllCodesByAppCode(appCode);
+		return corePermissionRepo.findAllCodesByAppCode(appCode);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
 	public List<CorePermission> findAllByAppCode(String appCode) {
-		return repo.findAllByAppCode(appCode);
+		return corePermissionRepo.findAllByAppCode(appCode);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
 	public Set<String> findAllCodesByUsernameAndAppCode(String username, String appCode) {
-		return repo.findAllCodesByUsernameAndAppCode(username.toLowerCase(), appCode);
+		return corePermissionRepo.findAllCodesByUsernameAndAppCode(username.toLowerCase(), appCode);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
 	public boolean isSuperAdmin(String username) {
-		return repo.isSuperAdmin(username.toLowerCase());
+		return corePermissionRepo.isSuperAdmin(username.toLowerCase());
 	}
 	
 }

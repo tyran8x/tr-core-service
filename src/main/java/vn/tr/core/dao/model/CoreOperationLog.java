@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import vn.tr.common.jpa.entity.BaseEntity;
+import vn.tr.common.jpa.entity.Identifiable;
+import vn.tr.common.jpa.entity.SoftDeletable;
 
 import java.time.LocalDate;
 
@@ -16,7 +18,7 @@ import java.time.LocalDate;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class CoreOperationLog extends BaseEntity {
+public class CoreOperationLog extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)

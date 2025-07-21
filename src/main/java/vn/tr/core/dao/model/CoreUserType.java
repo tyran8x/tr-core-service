@@ -15,7 +15,7 @@ import vn.tr.common.jpa.entity.BaseCommonEntity;
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATE core_user_type SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_user_type SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUserType extends BaseCommonEntity {
 	

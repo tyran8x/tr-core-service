@@ -22,7 +22,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class CoreRolePermissionServiceImpl implements CoreRolePermissionService {
 	
-	private final CoreRolePermissionRepo repo;
+	private final CoreRolePermissionRepo coreRolePermissionRepo;
 	
 	private final CoreRoleService coreRoleService;
 	
@@ -34,22 +34,22 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	
 	@Override
 	public void deleteById(Long id) {
-		repo.deleteById(id);
+		coreRolePermissionRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreRolePermissionRepo.existsById(id);
 	}
 	
 	@Override
 	public Optional<CoreRolePermission> findById(Long id) {
-		return repo.findById(id);
+		return coreRolePermissionRepo.findById(id);
 	}
 	
 	@Override
 	public CoreRolePermission save(CoreRolePermission coreRole2Menu) {
-		return repo.save(coreRole2Menu);
+		return coreRolePermissionRepo.save(coreRole2Menu);
 	}
 	
 	@Override

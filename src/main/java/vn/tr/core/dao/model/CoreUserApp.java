@@ -8,6 +8,8 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.jpa.entity.BaseEntity;
+import vn.tr.common.jpa.entity.Identifiable;
+import vn.tr.common.jpa.entity.SoftDeletable;
 
 import java.time.LocalDateTime;
 
@@ -19,9 +21,9 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATE core_user_app SET deleted_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_user_app SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreUserApp extends BaseEntity<Long> {
+public class CoreUserApp extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)

@@ -5,10 +5,14 @@ import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.core.dao.model.CoreContact;
 import vn.tr.core.data.dto.CoreContactData;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface CoreContactMapper {
 	
 	CoreContactData toData(CoreContact entity);
+	
+	List<CoreContactData> toData(List<CoreContact> entities);
 	
 	@Mapping(target = "id", ignore = true)
 	CoreContact toEntity(CoreContactData data);

@@ -19,61 +19,61 @@ import java.util.Set;
 @Slf4j
 public class CoreModuleServiceImpl implements CoreModuleService {
 	
-	private final CoreModuleRepo repo;
+	private final CoreModuleRepo coreModuleRepo;
 	
 	@Override
 	public Optional<CoreModule> findById(Long id) {
-		return repo.findById(id);
+		return coreModuleRepo.findById(id);
 	}
 	
 	@Override
 	public CoreModule save(CoreModule coreModule) {
-		return repo.save(coreModule);
+		return coreModuleRepo.save(coreModule);
 	}
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
+		coreModuleRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreModuleRepo.existsById(id);
 	}
 	
 	@Override
 	public Page<CoreModule> findAll(CoreModuleSearchCriteria coreModuleSearchCriteria, Pageable pageable) {
-		return repo.findAll(CoreModuleSpecifications.quickSearch(coreModuleSearchCriteria), pageable);
+		return coreModuleRepo.findAll(CoreModuleSpecifications.quickSearch(coreModuleSearchCriteria), pageable);
 	}
 	
 	@Override
 	public List<CoreModule> findAll(CoreModuleSearchCriteria coreModuleSearchCriteria) {
-		return repo.findAll(CoreModuleSpecifications.quickSearch(coreModuleSearchCriteria));
+		return coreModuleRepo.findAll(CoreModuleSpecifications.quickSearch(coreModuleSearchCriteria));
 	}
 	
 	@Override
 	public boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode) {
-		return repo.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, code, appCode);
+		return coreModuleRepo.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, code, appCode);
 	}
 	
 	@Override
 	public boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode) {
-		return repo.existsByIdNotAndNameIgnoreCaseAndAppCode(id, name, appCode);
+		return coreModuleRepo.existsByIdNotAndNameIgnoreCaseAndAppCode(id, name, appCode);
 	}
 	
 	@Override
 	public boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode) {
-		return repo.existsByCodeIgnoreCaseAndAppCode(code, appCode);
+		return coreModuleRepo.existsByCodeIgnoreCaseAndAppCode(code, appCode);
 	}
 	
 	@Override
 	public boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode) {
-		return repo.existsByNameIgnoreCaseAndAppCode(name, appCode);
+		return coreModuleRepo.existsByNameIgnoreCaseAndAppCode(name, appCode);
 	}
 	
 	@Override
 	public boolean existsByIdAndAppCode(long id, String appCode) {
-		return repo.existsByIdAndAppCode(id, appCode);
+		return coreModuleRepo.existsByIdAndAppCode(id, appCode);
 	}
 	
 	@Override
@@ -82,13 +82,13 @@ public class CoreModuleServiceImpl implements CoreModuleService {
 		if (ids.isEmpty()) {
 			return;
 		}
-		repo.softDeleteByIds(ids);
+		coreModuleRepo.softDeleteByIds(ids);
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
 	public Set<String> findAllCodesByAppCode(String appCode) {
-		return repo.findAllCodesByAppCode(appCode);
+		return coreModuleRepo.findAllCodesByAppCode(appCode);
 	}
 	
 	@Override
@@ -103,13 +103,13 @@ public class CoreModuleServiceImpl implements CoreModuleService {
 					newModule.setAppCode(normalizedAppCode);
 					newModule.setCode(normalizedCode);
 					newModule.setName(name);
-					return repo.save(newModule);
+					return coreModuleRepo.save(newModule);
 				});
 	}
 	
 	@Transactional(readOnly = true)
 	public Optional<CoreModule> findByCodeSafely(String appCode, String code) {
-		List<CoreModule> foundModules = repo.findByAppCodeIgnoreCaseAndCodeIgnoreCase(appCode, code);
+		List<CoreModule> foundModules = coreModuleRepo.findByAppCodeIgnoreCaseAndCodeIgnoreCase(appCode, code);
 		
 		if (foundModules.isEmpty()) {
 			return Optional.empty();
@@ -137,7 +137,7 @@ public class CoreModuleServiceImpl implements CoreModuleService {
 	@Override
 	@Transactional(readOnly = true)
 	public List<CoreModule> findAllByAppCode(String appCode) {
-		return repo.findAllByAppCode(appCode);
+		return coreModuleRepo.findAllByAppCode(appCode);
 	}
 	
 }

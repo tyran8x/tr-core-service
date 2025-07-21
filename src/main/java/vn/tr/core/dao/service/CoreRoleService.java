@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import vn.tr.core.dao.model.CoreApp;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
+import vn.tr.core.data.dto.CoreRoleData;
 
 import java.util.List;
 import java.util.Optional;
@@ -39,5 +40,7 @@ public interface CoreRoleService {
 	void deleteByIds(Set<Long> ids);
 	
 	CoreRole findOrCreate(CoreApp coreApp, String roleCode, String roleName);
+	
+	CoreRoleData createOrUpdateRole(CoreRoleData roleData);
 	
 }

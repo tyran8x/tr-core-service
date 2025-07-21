@@ -14,6 +14,8 @@ import java.util.Set;
 @Repository
 public interface CoreUserRepo extends JpaRepository<CoreUser, Long>, JpaSpecificationExecutor<CoreUser> {
 	
+	boolean existsByEmailIgnoreCase(String email);
+	
 	boolean existsByUsernameIgnoreCase(String username);
 	
 	boolean existsByIdNotAndUsernameIgnoreCase(long id, String username);
@@ -25,5 +27,8 @@ public interface CoreUserRepo extends JpaRepository<CoreUser, Long>, JpaSpecific
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreWorkSpaceItem g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
 	void softDeleteByIds(@Param("ids") Set<Long> ids);
+	
+	@Query("SELECT u FROM CoreUser u WHERE u.id = :id")
+	Optional<CoreUser> findByIdEvenIfDeleted(@Param("id") Long id);
 	
 }

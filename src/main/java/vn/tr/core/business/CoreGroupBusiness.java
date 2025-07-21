@@ -9,6 +9,7 @@ import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.dao.model.CoreGroup;
 import vn.tr.core.dao.service.CoreGroupService;
 import vn.tr.core.data.criteria.CoreGroupSearchCriteria;
@@ -71,10 +72,10 @@ public class CoreGroupBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public Page<CoreGroupData> findAll(CoreGroupSearchCriteria criteria) {
+	public PagedResult<CoreGroupData> findAll(CoreGroupSearchCriteria criteria) {
 		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
 		Page<CoreGroup> pageCoreGroup = coreGroupService.findAll(criteria, pageable);
-		return pageCoreGroup.map(coreGroupMapper::toData);
+		return PagedResult.from(pageCoreGroup, coreGroupMapper::toData);
 	}
 	
 	@Transactional(readOnly = true)

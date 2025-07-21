@@ -23,14 +23,6 @@ public class CorePermissionBusiness {
 	private final CorePermissionService corePermissionService;
 	private final CoreModuleService coreModuleService;
 	
-	/**
-	 * Lấy cấu trúc cây quyền cho một ứng dụng, được nhóm theo module. Dùng cho giao diện phân quyền vai trò.
-	 *
-	 * @param appCode
-	 * 		Mã của ứng dụng.
-	 *
-	 * @return Danh sách các module, mỗi module chứa danh sách các quyền của nó.
-	 */
 	public List<PermissionModuleNode> getPermissionTreeForApp(String appCode) {
 		// 1. Lấy tất cả module và permission của app
 		List<CoreModule> modules = coreModuleService.findAllByAppCode(appCode);
@@ -71,7 +63,6 @@ public class CorePermissionBusiness {
 				.build();
 	}
 	
-	// --- DTOs nội bộ để trả về cho FE ---
 	@Data
 	@Builder
 	public static class PermissionModuleNode {

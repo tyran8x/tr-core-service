@@ -15,12 +15,12 @@ public interface CoreUserAppService {
 	
 	CoreUserApp save(CoreUserApp coreUserApp);
 	
-	void replaceUserApps(String username, Set<String> newAppCodes);
+	void synchronizeUserApps(String username, Set<String> newAppCodes);
 	
-	Set<String> findAppCodesByUsername(String username);
+	Optional<CoreUserApp> findByUsernameAndAppCode(String username, String appCode);
 	
-	boolean existsByUsernameAndAppCode(String username, String appCode);
+	Set<String> findActiveAppCodesByUsername(String username);
 	
-	void assignUserToAppIfNotExists(String username, String appCode);
+	void assignUserToApp(String username, String appCode, String defaultUserType);
 	
 }

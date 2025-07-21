@@ -19,6 +19,7 @@ public class CoreUserData extends BaseData {
 	private String username;
 	
 	private String email;
+	
 	private String fullName;
 	
 	private String avatarUrl;

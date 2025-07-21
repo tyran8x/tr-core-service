@@ -1,83 +1,99 @@
 package vn.tr.core.dao.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.tr.common.jpa.helper.AssociationSyncHelper;
 import vn.tr.core.dao.model.CoreUserGroup;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
+@Slf4j
 public class CoreUserGroupServiceImpl implements CoreUserGroupService {
 	
-	private final CoreUserGroupRepo repo;
-	
-	public CoreUserGroupServiceImpl(CoreUserGroupRepo repo) {
-		this.repo = repo;
-	}
+	private final CoreUserGroupRepo coreUserGroupRepo;
+	private final AssociationSyncHelper associationSyncHelper;
 	
 	@Override
 	public CoreUserGroup save(CoreUserGroup coreUser2Group) {
-		return repo.save(coreUser2Group);
+		return coreUserGroupRepo.save(coreUser2Group);
 	}
 	
 	@Override
 	public void deleteById(Long id) {
-		repo.deleteById(id);
-	}
-	
-	@Override
-	public Optional<CoreUserGroup> findById(Long id) {
-		return repo.findById(id);
-	}
-	
-	@Override
-	public void replaceUserGroups(String username, Set<String> newGroupCodes) {
-		
-		List<CoreUserGroup> existingAssignments = repo.findByUsernameIgnoreCase(username);
-		
-		if (newGroupCodes.isEmpty() && existingAssignments.isEmpty()) {
-			return;
-		}
-		
-		Set<String> existingGroupCodes = existingAssignments.stream().map(CoreUserGroup::getGroupCode).collect(Collectors.toSet());
-		
-		if (existingGroupCodes.equals(newGroupCodes)) {
-			return;
-		}
-		
-		List<CoreUserGroup> toDelete = existingAssignments.stream().filter(ua -> !newGroupCodes.contains(ua.getGroupCode())).toList();
-		if (!toDelete.isEmpty()) {
-			repo.deleteAllInBatch(toDelete);
-		}
-		
-		Set<String> toAdd = newGroupCodes.stream().filter(code -> !existingGroupCodes.contains(code)).collect(Collectors.toSet());
-		
-		if (!toAdd.isEmpty()) {
-			List<CoreUserGroup> newAssignments = toAdd.stream().map(groupCode -> CoreUserGroup.builder()
-					.username(username)
-					.groupCode(groupCode)
-					.build()).toList();
-			repo.saveAll(newAssignments);
-		}
+		coreUserGroupRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreUserGroupRepo.existsById(id);
+	}
+	
+	@Override
+	public Optional<CoreUserGroup> findById(Long id) {
+		return coreUserGroupRepo.findById(id);
+	}
+	
+	@Override
+	@Transactional
+	public void synchronizeUserGroupsInApp(String username, String appCode, Set<String> newGroupCodes) {
+		log.info("Bắt đầu đồng bộ hóa các group cho người dùng '{}' trong ứng dụng '{}'", username, appCode);
+		
+		var ownerContext = new CoreUserGroupContext(username, appCode);
+		
+		List<CoreUserGroup> existingAssignments = coreUserGroupRepo.findAllByUsernameAndAppCodeIncludingDeleted(
+				ownerContext.username(), ownerContext.appCode());
+		
+		associationSyncHelper.synchronize(
+				ownerContext,
+				existingAssignments,
+				newGroupCodes,
+				CoreUserGroup::getGroupCode,
+				CoreUserGroup::new,
+				(association, context) -> {
+					association.setUsername(context.username());
+					association.setAppCode(context.appCode());
+				},
+				CoreUserGroup::setGroupCode,
+				coreUserGroupRepo);
+	}
+	
+	@Override
+	@Transactional
+	public void assignUserToGroupInApp(String username, String appCode, String groupCode) {
+		Set<String> currentGroups = this.findActiveGroupCodesByUsernameAndAppCode(username, appCode);
+		
+		if (!currentGroups.contains(groupCode)) {
+			currentGroups.add(groupCode);
+			synchronizeUserGroupsInApp(username, appCode, currentGroups);
+		}
 	}
 	
 	@Override
 	@Transactional(readOnly = true)
-	public Set<String> findGroupCodesByUsername(String username) {
+	public Set<String> findActiveGroupCodesByUsernameAndAppCode(String username, String appCode) {
+		if (username.isBlank() || appCode.isBlank()) {
+			return Collections.emptySet();
+		}
+		return coreUserGroupRepo.findActiveGroupCodesByUsernameAndAppCode(username.toLowerCase(), appCode);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public Set<String> findAllActiveGroupCodesByUsername(String username) {
 		if (username.isBlank()) {
 			return Collections.emptySet();
 		}
-		return repo.findGroupCodesByUsername(username.toLowerCase());
+		return coreUserGroupRepo.findAllActiveGroupCodesByUsername(username.toLowerCase());
+	}
+	
+	private record CoreUserGroupContext(String username, String appCode) {
 	}
 	
 }

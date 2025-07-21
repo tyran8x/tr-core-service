@@ -3,13 +3,14 @@ package vn.tr.core.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
+import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.data.dto.DeleteData;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.business.CoreMenuBusiness;
 import vn.tr.core.dao.service.CoreSyncService;
 import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
@@ -36,8 +37,8 @@ public class CoreMenuController {
 	
 	@GetMapping("/tree")
 	@Log(title = "Lấy cây Menu", businessType = BusinessType.LIST, isSaveRequestData = false)
-	public R<List<CoreMenuData>> getMenuTree(@RequestHeader(name = "X-App-Code") String appCode) {
-		List<CoreMenuData> menuTree = coreMenuBusiness.getMenuTreeForApp(appCode);
+	public R<List<CoreMenuData>> getMenuTree() {
+		List<CoreMenuData> menuTree = coreMenuBusiness.getMenuTreeForApp(LoginHelper.getAppCode());
 		return R.ok(menuTree);
 	}
 	
@@ -67,8 +68,8 @@ public class CoreMenuController {
 	
 	@GetMapping(value = {"/", ""})
 	@Log(title = "FindAll CoreMenu", businessType = BusinessType.FINDALL, isSaveRequestData = false)
-	public R<Page<CoreMenuData>> findAll(CoreMenuSearchCriteria criteria) {
-		Page<CoreMenuData> pageCoreMenuData = coreMenuBusiness.findAll(criteria);
+	public R<PagedResult<CoreMenuData>> findAll(CoreMenuSearchCriteria criteria) {
+		PagedResult<CoreMenuData> pageCoreMenuData = coreMenuBusiness.findAll(criteria);
 		return R.ok(pageCoreMenuData);
 	}
 	

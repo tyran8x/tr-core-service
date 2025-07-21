@@ -2,7 +2,6 @@ package vn.tr.core.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
@@ -10,6 +9,7 @@ import vn.tr.common.encrypt.annotation.ApiEncrypt;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
 import vn.tr.common.web.data.dto.DeleteData;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.business.CoreModuleBusiness;
 import vn.tr.core.data.criteria.CoreModuleSearchCriteria;
 import vn.tr.core.data.dto.CoreModuleData;
@@ -58,8 +58,8 @@ public class CoreModuleController {
 	@ApiEncrypt(response = true)
 	@GetMapping(value = {"/", ""})
 	@Log(title = "FindAll CoreModule", businessType = BusinessType.FINDALL, isSaveRequestData = false)
-	public R<Page<CoreModuleData>> findAll(CoreModuleSearchCriteria criteria) {
-		Page<CoreModuleData> pageCoreModuleData = coreModuleBusiness.findAll(criteria);
+	public R<PagedResult<CoreModuleData>> findAll(CoreModuleSearchCriteria criteria) {
+		PagedResult<CoreModuleData> pageCoreModuleData = coreModuleBusiness.findAll(criteria);
 		return R.ok(pageCoreModuleData);
 	}
 	

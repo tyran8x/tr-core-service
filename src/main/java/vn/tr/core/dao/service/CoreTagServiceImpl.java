@@ -17,62 +17,62 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CoreTagServiceImpl implements CoreTagService {
 	
-	private final CoreTagRepo repo;
+	private final CoreTagRepo coreTagRepo;
 	private final CoreTagAssignmentRepo coreTagAssignmentRepo;
 	
 	@Override
 	public Optional<CoreTag> findById(Long id) {
-		return repo.findById(id);
+		return coreTagRepo.findById(id);
 	}
 	
 	@Override
 	public CoreTag save(CoreTag coreTag) {
-		return repo.save(coreTag);
+		return coreTagRepo.save(coreTag);
 	}
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
+		coreTagRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreTagRepo.existsById(id);
 	}
 	
 	@Override
 	public Page<CoreTag> findAll(CoreTagSearchCriteria coreTagSearchCriteria, Pageable pageable) {
-		return repo.findAll(CoreTagSpecifications.quickSearch(coreTagSearchCriteria), pageable);
+		return coreTagRepo.findAll(CoreTagSpecifications.quickSearch(coreTagSearchCriteria), pageable);
 	}
 	
 	@Override
 	public List<CoreTag> findAll(CoreTagSearchCriteria coreTagSearchCriteria) {
-		return repo.findAll(CoreTagSpecifications.quickSearch(coreTagSearchCriteria));
+		return coreTagRepo.findAll(CoreTagSpecifications.quickSearch(coreTagSearchCriteria));
 	}
 	
 	@Override
 	public boolean existsByIdNotAndCodeIgnoreCase(long id, String code) {
-		return repo.existsByIdNotAndCodeIgnoreCase(id, code);
+		return coreTagRepo.existsByIdNotAndCodeIgnoreCase(id, code);
 	}
 	
 	@Override
 	public boolean existsByIdNotAndNameIgnoreCase(long id, String name) {
-		return repo.existsByIdNotAndNameIgnoreCase(id, name);
+		return coreTagRepo.existsByIdNotAndNameIgnoreCase(id, name);
 	}
 	
 	@Override
 	public boolean existsByCodeIgnoreCase(String code) {
-		return repo.existsByCodeIgnoreCase(code);
+		return coreTagRepo.existsByCodeIgnoreCase(code);
 	}
 	
 	@Override
 	public boolean existsByNameIgnoreCase(String name) {
-		return repo.existsByNameIgnoreCase(name);
+		return coreTagRepo.existsByNameIgnoreCase(name);
 	}
 	
 	@Override
 	public boolean existsById(long id) {
-		return repo.existsById(id);
+		return coreTagRepo.existsById(id);
 	}
 	
 	@Override
@@ -81,18 +81,18 @@ public class CoreTagServiceImpl implements CoreTagService {
 		if (ids.isEmpty()) {
 			return;
 		}
-		repo.softDeleteByIds(ids);
+		coreTagRepo.softDeleteByIds(ids);
 	}
 	
 	@Override
 	@Transactional
 	public void assignTag(String taggableValue, String taggableType, String tagCode) {
-		CoreTag coreTag = repo.findFirstByCodeIgnoreCase(tagCode)
+		CoreTag coreTag = coreTagRepo.findFirstByCodeIgnoreCase(tagCode)
 				.orElseGet(() -> {
 					CoreTag newTag = new CoreTag();
 					newTag.setCode(tagCode);
 					newTag.setName(tagCode);
-					return repo.save(newTag);
+					return coreTagRepo.save(newTag);
 				});
 		
 		Optional<CoreTagAssignment> existingAssignment = coreTagAssignmentRepo.findFirstByTagIdAndTaggableValueAndTaggableType(coreTag.getId(),

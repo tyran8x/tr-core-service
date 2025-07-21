@@ -12,6 +12,7 @@ import vn.tr.common.core.exception.base.BaseException;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.dao.service.CoreMenuService;
 import vn.tr.core.dao.service.CorePermissionService;
@@ -50,10 +51,10 @@ public class CoreMenuBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public Page<CoreMenuData> findAll(CoreMenuSearchCriteria criteria) {
+	public PagedResult<CoreMenuData> findAll(CoreMenuSearchCriteria criteria) {
 		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
 		Page<CoreMenu> pageCoreMenu = coreMenuService.findAll(criteria, pageable);
-		return pageCoreMenu.map(coreMenuMapper::toData);
+		return PagedResult.from(pageCoreMenu, coreMenuMapper::toData);
 	}
 	
 	@Transactional(readOnly = true)

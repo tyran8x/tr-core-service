@@ -17,6 +17,8 @@ public class CoreUserSearchCriteria extends BaseSearchCriteria {
 	
 	private String email;
 	
+	private String appCode;
+	
 	private LifecycleStatus status;
 	
 }

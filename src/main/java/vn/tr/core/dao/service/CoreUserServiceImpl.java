@@ -1,10 +1,11 @@
 package vn.tr.core.dao.service;
 
 import cn.dev33.satoken.exception.NotLoginException;
-import cn.dev33.satoken.secure.BCrypt;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.constant.CacheConstants;
 import vn.tr.common.core.constant.Constants;
 import vn.tr.common.core.domain.model.LoginUser;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.enums.LoginType;
 import vn.tr.common.core.exception.user.UserException;
 import vn.tr.common.core.utils.MessageUtils;
@@ -22,6 +24,7 @@ import vn.tr.common.log.event.LoginInfoEvent;
 import vn.tr.common.redis.utils.RedisUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
 import java.time.Duration;
@@ -32,12 +35,12 @@ import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CoreUserServiceImpl implements CoreUserService {
 	
-	private final CoreUserRepo repo;
+	private final CoreUserRepo coreUserRepo;
 	private final CorePermissionService corePermissionService;
 	private final CoreUserRoleService coreUserRoleService;
-	private final CoreRoleService coreRoleService;
 	private final CoreUserGroupService coreUserGroupService;
 	@Value("${user.password.maxRetryCount}")
 	private Integer maxRetryCount;
@@ -46,27 +49,27 @@ public class CoreUserServiceImpl implements CoreUserService {
 	
 	@Override
 	public void deleteById(Long id) {
-		repo.deleteById(id);
+		coreUserRepo.deleteById(id);
 	}
 	
 	@Override
 	public Optional<CoreUser> findById(Long id) {
-		return repo.findById(id);
+		return coreUserRepo.findById(id);
 	}
 	
 	@Override
 	public CoreUser save(CoreUser coreRole) {
-		return repo.save(coreRole);
+		return coreUserRepo.save(coreRole);
 	}
 	
 	@Override
 	public void delete(Long id) {
-		repo.deleteById(id);
+		coreUserRepo.deleteById(id);
 	}
 	
 	@Override
 	public boolean existsById(Long id) {
-		return repo.existsById(id);
+		return coreUserRepo.existsById(id);
 	}
 	
 	@Override
@@ -75,37 +78,42 @@ public class CoreUserServiceImpl implements CoreUserService {
 		if (ids.isEmpty()) {
 			return;
 		}
-		repo.softDeleteByIds(ids);
+		coreUserRepo.softDeleteByIds(ids);
 	}
 	
 	@Override
 	public Page<CoreUser> findAll(CoreUserSearchCriteria coreUserSearchCriteria, Pageable pageable) {
-		return repo.findAll(CoreUserSpecifications.quickSearch(coreUserSearchCriteria), pageable);
+		return coreUserRepo.findAll(CoreUserSpecifications.quickSearch(coreUserSearchCriteria), pageable);
 	}
 	
 	@Override
 	public List<CoreUser> findAll(CoreUserSearchCriteria coreUserSearchCriteria) {
-		return repo.findAll(CoreUserSpecifications.quickSearch(coreUserSearchCriteria));
+		return coreUserRepo.findAll(CoreUserSpecifications.quickSearch(coreUserSearchCriteria));
 	}
 	
 	@Override
 	public boolean existsByUsernameIgnoreCase(String username) {
-		return repo.existsByUsernameIgnoreCase(username);
+		return coreUserRepo.existsByUsernameIgnoreCase(username);
+	}
+	
+	@Override
+	public boolean existsByEmailIgnoreCase(String email) {
+		return coreUserRepo.existsByEmailIgnoreCase(email);
 	}
 	
 	@Override
 	public boolean existsByIdNotAndUsernameIgnoreCase(long id, String username) {
-		return repo.existsByIdNotAndUsernameIgnoreCase(id, username);
+		return coreUserRepo.existsByIdNotAndUsernameIgnoreCase(id, username);
 	}
 	
 	@Override
 	public Optional<CoreUser> findFirstByUsernameIgnoreCase(String username) {
-		return repo.findFirstByUsernameIgnoreCase(username);
+		return coreUserRepo.findFirstByUsernameIgnoreCase(username);
 	}
 	
 	@Override
 	public Optional<CoreUser> findFirstByEmailIgnoreCase(String email) {
-		return repo.findFirstByEmailIgnoreCase(email);
+		return coreUserRepo.findFirstByEmailIgnoreCase(email);
 	}
 	
 	@Override
@@ -119,17 +127,28 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
-	public LoginUser buildLoginUser(CoreUser coreUser, String appCode) {
+	public LoginUser buildLoginUser(CoreUser coreUser, CoreUserApp userAppAccess) {
 		LoginUser loginUser = new LoginUser();
 		loginUser.setUserId(coreUser.getId());
 		loginUser.setUsername(coreUser.getUsername());
 		loginUser.setFullName(coreUser.getFullName());
-//		loginUser.setUserType(coreUser.getUserType());
-		loginUser.setPermissionCodes(corePermissionService.findAllCodesByUsernameAndAppCode(coreUser.getUsername(), appCode));
-		loginUser.setGroupCodes(coreUserGroupService.findGroupCodesByUsername(coreUser.getUsername()));
-		loginUser.setRoleCodes(coreUserRoleService.findRoleCodesByUsername(coreUser.getUsername()));
-		
+		loginUser.setUserType(userAppAccess.getUserTypeCode());
+		loginUser.setPermissionCodes(corePermissionService.findAllCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
+		loginUser.setGroupCodes(coreUserGroupService.findActiveGroupCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
+		loginUser.setRoleCodes(coreUserRoleService.findActiveRoleCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
 		return loginUser;
+	}
+	
+	@Override
+	public void checkUserAppStatus(CoreUserApp userAppAccess) {
+		if (userAppAccess.getStatus() == null || userAppAccess.getStatus() == LifecycleStatus.INACTIVE) {
+			log.info("Người dùng '{}' đăng nhập vào app '{}' đã bị vô hiệu hóa.", userAppAccess.getUsername(), userAppAccess.getAppCode());
+			throw new UserException("user.blocked", userAppAccess.getUsername());
+		}
+		if (userAppAccess.getStatus() == LifecycleStatus.LOCKED) {
+			log.info("Người dùng '{}' đăng nhập vào app '{}' đã bị khóa.", userAppAccess.getUsername(), userAppAccess.getAppCode());
+			throw new UserException("user.password.retry.limit.exceed", userAppAccess.getUsername());
+		}
 	}
 	
 	@Override
@@ -179,7 +198,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 		// Chuẩn hóa username
 		String normalizedUsername = username.toLowerCase();
 		
-		return repo.findFirstByUsernameIgnoreCase(normalizedUsername)
+		return coreUserRepo.findFirstByUsernameIgnoreCase(normalizedUsername)
 				.orElseGet(() -> {
 					CoreUser newUser = new CoreUser();
 					newUser.setUsername(normalizedUsername);
@@ -188,8 +207,13 @@ public class CoreUserServiceImpl implements CoreUserService {
 					newUser.setHashedPassword(BCrypt.hashpw(rawPassword));
 					// Gán các giá trị mặc định khác nếu cần
 					// Ví dụ: newUser.setUserType(...)
-					return repo.save(newUser);
+					return coreUserRepo.save(newUser);
 				});
+	}
+	
+	@Override
+	public Optional<CoreUser> findByIdEvenIfDeleted(Long id) {
+		return coreUserRepo.findByIdEvenIfDeleted(id);
 	}
 	
 }

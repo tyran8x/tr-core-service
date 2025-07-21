@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
+import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.service.CoreRoleService;
 import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
@@ -58,10 +59,10 @@ public class CoreRoleBusiness {
 	}
 	
 	@Transactional(readOnly = true)
-	public Page<CoreRoleData> findAll(CoreRoleSearchCriteria criteria) {
+	public PagedResult<CoreRoleData> findAll(CoreRoleSearchCriteria criteria) {
 		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
 		Page<CoreRole> pageCoreRole = coreRoleService.findAll(criteria, pageable);
-		return pageCoreRole.map(coreRoleMapper::toData);
+		return PagedResult.from(pageCoreRole, coreRoleMapper::toData);
 	}
 	
 	@Transactional(readOnly = true)
