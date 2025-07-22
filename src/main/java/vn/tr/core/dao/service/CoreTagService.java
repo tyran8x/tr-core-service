@@ -4,6 +4,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import vn.tr.core.dao.model.CoreTag;
 import vn.tr.core.data.criteria.CoreTagSearchCriteria;
+import vn.tr.core.data.dto.CoreTagAssignmentData;
+import vn.tr.core.data.dto.CoreTagData;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,13 +25,15 @@ public interface CoreTagService {
 	
 	List<CoreTag> findAll(CoreTagSearchCriteria coreTagSearchCriteria);
 	
-	boolean existsByIdNotAndCodeIgnoreCase(long id, String code);
+	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode);
 	
-	boolean existsByIdNotAndNameIgnoreCase(long id, String name);
+	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode);
 	
-	boolean existsByCodeIgnoreCase(String code);
+	boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode);
 	
-	boolean existsByNameIgnoreCase(String name);
+	boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode);
+	
+	boolean existsByIdAndAppCode(long id, String appCode);
 	
 	boolean existsById(long id);
 	
@@ -37,6 +41,8 @@ public interface CoreTagService {
 	
 	void assignTag(String taggableValue, String taggableType, String tagCode);
 	
-	boolean hasTag(String taggableValue, String taggableType, String tagCode);
+	void synchronizeTagsForTaggable(String taggableType, String taggableValue, List<CoreTagAssignmentData> newAssignments);
+	
+	CoreTag upsert(CoreTagData coreTagData);
 	
 }

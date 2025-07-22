@@ -40,6 +40,7 @@ public class CoreUserBusiness {
 	private final CoreContactService coreContactService;
 	private final CoreUserMapper coreUserMapper;
 	private final CoreContactMapper coreContactMapper;
+	private final CoreTagService coreTagService;
 	
 	public CoreUserData create(CoreUserData userData, String appCodeContext) {
 		if (coreUserService.existsByUsernameIgnoreCase(userData.getUsername())) {
@@ -93,6 +94,10 @@ public class CoreUserBusiness {
 			allRelevantAppCodes.addAll(userData.getApps());
 		}
 		
+		if (userData.getCoreTagAssignmentDatas() != null) {
+			coreTagService.synchronizeTagsForTaggable(CoreUser.class.getSimpleName(), user.getUsername(), userData.getCoreTagAssignmentDatas());
+		}
+		
 		// Đồng bộ cho từng app
 		for (String appCode : allRelevantAppCodes) {
 			Set<String> rolesForThisApp = filterAndExtractCodes(userData.getRoles(), appCode, "ROLE");
@@ -101,12 +106,11 @@ public class CoreUserBusiness {
 			Set<String> groupsForThisApp = filterAndExtractCodes(userData.getGroups(), appCode, "GROUP");
 			coreUserGroupService.synchronizeUserGroupsInApp(username, appCode, groupsForThisApp);
 			
-			if (userData.getContacts() != null) {
-				List<CoreContactData> contactsForThisApp = userData.getContacts().stream()
+			if (userData.getCoreContactDatas() != null) {
+				List<CoreContactData> contactsForThisApp = userData.getCoreContactDatas().stream()
 						.filter(c -> appCode.equals(c.getAppCode())).collect(Collectors.toList());
-				coreContactService.synchronizeContactsForOwnerInApp(
-						CoreUser.class.getSimpleName(), username, appCode, user.getEmail(), contactsForThisApp
-				                                                   );
+				coreContactService.synchronizeContactsForOwnerInApp(CoreUser.class.getSimpleName(), username, appCode, user.getEmail(),
+						contactsForThisApp);
 			}
 		}
 	}
@@ -119,9 +123,9 @@ public class CoreUserBusiness {
 		if (userData.getGroups() != null) {
 			coreUserGroupService.synchronizeUserGroupsInApp(username, appCodeContext, userData.getGroups());
 		}
-		if (userData.getContacts() != null) {
+		if (userData.getCoreContactDatas() != null) {
 			coreContactService.synchronizeContactsForOwnerInApp(
-					CoreUser.class.getSimpleName(), username, appCodeContext, user.getEmail(), userData.getContacts()
+					CoreUser.class.getSimpleName(), username, appCodeContext, user.getEmail(), userData.getCoreContactDatas()
 			                                                   );
 		}
 	}
@@ -135,11 +139,12 @@ public class CoreUserBusiness {
 		if (isSuperAdmin) {
 			data.setRoles(coreUserRoleService.findAllActiveRoleCodesByUsername(user.getUsername()));
 			data.setGroups(coreUserGroupService.findAllActiveGroupCodesByUsername(user.getUsername()));
-			data.setContacts(coreContactMapper.toData(coreContactService.findAllActiveByOwner(CoreUser.class.getSimpleName(), user.getUsername())));
+			data.setCoreContactDatas(
+					coreContactMapper.toData(coreContactService.findAllActiveByOwner(CoreUser.class.getSimpleName(), user.getUsername())));
 		} else {
 			data.setRoles(coreUserRoleService.findActiveRoleCodesByUsernameAndAppCode(user.getUsername(), appCodeContext));
 			data.setGroups(coreUserGroupService.findActiveGroupCodesByUsernameAndAppCode(user.getUsername(), appCodeContext));
-			data.setContacts(coreContactMapper.toData(
+			data.setCoreContactDatas(coreContactMapper.toData(
 					coreContactService.findActiveByOwnerInApp(CoreUser.class.getSimpleName(), user.getUsername(), appCodeContext)));
 		}
 		
@@ -159,8 +164,6 @@ public class CoreUserBusiness {
 		// Quy ước: {PREFIX}_{APP_CODE}_{SUFFIX}
 		return parts.length >= 2 && prefix.equalsIgnoreCase(parts[0]) && appCode.equalsIgnoreCase(parts[1]);
 	}
-	
-	// --- Private Helper Methods ---
 	
 	public CoreUserData update(Long id, CoreUserData userData, String appCodeContext) {
 		CoreUser user = coreUserService.findByIdEvenIfDeleted(id)

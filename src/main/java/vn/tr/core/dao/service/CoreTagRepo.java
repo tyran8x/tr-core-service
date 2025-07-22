@@ -5,22 +5,26 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreTag;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Repository
 public interface CoreTagRepo extends JpaRepository<CoreTag, Long>, JpaSpecificationExecutor<CoreTag> {
 	
-	boolean existsByIdNotAndCodeIgnoreCase(long id, String code);
+	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, @Nullable String appCode);
 	
-	boolean existsByIdNotAndNameIgnoreCase(long id, String name);
+	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, @Nullable String appCode);
 	
-	boolean existsByCodeIgnoreCase(String code);
+	boolean existsByCodeIgnoreCaseAndAppCode(String code, @Nullable String appCode);
 	
-	boolean existsByNameIgnoreCase(String name);
+	boolean existsByNameIgnoreCaseAndAppCode(String name, @Nullable String appCode);
+	
+	boolean existsByIdAndAppCode(long id, @Nullable String appCode);
 	
 	boolean existsById(long id);
 	
@@ -29,4 +33,10 @@ public interface CoreTagRepo extends JpaRepository<CoreTag, Long>, JpaSpecificat
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreTag g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
 	void softDeleteByIds(@Param("ids") Set<Long> ids);
+	
+	List<CoreTag> findByCodeIn(Set<String> codes);
+	
+	@Query("SELECT t FROM CoreTag t WHERE t.code = :code")
+	List<CoreTag> findAllByCodeEvenIfDeleted(@Param("code") String code);
+	
 }

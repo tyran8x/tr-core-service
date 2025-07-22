@@ -17,7 +17,7 @@ import vn.tr.common.jpa.entity.SoftDeletable;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@SQLDelete(sql = "UPDATE core_user SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_user SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUser extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	

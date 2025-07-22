@@ -17,7 +17,7 @@ import vn.tr.common.jpa.entity.SoftDeletable;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATE core_user_role SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_user_role SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUserRole extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	

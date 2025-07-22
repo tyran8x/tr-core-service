@@ -32,9 +32,4 @@ public class CoreTagAssignmentServiceImpl implements CoreTagAssignmentService {
 		return coreTagAssignmentRepo.save(coreUserApp);
 	}
 	
-	@Override
-	public Optional<CoreTagAssignment> findFirstByTagIdAndTaggableValueAndTaggableType(Long tagId, String taggableValue, String taggableType) {
-		return coreTagAssignmentRepo.findFirstByTagIdAndTaggableValueAndTaggableType(tagId, taggableValue, taggableType);
-	}
-	
 }

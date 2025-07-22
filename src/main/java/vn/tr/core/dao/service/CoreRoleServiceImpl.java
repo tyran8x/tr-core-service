@@ -139,45 +139,49 @@ public class CoreRoleServiceImpl implements CoreRoleService {
 	
 	@Override
 	@Transactional
-	public CoreRoleData createOrUpdateRole(CoreRoleData roleData) {
-		log.info("Bắt đầu xử lý vai trò với mã: {} trong app: {}", roleData.getCode(), roleData.getAppCode());
+	public CoreRoleData upsert(CoreRoleData roleData) {
+		log.info("Bắt đầu xử lý Upsert cho vai trò: code='{}', app='{}'", roleData.getCode(), roleData.getAppCode());
 		
-		// 1. SỬ DỤNG UPSERT HELPER để xử lý logic tạo mới hoặc cập nhật/kích hoạt lại CoreRole
+		// 1. Dùng Upsert Helper để xử lý CoreRole
 		CoreRole savedRole = genericUpsertHelper.upsert(
 				roleData,
 				() -> coreRoleRepo.findByCodeAndAppCodeEvenIfDeleted(roleData.getCode(), roleData.getAppCode()),
-				() -> { // Logic để tạo mới một CoreRole
+				() -> {
 					CoreRole newRole = new CoreRole();
-					newRole.setAppCode(roleData.getAppCode()); // Gán các giá trị không thể null
+					newRole.setCode(roleData.getCode());
+					newRole.setAppCode(roleData.getAppCode());
 					return newRole;
 				},
-				coreRoleMapper::updateEntityFromData, // Logic để cập nhật từ DTO
-				coreRoleRepo
-		                                               );
+				coreRoleMapper::updateEntityFromData,
+				coreRoleRepo);
 		
-		// 2. SỬ DỤNG ASSOCIATION SYNC HELPER để đồng bộ hóa các quyền
+		// 2. Dùng Association Sync Helper để đồng bộ hóa permissions
 		if (roleData.getPermissionCodes() != null) {
-			var ownerContext = new CoreRoleContext(savedRole.getCode(), savedRole.getAppCode());
-			
-			List<CoreRolePermission> existingPermissions = coreRolePermissionRepo.findAllByRoleCodeAndAppCodeEvenIfDeleted(
-					ownerContext.roleCode(), ownerContext.appCode());
-			
-			associationSyncHelper.synchronize(
-					ownerContext,
-					existingPermissions,
-					roleData.getPermissionCodes(),
-					CoreRolePermission::getPermissionCode,
-					CoreRolePermission::new,
-					(association, context) -> {
-						association.setRoleCode(context.roleCode());
-						association.setAppCode(context.appCode());
-					},
-					CoreRolePermission::setPermissionCode,
-					coreRolePermissionRepo);
+			synchronizePermissionsForRole(savedRole, roleData.getPermissionCodes());
 		}
 		
-		// 3. Trả về DTO
 		return coreRoleMapper.toData(savedRole);
+	}
+	
+	private void synchronizePermissionsForRole(CoreRole role, Set<String> newPermissionCodes) {
+		var ownerContext = new CoreRoleContext(role.getCode(), role.getAppCode());
+		
+		List<CoreRolePermission> existingPermissions = coreRolePermissionRepo.findAllByRoleCodeAndAppCodeEvenIfDeleted(
+				ownerContext.roleCode(), ownerContext.appCode()
+		                                                                                                              );
+		
+		associationSyncHelper.synchronize(
+				ownerContext,
+				existingPermissions,
+				newPermissionCodes,
+				CoreRolePermission::getPermissionCode,
+				CoreRolePermission::new,
+				(association, context) -> {
+					association.setRoleCode(context.roleCode());
+					association.setAppCode(context.appCode());
+				},
+				CoreRolePermission::setPermissionCode,
+				coreRolePermissionRepo);
 	}
 	
 	private record CoreRoleSeedData(String appCode, String roleCode, String roleName) {

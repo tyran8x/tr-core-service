@@ -27,7 +27,8 @@ public class CoreUserData extends BaseData {
 	private String userTypeCode;
 	
 	// Danh sách các thông tin liên hệ khác
-	private List<CoreContactData> contacts;
+	private List<CoreContactData> coreContactDatas;
+	private List<CoreTagAssignmentData> coreTagAssignmentDatas;
 	
 	// Các thông tin quan hệ
 	private Set<String> roles;

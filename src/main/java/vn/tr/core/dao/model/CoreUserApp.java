@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@SQLDelete(sql = "UPDATE core_user_app SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_user_app SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreUserApp extends BaseEntity implements Identifiable<Long>, SoftDeletable {
 	

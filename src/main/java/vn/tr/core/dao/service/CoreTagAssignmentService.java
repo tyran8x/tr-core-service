@@ -14,6 +14,4 @@ public interface CoreTagAssignmentService {
 	
 	CoreTagAssignment save(CoreTagAssignment coreTagAssignment);
 	
-	Optional<CoreTagAssignment> findFirstByTagIdAndTaggableValueAndTaggableType(Long tagId, String taggableValue, String taggableType);
-	
 }

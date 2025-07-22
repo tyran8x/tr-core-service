@@ -1,33 +1,29 @@
 package vn.tr.core.data.mapper;
 
 import org.mapstruct.*;
-import vn.tr.core.dao.model.CoreApp;
-import vn.tr.core.data.dto.CoreAppData;
+import vn.tr.core.dao.model.CoreTag;
+import vn.tr.core.data.dto.CoreTagData;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface CoreAppMapper {
+public interface CoreTagMapper {
 	
-	CoreAppData toData(CoreApp coreApp);
+	CoreTagData toData(CoreTag coreTag);
 	
-	List<CoreAppData> toData(List<CoreApp> coreApps);
+	List<CoreTagData> toData(List<CoreTag> coreTags);
 	
 	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "createdBy", ignore = true)
-	@Mapping(target = "createdAt", ignore = true)
-	@Mapping(target = "updatedBy", ignore = true)
-	@Mapping(target = "updatedAt", ignore = true)
-	@Mapping(target = "deletedAt", ignore = true)
-	CoreApp toEntity(CoreAppData coreAppData);
+	CoreTag toEntity(CoreTagData coreTagData);
 	
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "appCode", ignore = true) // Luôn luôn ignore ở đây
 	@Mapping(target = "createdBy", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedBy", ignore = true)
 	@Mapping(target = "updatedAt", ignore = true)
 	@Mapping(target = "deletedAt", ignore = true)
-	void updateEntityFromData(CoreAppData coreAppData, @MappingTarget CoreApp coreApp);
+	void updateEntityFromData(CoreTagData coreTagData, @MappingTarget CoreTag coreTag);
 	
 }

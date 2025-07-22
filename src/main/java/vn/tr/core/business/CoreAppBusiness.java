@@ -33,7 +33,7 @@ public class CoreAppBusiness {
 	}
 	
 	private CoreAppData save(CoreApp coreApp, CoreAppData coreAppData) {
-		coreAppMapper.save(coreAppData, coreApp);
+		coreAppMapper.updateEntityFromData(coreAppData, coreApp);
 		CoreApp savedApp = coreAppService.save(coreApp);
 		return findById(savedApp.getId());
 	}

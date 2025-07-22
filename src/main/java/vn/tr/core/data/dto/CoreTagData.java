@@ -2,7 +2,6 @@ package vn.tr.core.data.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -10,14 +9,11 @@ import lombok.experimental.SuperBuilder;
 import vn.tr.common.json.handler.XssPlainTextJsonDeserializer;
 import vn.tr.common.web.data.dto.BaseData;
 
-import java.util.HashSet;
-import java.util.Set;
-
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class CoreRoleData extends BaseData {
+public class CoreTagData extends BaseData {
 	
 	@JsonIgnore
 	private String appCode;
@@ -26,8 +22,5 @@ public class CoreRoleData extends BaseData {
 	private String description;
 	
 	private Integer sortOrder;
-	
-	@Builder.Default
-	private Set<String> permissionCodes = new HashSet<>();
 	
 }

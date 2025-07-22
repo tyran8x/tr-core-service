@@ -35,7 +35,7 @@ public class CoreRoleBusiness {
 	}
 	
 	private CoreRoleData save(CoreRole coreRole, CoreRoleData coreRoleData) {
-		coreRoleMapper.save(coreRoleData, coreRole);
+		coreRoleMapper.updateEntityFromData(coreRoleData, coreRole);
 		CoreRole savedRole = coreRoleService.save(coreRole);
 		return findById(savedRole.getId());
 	}

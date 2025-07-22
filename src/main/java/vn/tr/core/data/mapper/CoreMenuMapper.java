@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mapstruct.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.data.dto.CoreMenuData;
 
@@ -26,18 +25,6 @@ public interface CoreMenuMapper {
 	
 	@Mapping(target = "id", ignore = true)
 	CoreMenu toEntity(CoreMenuData data);
-	
-	default void save(CoreMenuData data, CoreMenu entity) {
-		updateEntityFromData(data, entity);
-		
-		if (entity.getStatus() == null) {
-			entity.setStatus(LifecycleStatus.ACTIVE);
-		}
-		
-		if (entity.getAppCode() == null && data.getAppCode() != null) {
-			entity.setAppCode(data.getAppCode());
-		}
-	}
 	
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)

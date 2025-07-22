@@ -41,6 +41,6 @@ public interface CoreRoleService {
 	
 	CoreRole findOrCreate(CoreApp coreApp, String roleCode, String roleName);
 	
-	CoreRoleData createOrUpdateRole(CoreRoleData roleData);
+	CoreRoleData upsert(CoreRoleData roleData);
 	
 }

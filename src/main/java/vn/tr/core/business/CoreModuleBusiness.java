@@ -35,7 +35,7 @@ public class CoreModuleBusiness {
 	}
 	
 	private CoreModuleData save(CoreModule coreModule, CoreModuleData coreModuleData) {
-		coreModuleMapper.save(coreModuleData, coreModule);
+		coreModuleMapper.updateEntityFromData(coreModuleData, coreModule);
 		CoreModule savedModule = coreModuleService.save(coreModule);
 		return findById(savedModule.getId());
 	}

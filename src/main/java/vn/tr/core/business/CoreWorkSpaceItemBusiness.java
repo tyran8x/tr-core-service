@@ -37,7 +37,7 @@ public class CoreWorkSpaceItemBusiness {
 	}
 	
 	private CoreWorkSpaceItemData save(CoreWorkSpaceItem coreWorkSpaceItem, CoreWorkSpaceItemData coreWorkSpaceItemData) {
-		coreWorkSpaceItemMapper.save(coreWorkSpaceItemData, coreWorkSpaceItem);
+		coreWorkSpaceItemMapper.updateEntityFromData(coreWorkSpaceItemData, coreWorkSpaceItem);
 		if (coreWorkSpaceItemData.getParentId() != null) {
 			CoreWorkSpaceItem parentEntity = coreWorkSpaceItemService.findById(coreWorkSpaceItemData.getParentId())
 					.orElseThrow(() -> new EntityNotFoundException(CoreWorkSpaceItem.class, coreWorkSpaceItemData.getParentId()));

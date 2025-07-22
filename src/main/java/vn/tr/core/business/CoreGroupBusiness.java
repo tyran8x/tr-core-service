@@ -37,7 +37,7 @@ public class CoreGroupBusiness {
 	}
 	
 	private CoreGroupData save(CoreGroup coreGroup, CoreGroupData coreGroupData) {
-		coreGroupMapper.save(coreGroupData, coreGroup);
+		coreGroupMapper.updateEntityFromData(coreGroupData, coreGroup);
 		if (coreGroupData.getParentId() != null) {
 			CoreGroup parentEntity = coreGroupService.findById(coreGroupData.getParentId())
 					.orElseThrow(() -> new EntityNotFoundException(CoreGroup.class, coreGroupData.getParentId()));

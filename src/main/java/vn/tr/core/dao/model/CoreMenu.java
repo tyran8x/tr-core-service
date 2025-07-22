@@ -18,7 +18,7 @@ import vn.tr.common.jpa.entity.BaseCommonEntity;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@SQLDelete(sql = "UPDATE core_menu SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_menu SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreMenu extends BaseCommonEntity {
 	

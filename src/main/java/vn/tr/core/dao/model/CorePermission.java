@@ -15,7 +15,7 @@ import vn.tr.common.jpa.entity.BaseCommonEntity;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@SQLDelete(sql = "UPDATE core_permission SET deleted_at = CURRENT_TIMESTAMP() WHERE id = ?")
+@SQLDelete(sql = "UPDATE core_permission SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CorePermission extends BaseCommonEntity {
 	
