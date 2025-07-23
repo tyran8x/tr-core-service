@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import vn.tr.common.core.domain.data.CoreContactData;
 import vn.tr.common.core.event.EntityUpdatedEvent;
 import vn.tr.core.dao.service.CoreContactService;
+import vn.tr.core.data.dto.CoreContactData;
 
 import java.util.Collection;
 

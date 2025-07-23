@@ -104,4 +104,12 @@ public class CoreAppServiceImpl implements CoreAppService {
 		return coreAppRepo.existsById(id);
 	}
 	
+	@Override
+	public List<CoreApp> findAllByCodeIn(Collection<String> codes) {
+		if (codes.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return coreAppRepo.findAllByCodeIn(codes);
+	}
+	
 }

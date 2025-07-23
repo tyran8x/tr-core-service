@@ -33,12 +33,22 @@ public interface CoreUserGroupRepo extends JpaRepository<CoreUserGroup, Long>, J
 	@Query("SELECT cug.groupCode FROM CoreUserGroup cug WHERE cug.username = :username")
 	Set<String> findAllActiveGroupCodesByUsername(@Param("username") String username);
 	
+	/**
+	 * BỔ SUNG: Tìm tất cả các bản ghi gán nhóm đang hoạt động cho một danh sách người dùng. Dùng để tối ưu hóa việc tải dữ liệu hàng loạt.
+	 *
+	 * @param usernames Collection các username cần truy vấn.
+	 *
+	 * @return Danh sách các bản ghi CoreUserGroup.
+	 */
+	@Query("SELECT cug FROM CoreUserGroup cug WHERE cug.username IN :usernames")
+	List<CoreUserGroup> findActiveByUsernames(@Param("usernames") Collection<String> usernames);
+	
 	@Query("SELECT cug FROM CoreUserGroup cug WHERE cug.username IN :usernames AND cug.appCode = :appCode")
 	List<CoreUserGroup> findActiveForUsersInApp(@Param("usernames") Collection<String> usernames, @Param("appCode") String appCode);
 	
 	/**
-	 * Kiểm tra xem có bất kỳ người dùng nào được gán vào một group cụ thể (thông qua code và appCode) hay không.
-	 * Đây là phương thức cốt lõi để kiểm tra ràng buộc xóa.
+	 * Kiểm tra xem có bất kỳ người dùng nào được gán vào một group cụ thể (thông qua code và appCode) hay không. Đây là phương thức cốt lõi để kiểm
+	 * tra ràng buộc xóa.
 	 *
 	 * @param groupCode Mã của nhóm.
 	 * @param appCode   Mã của ứng dụng.

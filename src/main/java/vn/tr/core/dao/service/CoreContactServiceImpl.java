@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.tr.common.core.domain.data.CoreContactData;
 import vn.tr.core.dao.model.CoreContact;
+import vn.tr.core.data.dto.CoreContactData;
 import vn.tr.core.data.mapper.CoreContactMapper;
 
 import java.time.LocalDateTime;
@@ -43,7 +43,7 @@ public class CoreContactServiceImpl implements CoreContactService {
 	
 	@Override
 	@Transactional
-	public List<CoreContact> synchronizeContactsForOwnerInApp(String ownerType, String ownerValue, String appCode,
+	public void synchronizeContactsForOwnerInApp(String ownerType, String ownerValue, String appCode,
 			Collection<CoreContactData> contactDataList) {
 		log.info("Bắt đầu đồng bộ hóa danh bạ cho owner='{}', value='{}', app='{}'", ownerType, ownerValue, appCode);
 		
@@ -90,7 +90,6 @@ public class CoreContactServiceImpl implements CoreContactService {
 			log.info("Đã lưu {} thay đổi cho danh bạ của owner='{}', value='{}'", contactsToSave.size(), ownerType, ownerValue);
 		}
 		
-		return finalActiveContacts;
 	}
 	
 	@Override

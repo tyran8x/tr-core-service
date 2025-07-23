@@ -9,10 +9,10 @@ import vn.tr.core.data.criteria.CoreGroupSearchCriteria;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
- * Interface cho Service Layer của CoreGroup.
- * Định nghĩa các nghiệp vụ cơ bản và tái sử dụng liên quan đến thực thể CoreGroup.
+ * Interface cho Service Layer của CoreGroup. Định nghĩa các nghiệp vụ cơ bản và tái sử dụng liên quan đến thực thể CoreGroup.
  *
  * @author tyran8x
  * @version 2.2
@@ -36,8 +36,8 @@ public interface CoreGroupService {
 	List<CoreGroup> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 	
 	/**
-	 * Tìm một nhóm theo code và appCode, bao gồm cả các bản ghi đã bị xóa mềm.
-	 * Hứa hẹn trả về 0 hoặc 1 kết quả. Việc xử lý dữ liệu trùng lặp được đóng gói bên trong implementation.
+	 * Tìm một nhóm theo code và appCode, bao gồm cả các bản ghi đã bị xóa mềm. Hứa hẹn trả về 0 hoặc 1 kết quả. Việc xử lý dữ liệu trùng lặp được
+	 * đóng gói bên trong implementation.
 	 *
 	 * @param code    Mã nhóm.
 	 * @param appCode Mã ứng dụng.
@@ -58,4 +58,14 @@ public interface CoreGroupService {
 	boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode);
 	
 	boolean existsByIdAndAppCode(long id, String appCode);
+	
+	/**
+	 * BỔ SUNG: Lọc và trả về một Set các mã nhóm hợp lệ trong một ứng dụng cụ thể.
+	 *
+	 * @param appCode    Mã ứng dụng.
+	 * @param groupCodes Collection các mã nhóm cần kiểm tra.
+	 *
+	 * @return Một Set chứa các mã nhóm hợp lệ.
+	 */
+	Set<String> filterExistingGroupCodesInApp(String appCode, Collection<String> groupCodes);
 }

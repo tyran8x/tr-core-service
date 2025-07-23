@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,19 +17,22 @@ import vn.tr.common.jpa.helper.GenericUpsertHelper;
 import vn.tr.common.web.data.dto.BulkOperationResult;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.common.web.utils.PagedResult;
-import vn.tr.core.dao.model.*;
+import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.dao.model.CoreUserApp;
+import vn.tr.core.dao.model.CoreUserGroup;
+import vn.tr.core.dao.model.CoreUserRole;
 import vn.tr.core.dao.service.*;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
+import vn.tr.core.data.dto.CoreContactData;
 import vn.tr.core.data.dto.CoreUserData;
-import vn.tr.core.data.mapper.CoreContactMapper;
 import vn.tr.core.data.mapper.CoreUserMapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Lớp Business (Facade) điều phối các nghiệp vụ phức tạp nhất liên quan đến Quản lý Người dùng (CoreUser).
- * Đây là module trung tâm, tương tác với nhiều service khác để đồng bộ hóa toàn bộ thông tin người dùng.
+ * Lớp Business (Facade) điều phối các nghiệp vụ phức tạp nhất liên quan đến Quản lý Người dùng (CoreUser). Đây là module trung tâm, tương tác với
+ * nhiều service khác để đồng bộ hóa toàn bộ thông tin người dùng.
  *
  * @author tyran8x
  * @version 3.0 (Grand Refactoring)
@@ -41,11 +43,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class CoreUserBusiness {
 	
-	//<editor-fold desc="Dependencies">
 	// Primary Services & Mappers
 	private final CoreUserService coreUserService;
 	private final CoreUserMapper coreUserMapper;
-	private final CoreContactMapper coreContactMapper;
 	
 	// Association Services
 	private final CoreUserAppService coreUserAppService;
@@ -55,16 +55,12 @@ public class CoreUserBusiness {
 	private final CoreTagAssignmentService coreTagAssignmentService;
 	
 	// Parent Entity Services (for Helpers)
-	private final CoreAppService coreAppService;
 	private final CoreRoleService coreRoleService;
 	private final CoreGroupService coreGroupService;
-	private final CoreTagService coreTagService;
 	
 	// Helpers & Event Publisher
 	private final GenericUpsertHelper genericUpsertHelper;
 	private final AssociationSyncHelper associationSyncHelper;
-	private final ApplicationEventPublisher eventPublisher;
-	//</editor-fold>
 	
 	/**
 	 * Tạo mới một người dùng.
@@ -128,21 +124,41 @@ public class CoreUserBusiness {
 		
 		// --- 1. Đồng bộ User-App (Chỉ Super Admin mới có quyền) ---
 		if (isSuperAdmin && userData.getApps() != null) {
-			record UserAppContext(CoreUser user, String userTypeCode, LifecycleStatus status) {
+			// 2. Định nghĩa ngữ cảnh (Owner Context)
+			record UserAppContext(String username, String userTypeCode, LifecycleStatus status) {
 			}
-			var context = new UserAppContext(user, userData.getUserTypeCode(), userData.getStatus());
+			var ownerContext = new UserAppContext(username, userData.getUserTypeCode(), userData.getStatus());
 			
+			// 3. Gọi helper với đúng 8 tham số và logic phù hợp với model hiện tại
 			associationSyncHelper.synchronize(
-					context,
+					// Tham số 1: ownerContext - Ngữ cảnh của "chủ thể"
+					ownerContext,
+					
+					// Tham số 2: existingAssociations - Danh sách liên kết cũ
 					coreUserAppService.findByUsernameIncludingDeleted(username),
-					coreAppService.findAllByCodeIn(userData.getApps()),
-					(userApp) -> userApp.getApp().getCode(),
-					CoreApp::getCode,
-					(app) -> CoreUserApp.builder()
-							.user(context.user()).app(app)
-							.userTypeCode(context.userTypeCode()).status(context.status()).build(),
-					(userApp) -> coreUserAppService.deleteById(userApp.getId())
-			                                 );
+					
+					// Tham số 3: newKeys - Tập hợp các khóa mới (app_code)
+					userData.getApps(),
+					
+					// Tham số 4: keyExtractor - Lấy khóa từ bản ghi cũ (CoreUserApp -> appCode)
+					CoreUserApp::getAppCode,
+					
+					// Tham số 5: associationFactory - Tạo một bản ghi mới rỗng
+					CoreUserApp::new,
+					
+					// Tham số 6: ownerContextSetter - Gán thông tin từ "chủ thể" vào bản ghi mới
+					(association, context) -> {
+						association.setUsername(context.username());
+						association.setUserTypeCode(context.userTypeCode());
+						association.setStatus(context.status());
+					},
+					
+					// Tham số 7: keySetter - Gán "khóa" (app_code) vào bản ghi mới
+					CoreUserApp::setAppCode,
+					
+					// Tham số 8: repository - Repository để helper tự lưu/xóa
+					coreUserAppService.getRepository());
+			
 		}
 		
 		// --- 2. Đồng bộ User-Role & User-Group trong từng App ---
@@ -154,27 +170,35 @@ public class CoreUserBusiness {
 			// Đồng bộ Role
 			if (userData.getRoles() != null) {
 				Set<String> rolesForApp = isSuperAdmin
-						? userData.getRoles().stream().filter(r -> coreRoleService.isRoleInApp(r, appCode)).collect(Collectors.toSet())
+						? coreRoleService.filterExistingRoleCodesInApp(appCode, userData.getRoles())
 						: userData.getRoles();
 				syncUserRolesInApp(user, appCode, rolesForApp);
 			}
 			// Đồng bộ Group
 			if (userData.getGroups() != null) {
 				Set<String> groupsForApp = isSuperAdmin
-						? userData.getGroups().stream().filter(g -> coreGroupService.isGroupInApp(g, appCode)).collect(Collectors.toSet())
+						? coreGroupService.filterExistingGroupCodesInApp(appCode, userData.getGroups())
 						: userData.getGroups();
 				syncUserGroupsInApp(user, appCode, groupsForApp);
 			}
 		}
 		
-		// --- 3. Đồng bộ các quan hệ đa hình (Contact, Tag) ---
-		if (userData.getContacts() != null) {
-			coreContactService.synchronizeContactsForOwnerInApp(
-					CoreUser.class.getSimpleName(), username, appCodeContext, userData.getContacts());
+		syncUserContacts(user, appCodeContext, userData.getCoreContactDatas());
+		syncUserTags(user, userData.getTagCodes());
+	}
+	
+	private void syncUserContacts(CoreUser user, String appCodeContext, Collection<CoreContactData> contacts) {
+		if (contacts != null) {
+			coreContactService.synchronizeContactsForOwnerInApp(CoreUser.class.getSimpleName(), user.getUsername(), appCodeContext, contacts);
 		}
-		if (userData.getTagCodes() != null) {
-			coreTagAssignmentService.synchronizeTagsForTaggable(
-					CoreUser.class.getSimpleName(), username, userData.getTagCodes());
+	}
+	
+	/**
+	 * **HÀM MỚI:** Đóng gói logic đồng bộ hóa thẻ tag cho người dùng.
+	 */
+	private void syncUserTags(CoreUser user, Set<String> tagCodes) {
+		if (tagCodes != null) {
+			coreTagAssignmentService.synchronizeTagsForTaggable(CoreUser.class.getSimpleName(), user.getUsername(), tagCodes);
 		}
 	}
 	
@@ -183,26 +207,48 @@ public class CoreUserBusiness {
 	 */
 	private CoreUserData mapEntityToDataWithRelations(CoreUser user, String appCodeContext) {
 		// Tái sử dụng logic của mapEntitiesToDataWithRelationsInBatch để tránh lặp code
-		return mapEntitiesToDataWithRelationsInBatch(List.of(user), appCodeContext).get(0);
+		return mapEntitiesToDataWithRelationsInBatch(List.of(user), appCodeContext).getFirst();
 	}
 	
-	// Các phương thức sync con, giúp `syncUserRelations` gọn gàng hơn
 	private void syncUserRolesInApp(CoreUser user, String appCode, Set<String> roleCodes) {
-		record UserRoleContext(CoreUser user, String appCode) {
+		record UserRoleContext(String username, String appCode) {
 		}
+		var ownerContext = new UserRoleContext(user.getUsername(), appCode);
+		
 		associationSyncHelper.synchronize(
-				new UserRoleContext(user, appCode),
+				ownerContext,
 				coreUserRoleService.findByUsernameAndAppCodeIncludingDeleted(user.getUsername(), appCode),
-				coreRoleService.findAllByAppCodeAndCodeIn(appCode, roleCodes),
-				(userRole) -> userRole.getRole().getCode(),
-				CoreRole::getCode,
-				(role) -> CoreUserRole.builder().user(user).role(role).build(),
-				(userRole) -> coreUserRoleService.deleteById(userRole.getId())
+				roleCodes,
+				CoreUserRole::getRoleCode,
+				CoreUserRole::new,
+				(association, context) -> {
+					association.setUsername(context.username());
+					association.setAppCode(context.appCode());
+				},
+				CoreUserRole::setRoleCode,
+				coreUserRoleService.getRepository()
 		                                 );
 	}
 	
 	private void syncUserGroupsInApp(CoreUser user, String appCode, Set<String> groupCodes) {
-		// Tương tự như syncUserRolesInApp
+		record UserGroupContext(String username, String appCode) {
+		}
+		var ownerContext = new UserGroupContext(user.getUsername(), appCode);
+		
+		// **SỬA LỖI TẠI ĐÂY**
+		associationSyncHelper.synchronize(
+				ownerContext,
+				coreUserGroupService.findByUsernameAndAppCodeIncludingDeleted(user.getUsername(), appCode),
+				groupCodes,
+				CoreUserGroup::getGroupCode,
+				CoreUserGroup::new,
+				(association, context) -> {
+					association.setUsername(context.username());
+					association.setAppCode(context.appCode());
+				},
+				CoreUserGroup::setGroupCode,
+				coreUserGroupService.getRepository()
+		                                 );
 	}
 	
 	// =================================================================================================================
@@ -353,5 +399,35 @@ public class CoreUserBusiness {
 		Pageable pageable = CoreUtils.getPageRequest(criteria);
 		Page<CoreUser> pageUser = coreUserService.findAll(criteria, pageable);
 		return PagedResult.from(pageUser, user -> mapEntityToDataWithRelations(user, appCodeContext));
+	}
+	
+	/**
+	 * Lấy danh sách đầy đủ người dùng (không phân trang) theo tiêu chí.
+	 *
+	 * @param criteria       Các tiêu chí để lọc.
+	 * @param appCodeContext Ngữ cảnh ứng dụng để lọc kết quả.
+	 *
+	 * @return Danh sách đầy đủ người dùng.
+	 */
+	@Transactional(readOnly = true)
+	public List<CoreUserData> getAll(CoreUserSearchCriteria criteria, String appCodeContext) {
+		if (appCodeContext != null) {
+			criteria.setAppCode(appCodeContext);
+		}
+		List<CoreUser> users = coreUserService.findAll(criteria);
+		// Tái sử dụng helper map hàng loạt để tối ưu hiệu năng
+		return mapEntitiesToDataWithRelationsInBatch(users, appCodeContext);
+	}
+	
+	@Transactional
+	public void updateStatus(String username, LifecycleStatus newStatus, String appCodeContext) {
+		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(username)
+				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
+		
+		// Kiểm tra quyền: App Admin chỉ được cập nhật trạng thái người dùng trong app của họ
+		hasPermission(username, appCodeContext);
+		
+		user.setStatus(newStatus);
+		coreUserService.save(user);
 	}
 }

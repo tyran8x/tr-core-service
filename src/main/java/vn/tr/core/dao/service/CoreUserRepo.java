@@ -21,15 +21,12 @@ import java.util.Optional;
 public interface CoreUserRepo extends JpaRepository<CoreUser, Long>, JpaSpecificationExecutor<CoreUser> {
 	
 	/**
-	 * Tìm một người dùng theo username (không phân biệt hoa thường).
-	 * Chỉ trả về các bản ghi đang hoạt động.
+	 * Tìm một người dùng theo username (không phân biệt hoa thường). Chỉ trả về các bản ghi đang hoạt động.
 	 */
 	Optional<CoreUser> findFirstByUsernameIgnoreCase(String username);
 	
 	/**
-	 * Tìm một người dùng theo username (không phân biệt hoa thường),
-	 * BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM.
-	 * Cần thiết cho logic Upsert.
+	 * Tìm một người dùng theo username (không phân biệt hoa thường), BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM. Cần thiết cho logic Upsert.
 	 */
 	@Query("SELECT u FROM CoreUser u WHERE lower(u.username) = lower(:username)")
 	Optional<CoreUser> findByUsernameIgnoreCaseIncludingDeleted(@Param("username") String username);
@@ -39,10 +36,13 @@ public interface CoreUserRepo extends JpaRepository<CoreUser, Long>, JpaSpecific
 	 */
 	boolean existsByUsernameIgnoreCase(String username);
 	
+	boolean existsByIdNotAndUsernameIgnoreCase(long id, String username);
+	
 	/**
 	 * Thực hiện xóa mềm cho một tập hợp các ID người dùng.
 	 *
-	 * @param ids Collection các ID của người dùng cần xóa.
+	 * @param ids
+	 * 		Collection các ID của người dùng cần xóa.
 	 */
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreUser u SET u.deletedAt = CURRENT_TIMESTAMP WHERE u.id IN :ids")

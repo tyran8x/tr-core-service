@@ -8,15 +8,15 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreMenu;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @Repository
 public interface CoreMenuRepo extends JpaRepository<CoreMenu, Long>, JpaSpecificationExecutor<CoreMenu> {
 	
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreModule g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
-	void softDeleteByIds(@Param("ids") Set<Long> ids);
+	void softDeleteByIds(@Param("ids") Collection<Long> ids);
 	
 	List<CoreMenu> findByAppCodeIgnoreCaseAndCodeIgnoreCase(String appCode, String code);
 	

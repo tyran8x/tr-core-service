@@ -9,6 +9,7 @@ import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CoreRoleService {
 	
@@ -41,5 +42,25 @@ public interface CoreRoleService {
 	Optional<CoreRole> findByCodeAndAppCodeIncludingDeleted(String code, String appCode);
 	
 	JpaRepository<CoreRole, Long> getRepository();
+	
+	/**
+	 * BỔ SUNG: Lọc và trả về một Set các mã vai trò hợp lệ trong một ứng dụng cụ thể.
+	 *
+	 * @param appCode   Mã ứng dụng.
+	 * @param roleCodes Collection các mã vai trò cần kiểm tra.
+	 *
+	 * @return Một Set chứa các mã vai trò hợp lệ.
+	 */
+	Set<String> filterExistingRoleCodesInApp(String appCode, Collection<String> roleCodes);
+	
+	/**
+	 * BỔ SUNG: Tìm tất cả các thực thể CoreRole dựa trên appCode và một danh sách các code.
+	 *
+	 * @param appCode Mã ứng dụng.
+	 * @param codes   Collection các mã vai trò.
+	 *
+	 * @return Danh sách các thực thể CoreRole tìm thấy.
+	 */
+	List<CoreRole> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 	
 }

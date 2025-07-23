@@ -57,12 +57,10 @@ public interface CoreUserService {
 	
 	void deleteByIds(Collection<Long> ids);
 	
-	// --- Business Logic Support ---
 	Optional<CoreUser> findByUsernameIgnoreCase(String username);
 	
 	Optional<CoreUser> findByUsernameIgnoreCaseIncludingDeleted(String username);
 	
-	// --- Helper Support ---
 	JpaRepository<CoreUser, Long> getRepository();
 	
 }

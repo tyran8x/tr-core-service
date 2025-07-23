@@ -27,8 +27,7 @@ public interface CoreUserGroupService {
 	Set<String> findAllActiveGroupCodesByUsername(String username);
 	
 	/**
-	 * Lấy danh sách group code đang hoạt động cho một tập hợp người dùng trong một app cụ thể.
-	 * Tối ưu cho việc hiển thị danh sách, tránh N+1 query.
+	 * Lấy danh sách group code đang hoạt động cho một tập hợp người dùng trong một app cụ thể. Tối ưu cho việc hiển thị danh sách, tránh N+1 query.
 	 */
 	Map<String, Set<String>> findActiveGroupCodesForUsersInApp(Collection<String> usernames, String appCode);
 	
@@ -40,5 +39,15 @@ public interface CoreUserGroupService {
 	 * @return true nếu đang được sử dụng, ngược lại false.
 	 */
 	boolean isGroupInUse(CoreGroup coreGroup);
+	
+	/**
+	 * BỔ SUNG: Lấy danh sách group code đang hoạt động cho một tập hợp người dùng trên tất cả các app. Tối ưu cho việc hiển thị danh sách của Super
+	 * Admin.
+	 *
+	 * @param usernames Collection các username cần truy vấn.
+	 *
+	 * @return Một Map với key là username và value là Set các group code.
+	 */
+	Map<String, Set<String>> findAllActiveGroupCodesForUsers(Collection<String> usernames);
 	
 }

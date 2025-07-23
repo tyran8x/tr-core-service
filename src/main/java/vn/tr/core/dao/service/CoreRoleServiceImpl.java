@@ -10,10 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -103,6 +100,22 @@ public class CoreRoleServiceImpl implements CoreRoleService {
 					results.size(), code, appCode, results.getFirst().getId());
 		}
 		return Optional.of(results.getFirst());
+	}
+	
+	@Override
+	public Set<String> filterExistingRoleCodesInApp(String appCode, Collection<String> roleCodes) {
+		if (roleCodes.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return coreRoleRepo.findExistingRoleCodesInApp(appCode, roleCodes);
+	}
+	
+	@Override
+	public List<CoreRole> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes) {
+		if (codes.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return coreRoleRepo.findAllByAppCodeAndCodeIn(appCode, codes);
 	}
 	
 	@Override

@@ -11,6 +11,7 @@ import vn.tr.core.dao.model.CoreRole;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface CoreRoleRepo extends JpaRepository<CoreRole, Long>, JpaSpecificationExecutor<CoreRole> {
@@ -26,8 +27,8 @@ public interface CoreRoleRepo extends JpaRepository<CoreRole, Long>, JpaSpecific
 	boolean existsByIdAndAppCode(long id, @Nullable String appCode);
 	
 	/**
-	 * Tìm kiếm Role theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM.
-	 * Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động và được cập nhật gần nhất.
+	 * Tìm kiếm Role theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM. Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động và được cập
+	 * nhật gần nhất.
 	 *
 	 * @param code    Mã của module.
 	 * @param appCode Mã của ứng dụng.
@@ -41,5 +42,28 @@ public interface CoreRoleRepo extends JpaRepository<CoreRole, Long>, JpaSpecific
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreRole m SET m.deletedAt = CURRENT_TIMESTAMP WHERE m.id IN :ids")
 	void softDeleteByIds(@Param("ids") Collection<Long> ids);
+	
+	/**
+	 * BỔ SUNG: Tìm tất cả các mã vai trò (role codes) tồn tại trong một ứng dụng cụ thể, từ một danh sách các mã vai trò cho trước. Phương thức này
+	 * rất hiệu quả để lọc và xác thực hàng loạt.
+	 *
+	 * @param appCode   Mã ứng dụng.
+	 * @param roleCodes Collection các mã vai trò cần kiểm tra.
+	 *
+	 * @return Một Set chứa các mã vai trò hợp lệ trong ứng dụng đó.
+	 */
+	@Query("SELECT r.code FROM CoreRole r WHERE r.appCode = :appCode AND r.code IN :roleCodes")
+	Set<String> findExistingRoleCodesInApp(@Param("appCode") String appCode, @Param("roleCodes") Collection<String> roleCodes);
+	
+	/**
+	 * BỔ SUNG: Tìm tất cả các thực thể CoreRole dựa trên appCode và một danh sách các code. Phương thức này là "nguyên liệu" bắt buộc cho
+	 * AssociationSyncHelper khi đồng bộ User-Role.
+	 *
+	 * @param appCode Mã ứng dụng.
+	 * @param codes   Collection các mã vai trò.
+	 *
+	 * @return Danh sách các thực thể CoreRole tìm thấy.
+	 */
+	List<CoreRole> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 	
 }

@@ -11,8 +11,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Lớp triển khai cho CoreUserGroupService.
- * Chỉ chứa các logic truy vấn và CRUD cơ bản, không chứa nghiệp vụ phức tạp.
+ * Lớp triển khai cho CoreUserGroupService. Chỉ chứa các logic truy vấn và CRUD cơ bản, không chứa nghiệp vụ phức tạp.
  *
  * @author tyran8x
  * @version 2.0
@@ -67,7 +66,7 @@ public class CoreUserGroupServiceImpl implements CoreUserGroupService {
 	
 	@Override
 	public Map<String, Set<String>> findActiveGroupCodesForUsersInApp(Collection<String> usernames, String appCode) {
-		if (usernames == null || usernames.isEmpty()) {
+		if (usernames.isEmpty()) {
 			return Collections.emptyMap();
 		}
 		List<CoreUserGroup> assignments = coreUserGroupRepo.findActiveForUsersInApp(usernames, appCode);
@@ -79,8 +78,7 @@ public class CoreUserGroupServiceImpl implements CoreUserGroupService {
 	}
 	
 	/**
-	 * Kiểm tra xem một CoreGroup cụ thể có đang được sử dụng hay không.
-	 * Logic này dựa trên việc kiểm tra sự tồn tại của bản ghi trong core_user_group
+	 * Kiểm tra xem một CoreGroup cụ thể có đang được sử dụng hay không. Logic này dựa trên việc kiểm tra sự tồn tại của bản ghi trong core_user_group
 	 * bằng cách sử dụng group_code và app_code từ đối tượng CoreGroup.
 	 *
 	 * @param group Đối tượng CoreGroup cần kiểm tra.
@@ -94,5 +92,17 @@ public class CoreUserGroupServiceImpl implements CoreUserGroupService {
 			return false;
 		}
 		return coreUserGroupRepo.existsByGroupCodeAndAppCode(group.getCode(), group.getAppCode());
+	}
+	
+	@Override
+	public Map<String, Set<String>> findAllActiveGroupCodesForUsers(Collection<String> usernames) {
+		if (usernames.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		List<CoreUserGroup> assignments = coreUserGroupRepo.findActiveByUsernames(usernames);
+		return assignments.stream()
+				.collect(Collectors.groupingBy(
+						CoreUserGroup::getUsername,
+						Collectors.mapping(CoreUserGroup::getGroupCode, Collectors.toSet())));
 	}
 }

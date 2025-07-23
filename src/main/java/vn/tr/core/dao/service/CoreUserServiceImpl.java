@@ -3,7 +3,6 @@ package vn.tr.core.dao.service;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,10 +29,7 @@ import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
 import java.time.Duration;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 @Service
@@ -136,8 +132,10 @@ public class CoreUserServiceImpl implements CoreUserService {
 	/**
 	 * Build a LoginUser object from CoreUser and CoreUserApp.
 	 *
-	 * @param coreUser      the user entity
-	 * @param userAppAccess the user's app access entity
+	 * @param coreUser
+	 * 		the user entity
+	 * @param userAppAccess
+	 * 		the user's app access entity
 	 *
 	 * @return LoginUser object with permissions, groups, and roles
 	 */
@@ -208,8 +206,12 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
+	@Transactional(readOnly = true)
 	public List<CoreUser> findAllByIdIn(Collection<Long> ids) {
-		//return coreUserRepo.;
+		if (ids.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return coreUserRepo.findAllById(ids);
 	}
 	
 	@Override
@@ -233,24 +235,24 @@ public class CoreUserServiceImpl implements CoreUserService {
 	public JpaRepository<CoreUser, Long> getRepository() {
 		return this.coreUserRepo;
 	}
-	
-	@Override
-	@Transactional
-	public CoreUser findOrCreate(String username, String fullName, String email, String rawPassword) {
-		// Chuẩn hóa username
-		String normalizedUsername = username.toLowerCase();
-		
-		return coreUserRepo.findFirstByUsernameIgnoreCase(normalizedUsername)
-				.orElseGet(() -> {
-					CoreUser newUser = new CoreUser();
-					newUser.setUsername(normalizedUsername);
-					newUser.setFullName(fullName);
-					newUser.setEmail(email);
-					newUser.setHashedPassword(BCrypt.hashpw(rawPassword));
-					// Gán các giá trị mặc định khác nếu cần
-					// Ví dụ: newUser.setUserType(...)
-					return coreUserRepo.save(newUser);
-				});
-	}
-	
+
+//	@Override
+//	@Transactional
+//	public CoreUser findOrCreate(String username, String fullName, String email, String rawPassword) {
+//		// Chuẩn hóa username
+//		String normalizedUsername = username.toLowerCase();
+//
+//		return coreUserRepo.findFirstByUsernameIgnoreCase(normalizedUsername)
+//				.orElseGet(() -> {
+//					CoreUser newUser = new CoreUser();
+//					newUser.setUsername(normalizedUsername);
+//					newUser.setFullName(fullName);
+//					newUser.setEmail(email);
+//					newUser.setHashedPassword(BCrypt.hashpw(rawPassword));
+//					// Gán các giá trị mặc định khác nếu cần
+//					// Ví dụ: newUser.setUserType(...)
+//					return coreUserRepo.save(newUser);
+//				});
+//	}
+
 }

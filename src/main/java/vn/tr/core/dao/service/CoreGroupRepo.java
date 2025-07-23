@@ -11,10 +11,10 @@ import vn.tr.core.dao.model.CoreGroup;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Repository interface cho thực thể CoreGroup.
- * Cung cấp các phương thức truy vấn cơ sở dữ liệu, đã được tối ưu cho các nghiệp vụ cụ thể.
+ * Repository interface cho thực thể CoreGroup. Cung cấp các phương thức truy vấn cơ sở dữ liệu, đã được tối ưu cho các nghiệp vụ cụ thể.
  *
  * @author tyran8x
  * @version 2.3 (Optimized Queries)
@@ -38,9 +38,8 @@ public interface CoreGroupRepo extends JpaRepository<CoreGroup, Long>, JpaSpecif
 	List<CoreGroup> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 	
 	/**
-	 * Tìm kiếm Group theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM.
-	 * Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động (deletedAt IS NULL) và được cập nhật gần nhất.
-	 * Điều này rất quan trọng để tầng Service có thể xử lý an toàn trường hợp dữ liệu trùng lặp.
+	 * Tìm kiếm Group theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM. Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động (deletedAt IS
+	 * NULL) và được cập nhật gần nhất. Điều này rất quan trọng để tầng Service có thể xử lý an toàn trường hợp dữ liệu trùng lặp.
 	 *
 	 * @param code    Mã của nhóm.
 	 * @param appCode Mã của ứng dụng.
@@ -57,4 +56,15 @@ public interface CoreGroupRepo extends JpaRepository<CoreGroup, Long>, JpaSpecif
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreGroup g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
 	void softDeleteByIds(@Param("ids") Collection<Long> ids);
+	
+	/**
+	 * BỔ SUNG: Tìm tất cả các mã nhóm (group codes) tồn tại trong một ứng dụng cụ thể, từ một danh sách các mã nhóm cho trước.
+	 *
+	 * @param appCode    Mã ứng dụng.
+	 * @param groupCodes Collection các mã nhóm cần kiểm tra.
+	 *
+	 * @return Một Set chứa các mã nhóm hợp lệ trong ứng dụng đó.
+	 */
+	@Query("SELECT g.code FROM CoreGroup g WHERE g.appCode = :appCode AND g.code IN :groupCodes")
+	Set<String> findExistingGroupCodesInApp(@Param("appCode") String appCode, @Param("groupCodes") Collection<String> groupCodes);
 }

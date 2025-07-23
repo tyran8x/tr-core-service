@@ -10,10 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreGroup;
 import vn.tr.core.data.criteria.CoreGroupSearchCriteria;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Lớp triển khai cho CoreGroupService, với logic xử lý dữ liệu trùng lặp một cách an toàn.
@@ -79,10 +76,8 @@ public class CoreGroupServiceImpl implements CoreGroupService {
 	}
 	
 	/**
-	 * Tìm một nhóm theo code và appCode, bao gồm cả đã xóa mềm.
-	 * Phương thức này được thiết kế để xử lý dữ liệu trùng lặp một cách uyển chuyển.
-	 * Nó sẽ ưu tiên trả về bản ghi đang hoạt động và được cập nhật gần nhất,
-	 * đồng thời ghi log cảnh báo nếu phát hiện trùng lặp.
+	 * Tìm một nhóm theo code và appCode, bao gồm cả đã xóa mềm. Phương thức này được thiết kế để xử lý dữ liệu trùng lặp một cách uyển chuyển. Nó sẽ
+	 * ưu tiên trả về bản ghi đang hoạt động và được cập nhật gần nhất, đồng thời ghi log cảnh báo nếu phát hiện trùng lặp.
 	 *
 	 * @return Optional.empty() nếu không tìm thấy.
 	 *
@@ -136,5 +131,13 @@ public class CoreGroupServiceImpl implements CoreGroupService {
 	@Override
 	public boolean existsByIdAndAppCode(long id, String appCode) {
 		return coreGroupRepo.existsByIdAndAppCode(id, appCode);
+	}
+	
+	@Override
+	public Set<String> filterExistingGroupCodesInApp(String appCode, Collection<String> groupCodes) {
+		if (groupCodes.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return coreGroupRepo.findExistingGroupCodesInApp(appCode, groupCodes);
 	}
 }

@@ -9,10 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +53,7 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	
 	@Override
 	@Transactional
-	public void deleteByIds(Set<Long> ids) {
+	public void deleteByIds(Collection<Long> ids) {
 		if (ids.isEmpty()) {
 			return;
 		}
