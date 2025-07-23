@@ -5,9 +5,9 @@ import org.springframework.data.domain.Pageable;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface CoreMenuService {
 	
@@ -23,7 +23,7 @@ public interface CoreMenuService {
 	
 	CoreMenu save(CoreMenu coreMenu);
 	
-	void deleteByIds(Set<Long> ids);
+	void deleteByIds(Collection<Long> ids);
 	
 	Optional<CoreMenu> findByCodeSafely(String appCode, String code);
 	

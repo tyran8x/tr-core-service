@@ -5,23 +5,49 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CorePermission;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 @Repository
 public interface CorePermissionRepo extends JpaRepository<CorePermission, Long>, JpaSpecificationExecutor<CorePermission> {
 	
-	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CorePermission g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
-	void softDeleteByIds(@Param("ids") Set<Long> ids);
+	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, @Nullable String appCode);
 	
-	@Query("SELECT p.code FROM CorePermission p WHERE p.appCode = :appCode")
-	Set<String> findAllCodesByAppCode(@Param("appCode") String appCode);
+	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, @Nullable String appCode);
+	
+	boolean existsByCodeIgnoreCaseAndAppCode(String code, @Nullable String appCode);
+	
+	boolean existsByNameIgnoreCaseAndAppCode(String name, @Nullable String appCode);
+	
+	// --- Query Methods ---
+	
+	/**
+	 * Tìm kiếm Permission theo code và appCode, BAO GỒM CẢ BẢN GHI ĐÃ BỊ XÓA MỀM.
+	 * Sắp xếp để ưu tiên bản ghi active và được cập nhật gần nhất.
+	 */
+	@Query(
+			"SELECT p FROM CorePermission p WHERE p.code = :code AND p.appCode = :appCode " +
+					"ORDER BY p.deletedAt ASC NULLS FIRST, p.updatedAt DESC"
+	)
+	List<CorePermission> findAllByCodeAndAppCodeIncludingDeletedSorted(@Param("code") String code, @Param("appCode") String appCode);
 	
 	List<CorePermission> findAllByAppCode(String appCode);
+	
+	List<CorePermission> findAllByIdIn(Collection<Long> ids);
+	
+	Set<String> findAllCodesByAppCode(String appCode);
+	
+	boolean existsByModuleId(Long moduleId); // Để kiểm tra ràng buộc xóa Module
+	
+	// --- Soft Deletion ---
+	@Modifying(clearAutomatically = true)
+	@Query("UPDATE CorePermission p SET p.deletedAt = CURRENT_TIMESTAMP WHERE p.id IN :ids")
+	void softDeleteByIds(@Param("ids") Collection<Long> ids);
 	
 	@Query(
 			"""
@@ -35,4 +61,15 @@ public interface CorePermissionRepo extends JpaRepository<CorePermission, Long>,
 	@Query("SELECT EXISTS(SELECT 1 FROM CoreUserRole ur WHERE ur.username = :username AND ur.appCode = 'SYSTEM' AND ur.roleCode = 'ROLE_SUPER_ADMIN')")
 	boolean isSuperAdmin(@Param("username") String username);
 	
+	/**
+	 * BỔ SUNG: Tìm tất cả các thực thể CorePermission dựa trên appCode và một danh sách các code.
+	 * Phương thức này rất quan trọng để AssociationSyncHelper có thể lấy các thực thể
+	 * liên quan trong một lần truy vấn duy nhất.
+	 *
+	 * @param appCode Mã ứng dụng.
+	 * @param codes   Collection các mã quyền hạn.
+	 *
+	 * @return Danh sách các thực thể CorePermission tìm thấy.
+	 */
+	List<CorePermission> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 }

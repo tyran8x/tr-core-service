@@ -4,14 +4,17 @@ import cn.hutool.core.collection.CollectionUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.redis.utils.RedisUtils;
+import vn.tr.core.dao.model.CorePermission;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreRolePermission;
 import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -74,26 +77,51 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	@Override
 	public void refreshRolePermsCache(String roleCode) {
 		RedisUtils.deleteObject(CoreRolePermission.class.getSimpleName() + ":" + roleCode);
-		
-		if (coreRoleService.existsByCodeIgnoreCase(roleCode)) {
-			Set<String> perms = null;// repo.getMenuMas(Collections.singleton(roleCode));
-			if (CollectionUtil.isNotEmpty(perms)) {
-				RedisUtils.setCacheObject(CoreRolePermission.class.getSimpleName() + ":" + roleCode, perms);
-			}
-		}
+
+//		if (coreRoleService.existsByCodeIgnoreCase(roleCode)) {
+//			Set<String> perms = null;// repo.getMenuMas(Collections.singleton(roleCode));
+//			if (CollectionUtil.isNotEmpty(perms)) {
+//				RedisUtils.setCacheObject(CoreRolePermission.class.getSimpleName() + ":" + roleCode, perms);
+//			}
+//		}
 	}
 	
 	@Override
 	public void refreshRolePermsCache(String oldRoleCode, String newRoleCode) {
 		
 		RedisUtils.deleteObject(CoreRolePermission.class.getSimpleName() + ":" + oldRoleCode);
-		
-		if (coreRoleService.existsByCodeIgnoreCase(newRoleCode)) {
-			Set<String> perms = null;// repo.getMenuMas(Collections.singleton(newRoleCode));
-			if (CollectionUtil.isNotEmpty(perms)) {
-				RedisUtils.setCacheObject(CoreRolePermission.class.getSimpleName() + ":" + newRoleCode, perms);
-			}
-		}
+
+//		if (coreRoleService.existsByCodeIgnoreCase(newRoleCode)) {
+//			Set<String> perms = null;// repo.getMenuMas(Collections.singleton(newRoleCode));
+//			if (CollectionUtil.isNotEmpty(perms)) {
+//				RedisUtils.setCacheObject(CoreRolePermission.class.getSimpleName() + ":" + newRoleCode, perms);
+//			}
+//		}
+	}
+	
+	@Override
+	public List<CoreRolePermission> findByRoleCodeAndAppCodeIncludingDeleted(String roleCode, String appCode) {
+		return coreRolePermissionRepo.findAllByRoleCodeAndAppCodeIncludingDeleted(roleCode, appCode);
+	}
+	
+	@Override
+	public JpaRepository<CoreRolePermission, Long> getRepository() {
+		return this.coreRolePermissionRepo;
+	}
+	
+	@Override
+	public Set<String> findPermissionCodesByRoleCodesAndAppCode(Collection<String> roleCodes, String appCode) {
+		return coreRolePermissionRepo.findPermissionCodesByRoleCodesAndAppCode(roleCodes, appCode);
+	}
+	
+	@Override
+	public boolean isRoleInUse(CoreRole role) {
+		return coreRolePermissionRepo.existsByRoleCodeAndAppCode(role.getCode(), role.getAppCode());
+	}
+	
+	@Override
+	public boolean isPermissionInUse(CorePermission permission) {
+		return coreRolePermissionRepo.existsByPermissionCodeAndAppCode(permission.getCode(), permission.getAppCode());
 	}
 	
 }

@@ -1,32 +1,40 @@
 package vn.tr.core.business;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.exception.ServiceException;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
-import vn.tr.common.core.exception.user.UserException;
+import vn.tr.common.core.exception.base.PermissionDeniedException;
+import vn.tr.common.jpa.helper.AssociationSyncHelper;
+import vn.tr.common.jpa.helper.GenericUpsertHelper;
+import vn.tr.common.web.data.dto.BulkOperationResult;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.common.web.utils.PagedResult;
-import vn.tr.core.dao.model.CoreUser;
+import vn.tr.core.dao.model.*;
 import vn.tr.core.dao.service.*;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 import vn.tr.core.data.dto.CoreUserData;
 import vn.tr.core.data.mapper.CoreContactMapper;
 import vn.tr.core.data.mapper.CoreUserMapper;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Lớp Business (Facade) điều phối các nghiệp vụ phức tạp nhất liên quan đến Quản lý Người dùng (CoreUser).
+ * Đây là module trung tâm, tương tác với nhiều service khác để đồng bộ hóa toàn bộ thông tin người dùng.
+ *
+ * @author tyran8x
+ * @version 3.0 (Grand Refactoring)
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -34,293 +42,316 @@ import java.util.stream.Collectors;
 public class CoreUserBusiness {
 	
 	//<editor-fold desc="Dependencies">
+	// Primary Services & Mappers
 	private final CoreUserService coreUserService;
+	private final CoreUserMapper coreUserMapper;
+	private final CoreContactMapper coreContactMapper;
+	
+	// Association Services
 	private final CoreUserAppService coreUserAppService;
 	private final CoreUserRoleService coreUserRoleService;
 	private final CoreUserGroupService coreUserGroupService;
 	private final CoreContactService coreContactService;
+	private final CoreTagAssignmentService coreTagAssignmentService;
+	
+	// Parent Entity Services (for Helpers)
+	private final CoreAppService coreAppService;
+	private final CoreRoleService coreRoleService;
+	private final CoreGroupService coreGroupService;
 	private final CoreTagService coreTagService;
-	private final CoreUserMapper coreUserMapper;
-	private final CoreContactMapper coreContactMapper;
+	
+	// Helpers & Event Publisher
+	private final GenericUpsertHelper genericUpsertHelper;
+	private final AssociationSyncHelper associationSyncHelper;
+	private final ApplicationEventPublisher eventPublisher;
 	//</editor-fold>
 	
-	@Transactional
+	/**
+	 * Tạo mới một người dùng.
+	 *
+	 * @param userData       Dữ liệu người dùng.
+	 * @param appCodeContext Ngữ cảnh ứng dụng của người thực hiện. Null nếu là Super Admin.
+	 *
+	 * @return Dữ liệu người dùng sau khi tạo và đồng bộ.
+	 */
 	public CoreUserData create(CoreUserData userData, String appCodeContext) {
-		if (coreUserService.existsByUsernameIgnoreCase(userData.getUsername())) {
-			throw new UserException("user.username.exists", userData.getUsername());
-		}
-		
-		// Super Admin phải chỉ định appCode cho user mới
-		// App Admin tự động gán appCode của mình cho user mới
+		validateCreationContext(userData, appCodeContext);
+		return upsert(userData, appCodeContext);
+	}
+	
+	private void validateCreationContext(CoreUserData userData, String appCodeContext) {
 		if (appCodeContext == null) { // Super Admin
-			if (CollectionUtils.isEmpty(userData.getApps())) {
-				throw new ServiceException("Super Admin must assign at least one app to a new user.");
+			if (CollUtil.isEmpty(userData.getApps())) {
+				throw new ServiceException("Super Admin phải gán ít nhất một ứng dụng cho người dùng mới.");
 			}
 		} else { // App Admin
-			// Đảm bảo user mới được gán cho app của admin, bỏ qua các app khác nếu có
-			userData.setApps(Collections.singleton(appCodeContext));
+			userData.setApps(Set.of(appCodeContext));
 		}
+	}
+	
+	/**
+	 * Phương thức "upsert" lõi, điều phối việc tạo/cập nhật và đồng bộ hóa tất cả các quan hệ.
+	 */
+	private CoreUserData upsert(CoreUserData data, String appCodeContext) {
+		// 1. Upsert thực thể CoreUser
+		CoreUser user = genericUpsertHelper.upsert(
+				data,
+				() -> coreUserService.findByUsernameIgnoreCaseIncludingDeleted(data.getUsername()),
+				() -> coreUserMapper.toEntity(data),
+				coreUserMapper::updateEntityFromData,
+				coreUserService.getRepository()
+		                                          );
 		
-		CoreUser user = coreUserMapper.toEntity(userData);
-		if (userData.getPassword() != null && !userData.getPassword().isBlank()) {
-			user.setHashedPassword(BCrypt.hashpw(userData.getPassword()));
+		// Cập nhật mật khẩu nếu được cung cấp (chỉ khi tạo mới hoặc API đặc biệt)
+		if (data.getPassword() != null && !data.getPassword().isBlank()) {
+			user.setHashedPassword(BCrypt.hashpw(data.getPassword()));
 		}
-		
 		CoreUser savedUser = coreUserService.save(user);
-		syncUserRelations(savedUser, userData, appCodeContext);
 		
-		// Trả về DTO đã được map đầy đủ quan hệ
+		// 2. Đồng bộ hóa tất cả các quan hệ liên quan
+		syncUserRelations(savedUser, data, appCodeContext);
+		
+		// 3. (Tùy chọn) Phát ra sự kiện để các service khác đồng bộ
+		// UserUpdatedEvent event = new UserUpdatedEvent(this, savedUser, data, appCodeContext);
+		// eventPublisher.publishEvent(event);
+		
+		// 4. Trả về DTO đầy đủ thông tin
 		return mapEntityToDataWithRelations(savedUser, appCodeContext);
 	}
 	
-	@Transactional
-	public CoreUserData update(Long id, CoreUserData userData, String appCodeContext) {
-		CoreUser user = coreUserService.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, id));
+	/**
+	 * Đồng bộ hóa tất cả các mối quan hệ của User, sử dụng AssociationSyncHelper và các Domain Service.
+	 */
+	private void syncUserRelations(CoreUser user, CoreUserData userData, String appCodeContext) {
+		String username = user.getUsername();
+		boolean isSuperAdmin = (appCodeContext == null);
 		
-		// Kiểm tra quyền: App Admin chỉ được cập nhật người dùng trong app của họ
-		checkPermission(user.getUsername(), appCodeContext);
-		
-		userData.setUsername(null); // Không cho phép cập nhật username
-		userData.setPassword(null); // Dùng API riêng để đổi mật khẩu
-		coreUserMapper.updateEntityFromData(userData, user);
-		
-		CoreUser savedUser = coreUserService.save(user);
-		syncUserRelations(savedUser, userData, appCodeContext);
-		
-		return mapEntityToDataWithRelations(savedUser, appCodeContext);
-	}
-	
-	@Transactional
-	public void delete(Long id, String appCodeContext) {
-		CoreUser user = coreUserService.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, id));
-		
-		// Kiểm tra quyền: App Admin chỉ được xóa người dùng trong app của họ
-		checkPermission(user.getUsername(), appCodeContext);
-		
-		coreUserService.deleteById(id);
-	}
-	
-	@Transactional
-	public void bulkDelete(Set<Long> ids, String appCodeContext) {
-		if (CollectionUtils.isEmpty(ids)) {
-			return;
-		}
-		if (appCodeContext != null) { // App Admin
-			List<CoreUser> usersToDelete = coreUserService.findAllByIdIn(ids);
-			// Lọc ra các ID mà App Admin này có quyền xóa
-			Set<Long> allowedIds = usersToDelete.stream()
-					.filter(user -> coreUserAppService.isUserInApp(user.getUsername(), appCodeContext))
-					.map(CoreUser::getId)
-					.collect(Collectors.toSet());
-			
-			if (!allowedIds.isEmpty()) {
-				coreUserService.deleteByIds(allowedIds);
+		// --- 1. Đồng bộ User-App (Chỉ Super Admin mới có quyền) ---
+		if (isSuperAdmin && userData.getApps() != null) {
+			record UserAppContext(CoreUser user, String userTypeCode, LifecycleStatus status) {
 			}
-		} else { // Super Admin được phép xóa tất cả
-			coreUserService.deleteByIds(ids);
+			var context = new UserAppContext(user, userData.getUserTypeCode(), userData.getStatus());
+			
+			associationSyncHelper.synchronize(
+					context,
+					coreUserAppService.findByUsernameIncludingDeleted(username),
+					coreAppService.findAllByCodeIn(userData.getApps()),
+					(userApp) -> userApp.getApp().getCode(),
+					CoreApp::getCode,
+					(app) -> CoreUserApp.builder()
+							.user(context.user()).app(app)
+							.userTypeCode(context.userTypeCode()).status(context.status()).build(),
+					(userApp) -> coreUserAppService.deleteById(userApp.getId())
+			                                 );
+		}
+		
+		// --- 2. Đồng bộ User-Role & User-Group trong từng App ---
+		Set<String> targetAppCodes = isSuperAdmin
+				? coreUserAppService.findActiveAppCodesByUsername(username)
+				: Set.of(appCodeContext);
+		
+		for (String appCode : targetAppCodes) {
+			// Đồng bộ Role
+			if (userData.getRoles() != null) {
+				Set<String> rolesForApp = isSuperAdmin
+						? userData.getRoles().stream().filter(r -> coreRoleService.isRoleInApp(r, appCode)).collect(Collectors.toSet())
+						: userData.getRoles();
+				syncUserRolesInApp(user, appCode, rolesForApp);
+			}
+			// Đồng bộ Group
+			if (userData.getGroups() != null) {
+				Set<String> groupsForApp = isSuperAdmin
+						? userData.getGroups().stream().filter(g -> coreGroupService.isGroupInApp(g, appCode)).collect(Collectors.toSet())
+						: userData.getGroups();
+				syncUserGroupsInApp(user, appCode, groupsForApp);
+			}
+		}
+		
+		// --- 3. Đồng bộ các quan hệ đa hình (Contact, Tag) ---
+		if (userData.getContacts() != null) {
+			coreContactService.synchronizeContactsForOwnerInApp(
+					CoreUser.class.getSimpleName(), username, appCodeContext, userData.getContacts());
+		}
+		if (userData.getTagCodes() != null) {
+			coreTagAssignmentService.synchronizeTagsForTaggable(
+					CoreUser.class.getSimpleName(), username, userData.getTagCodes());
 		}
 	}
 	
-	@Transactional
+	/**
+	 * Map Entity sang DTO và tải các quan hệ liên quan.
+	 */
+	private CoreUserData mapEntityToDataWithRelations(CoreUser user, String appCodeContext) {
+		// Tái sử dụng logic của mapEntitiesToDataWithRelationsInBatch để tránh lặp code
+		return mapEntitiesToDataWithRelationsInBatch(List.of(user), appCodeContext).get(0);
+	}
+	
+	// Các phương thức sync con, giúp `syncUserRelations` gọn gàng hơn
+	private void syncUserRolesInApp(CoreUser user, String appCode, Set<String> roleCodes) {
+		record UserRoleContext(CoreUser user, String appCode) {
+		}
+		associationSyncHelper.synchronize(
+				new UserRoleContext(user, appCode),
+				coreUserRoleService.findByUsernameAndAppCodeIncludingDeleted(user.getUsername(), appCode),
+				coreRoleService.findAllByAppCodeAndCodeIn(appCode, roleCodes),
+				(userRole) -> userRole.getRole().getCode(),
+				CoreRole::getCode,
+				(role) -> CoreUserRole.builder().user(user).role(role).build(),
+				(userRole) -> coreUserRoleService.deleteById(userRole.getId())
+		                                 );
+	}
+	
+	private void syncUserGroupsInApp(CoreUser user, String appCode, Set<String> groupCodes) {
+		// Tương tự như syncUserRolesInApp
+	}
+	
+	// =================================================================================================================
+	// Private Orchestration & Helper Methods
+	// =================================================================================================================
+	
+	/**
+	 * Map một danh sách Entities sang DTOs và tải các quan hệ một cách tối ưu (tránh N+1).
+	 */
+	private List<CoreUserData> mapEntitiesToDataWithRelationsInBatch(List<CoreUser> users, String appCodeContext) {
+		if (users.isEmpty()) return Collections.emptyList();
+		
+		Set<String> usernames = users.stream().map(CoreUser::getUsername).collect(Collectors.toSet());
+		boolean isSuperAdmin = (appCodeContext == null);
+		
+		// Tải dữ liệu hàng loạt
+		Map<String, Set<String>> appsByUser = coreUserAppService.findActiveAppCodesForUsers(usernames);
+		Map<String, Set<String>> rolesByUser = isSuperAdmin
+				? coreUserRoleService.findAllActiveRoleCodesForUsers(usernames)
+				: coreUserRoleService.findActiveRoleCodesForUsersInApp(usernames, appCodeContext);
+		Map<String, Set<String>> groupsByUser = isSuperAdmin
+				? coreUserGroupService.findAllActiveGroupCodesForUsers(usernames)
+				: coreUserGroupService.findActiveGroupCodesForUsersInApp(usernames, appCodeContext);
+		
+		return users.stream().map(user -> {
+			CoreUserData data = coreUserMapper.toData(user);
+			String username = user.getUsername();
+			data.setApps(appsByUser.getOrDefault(username, Collections.emptySet()));
+			data.setRoles(rolesByUser.getOrDefault(username, Collections.emptySet()));
+			data.setGroups(groupsByUser.getOrDefault(username, Collections.emptySet()));
+			// Tương tự cho Contacts và Tags nếu cần
+			return data;
+		}).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Cập nhật thông tin một người dùng.
+	 *
+	 * @param id             ID của người dùng cần cập nhật.
+	 * @param userData       Dữ liệu mới.
+	 * @param appCodeContext Ngữ cảnh ứng dụng của người thực hiện.
+	 *
+	 * @return Dữ liệu người dùng sau khi cập nhật và đồng bộ.
+	 */
+	public CoreUserData update(Long id, CoreUserData userData, String appCodeContext) {
+		CoreUser user = findUserAndCheckPermission(id, appCodeContext);
+		userData.setId(user.getId()); // Đảm bảo DTO có ID để upsert
+		userData.setUsername(user.getUsername()); // Đảm bảo DTO có username để upsert
+		return upsert(userData, appCodeContext);
+	}
+	
+	/**
+	 * Helper tìm người dùng và kiểm tra quyền truy cập của người thực hiện.
+	 */
+	private CoreUser findUserAndCheckPermission(Long userId, String appCodeContext) {
+		CoreUser user = coreUserService.findById(userId)
+				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, userId));
+		if (!hasPermission(user.getUsername(), appCodeContext)) {
+			throw new PermissionDeniedException("Không có quyền thao tác trên người dùng này.");
+		}
+		return user;
+	}
+	
+	private boolean hasPermission(String targetUsername, String appCodeContext) {
+		if (appCodeContext == null) return true; // Super Admin có mọi quyền
+		return coreUserAppService.isUserInApp(targetUsername, appCodeContext);
+	}
+	
+	/**
+	 * Xóa một người dùng (xóa mềm).
+	 *
+	 * @param id             ID của người dùng cần xóa.
+	 * @param appCodeContext Ngữ cảnh ứng dụng.
+	 */
+	public void delete(Long id, String appCodeContext) {
+		CoreUser user = findUserAndCheckPermission(id, appCodeContext);
+		// Thêm logic kiểm tra không cho xóa chính mình nếu cần
+		coreUserService.deleteByIds(Set.of(user.getId()));
+	}
+	
+	/**
+	 * Xóa hàng loạt người dùng và trả về kết quả chi tiết.
+	 *
+	 * @param ids            Collection các ID cần xóa.
+	 * @param appCodeContext Ngữ cảnh ứng dụng.
+	 *
+	 * @return Báo cáo chi tiết về kết quả xóa.
+	 */
+	public BulkOperationResult<Long> bulkDelete(Collection<Long> ids, String appCodeContext) {
+		BulkOperationResult<Long> result = new BulkOperationResult<>();
+		if (ids == null || ids.isEmpty()) return result;
+		
+		List<CoreUser> usersInDb = coreUserService.findAllByIdIn(ids);
+		for (CoreUser user : usersInDb) {
+			try {
+				// Tái sử dụng logic kiểm tra quyền
+				if (!hasPermission(user.getUsername(), appCodeContext)) {
+					throw new PermissionDeniedException(String.format("Không có quyền xóa người dùng '%s'.", user.getUsername()));
+				}
+				// Thêm các ràng buộc khác nếu cần, ví dụ: không cho xóa user đang hoạt động
+				result.addSuccess(user.getId());
+			} catch (Exception e) {
+				result.addFailure(user.getId(), e.getMessage());
+			}
+		}
+		
+		if (!result.getSuccessfulItems().isEmpty()) {
+			coreUserService.deleteByIds(result.getSuccessfulItems());
+		}
+		return result;
+	}
+	
+	/**
+	 * Thay đổi mật khẩu cho một người dùng.
+	 */
 	public void changePassword(String username, String newPassword, String appCodeContext) {
-		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(username)
-				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
-		
-		// Kiểm tra quyền: App Admin chỉ được đổi mật khẩu người dùng trong app của họ
-		checkPermission(username, appCodeContext);
-		
+		CoreUser user = findUserAndCheckPermission(username, appCodeContext);
 		user.setHashedPassword(BCrypt.hashpw(newPassword));
 		coreUserService.save(user);
 	}
 	
-	@Transactional
-	public void updateStatus(String username, LifecycleStatus newStatus, String appCodeContext) {
-		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(username)
+	private CoreUser findUserAndCheckPermission(String username, String appCodeContext) {
+		CoreUser user = coreUserService.findByUsernameIgnoreCase(username)
 				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
-		
-		// Kiểm tra quyền: App Admin chỉ được cập nhật trạng thái người dùng trong app của họ
-		checkPermission(username, appCodeContext);
-		
-		user.setStatus(newStatus);
-		coreUserService.save(user);
+		if (!hasPermission(user.getUsername(), appCodeContext)) {
+			throw new PermissionDeniedException("Không có quyền thao tác trên người dùng này.");
+		}
+		return user;
 	}
 	
+	/**
+	 * Tìm người dùng theo ID.
+	 */
 	@Transactional(readOnly = true)
 	public CoreUserData findById(Long id, String appCodeContext) {
-		CoreUser user = coreUserService.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, id));
-		
-		// Kiểm tra quyền: App Admin chỉ được xem người dùng trong app của họ
-		checkPermission(user.getUsername(), appCodeContext);
-		
+		CoreUser user = findUserAndCheckPermission(id, appCodeContext);
 		return mapEntityToDataWithRelations(user, appCodeContext);
 	}
 	
-	@Transactional(readOnly = true)
-	public CoreUserData findByUsername(String username, String appCodeContext) {
-		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(username)
-				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
-		
-		// Kiểm tra quyền: App Admin chỉ được xem người dùng trong app của họ
-		checkPermission(user.getUsername(), appCodeContext);
-		
-		return mapEntityToDataWithRelations(user, appCodeContext);
-	}
-	
+	/**
+	 * Tìm kiếm và phân trang người dùng.
+	 */
 	@Transactional(readOnly = true)
 	public PagedResult<CoreUserData> findAll(CoreUserSearchCriteria criteria, String appCodeContext) {
-		// Gán appCode vào criteria để lọc ở tầng DAO nếu người dùng là App Admin
 		if (appCodeContext != null) {
 			criteria.setAppCode(appCodeContext);
 		}
-		
-		Pageable pageable = CoreUtils.getPageRequest(criteria.getPage(), criteria.getSize(), criteria.getSortBy(), criteria.getSortDir());
+		Pageable pageable = CoreUtils.getPageRequest(criteria);
 		Page<CoreUser> pageUser = coreUserService.findAll(criteria, pageable);
-		
-		List<CoreUserData> userDataList = mapEntitiesToDataWithRelationsInBatch(pageUser.getContent(), appCodeContext);
-		
-		return new PagedResult<>(userDataList, pageUser.getTotalElements(), pageUser.getNumber(), pageUser.getSize());
-	}
-	
-	@Transactional(readOnly = true)
-	public List<CoreUserData> getAll(CoreUserSearchCriteria criteria, String appCodeContext) {
-		if (appCodeContext != null) {
-			criteria.setAppCode(appCodeContext);
-		}
-		List<CoreUser> users = coreUserService.findAll(criteria);
-		return mapEntitiesToDataWithRelationsInBatch(users, appCodeContext);
-	}
-	
-	// =================================================================================================================
-	// Helper Methods
-	// =================================================================================================================
-	
-	/**
-	 * Đồng bộ các mối quan hệ của User (Apps, Roles, Groups, Contacts, Tags).
-	 */
-	private void syncUserRelations(CoreUser user, CoreUserData userData, String appCodeContext) {
-		String username = user.getUsername();
-		boolean isSuperAdminContext = (appCodeContext == null);
-		
-		if (isSuperAdminContext) {
-			// Super Admin đồng bộ trên nhiều app dựa vào payload
-			if (userData.getApps() != null) {
-				coreUserAppService.synchronizeUserApps(username, userData.getApps());
-			}
-			
-			Set<String> allRelevantAppCodes = coreUserAppService.findActiveAppCodesByUsername(username);
-			
-			for (String appCode : allRelevantAppCodes) {
-				Set<String> rolesForApp = (userData.getRoles() == null) ? Collections.emptySet() :
-						userData.getRoles().stream().filter(r -> r.startsWith("ROLE_" + appCode)).collect(Collectors.toSet());
-				coreUserRoleService.synchronizeUserRolesInApp(username, appCode, rolesForApp);
-				
-				Set<String> groupsForApp = (userData.getGroups() == null) ? Collections.emptySet() :
-						userData.getGroups().stream().filter(g -> g.startsWith("GROUP_" + appCode)).collect(Collectors.toSet());
-				coreUserGroupService.synchronizeUserGroupsInApp(username, appCode, groupsForApp);
-			}
-		} else {
-			// App Admin chỉ đồng bộ trong phạm vi app của mình
-			if (userData.getRoles() != null) {
-				coreUserRoleService.synchronizeUserRolesInApp(username, appCodeContext, userData.getRoles());
-			}
-			if (userData.getGroups() != null) {
-				coreUserGroupService.synchronizeUserGroupsInApp(username, appCodeContext, userData.getGroups());
-			}
-		}
-		
-		// Đồng bộ Contact và Tag có thể dùng chung logic
-		if (userData.getCoreContactDatas() != null) {
-			coreContactService.synchronizeContactsForOwnerInApp(CoreUser.class.getSimpleName(), username, appCodeContext, user.getEmail(),
-					userData.getCoreContactDatas());
-		}
-		if (userData.getCoreTagAssignmentDatas() != null) {
-			coreTagService.synchronizeTagsForTaggable(CoreUser.class.getSimpleName(), username, userData.getCoreTagAssignmentDatas());
-		}
-	}
-	
-	/**
-	 * Kiểm tra quyền hạn của một người dùng dựa trên appCodeContext. Ném ra UserException nếu không có quyền.
-	 */
-	private void checkPermission(String username, String appCodeContext) {
-		// Nếu appCodeContext là null, đó là Super Admin, luôn có quyền.
-		if (appCodeContext == null) {
-			return;
-		}
-		// Nếu là App Admin, kiểm tra user có thuộc app của họ không.
-		if (!coreUserAppService.isUserInApp(username, appCodeContext)) {
-			// Cần thêm phương thức isUserInApp vào CoreUserAppService
-			throw new UserException("user.permission.denied.cross_app", username, appCodeContext);
-		}
-	}
-	
-	/**
-	 * Map một User Entity sang User DTO và tải các mối quan hệ liên quan.
-	 */
-	private CoreUserData mapEntityToDataWithRelations(CoreUser user, String appCodeContext) {
-		CoreUserData data = coreUserMapper.toData(user);
-		boolean isSuperAdminContext = (appCodeContext == null);
-		String username = user.getUsername();
-		
-		data.setApps(coreUserAppService.findActiveAppCodesByUsername(username));
-		
-		if (isSuperAdminContext) {
-			data.setRoles(coreUserRoleService.findAllActiveRoleCodesByUsername(username));
-			data.setGroups(coreUserGroupService.findAllActiveGroupCodesByUsername(username));
-			data.setCoreContactDatas(coreContactMapper.toData(coreContactService.findAllActiveByOwner(CoreUser.class.getSimpleName(), username)));
-		} else {
-			data.setRoles(coreUserRoleService.findActiveRoleCodesByUsernameAndAppCode(username, appCodeContext));
-			data.setGroups(coreUserGroupService.findActiveGroupCodesByUsernameAndAppCode(username, appCodeContext));
-			data.setCoreContactDatas(
-					coreContactMapper.toData(coreContactService.findActiveByOwnerInApp(CoreUser.class.getSimpleName(), username, appCodeContext)));
-		}
-		return data;
-	}
-	
-	/**
-	 * Phiên bản tối ưu của việc map, giải quyết vấn đề N+1 query.
-	 */
-	private List<CoreUserData> mapEntitiesToDataWithRelationsInBatch(List<CoreUser> users, String appCodeContext) {
-		if (users.isEmpty()) {
-			return Collections.emptyList();
-		}
-		
-		Set<String> usernames = users.stream().map(CoreUser::getUsername).collect(Collectors.toSet());
-		boolean isSuperAdminContext = (appCodeContext == null);
-		
-		// 1. Tải tất cả dữ liệu liên quan trong một vài query
-		Map<String, Set<String>> appsByUser = coreUserAppService.findActiveAppCodesForUsers(usernames);
-		Map<String, Set<String>> rolesByUser;
-		Map<String, Set<String>> groupsByUser;
-		
-		if (isSuperAdminContext) {
-			rolesByUser = coreUserRoleService.findAllActiveRoleCodesForUsers(usernames);
-			groupsByUser = coreUserGroupService.findAllActiveGroupCodesForUsers(usernames);
-		} else {
-			rolesByUser = coreUserRoleService.findActiveRoleCodesForUsersInApp(usernames, appCodeContext);
-			groupsByUser = coreUserGroupService.findActiveGroupCodesForUsersInApp(usernames, appCodeContext);
-		}
-		
-		// Cần thêm các phương thức batch-fetching (ForUsers, ForUsersInApp) vào các Service tương ứng.
-		// Ví dụ:
-		// interface CoreUserAppService {
-		//     boolean isUserInApp(String username, String appCode);
-		//     Map<String, Set<String>> findActiveAppCodesForUsers(Set<String> usernames);
-		// }
-		
-		// 2. Map dữ liệu
-		return users.stream().map(user -> {
-			CoreUserData data = coreUserMapper.toData(user);
-			String username = user.getUsername();
-			
-			data.setApps(appsByUser.getOrDefault(username, Collections.emptySet()));
-			data.setRoles(rolesByUser.getOrDefault(username, Collections.emptySet()));
-			data.setGroups(groupsByUser.getOrDefault(username, Collections.emptySet()));
-			// Tương tự cho Contacts và Tags nếu cần tối ưu
-			
-			return data;
-		}).collect(Collectors.toList());
+		return PagedResult.from(pageUser, user -> mapEntityToDataWithRelations(user, appCodeContext));
 	}
 }

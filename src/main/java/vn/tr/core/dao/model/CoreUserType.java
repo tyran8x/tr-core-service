@@ -24,7 +24,7 @@ public class CoreUserType extends BaseCommonEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "icon", length = 50)
-	private String icon;
+	@Column(name = "app_code", length = 50)
+	private String appCode;
 	
 }

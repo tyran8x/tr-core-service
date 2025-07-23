@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.constant.CacheConstants;
@@ -29,6 +30,7 @@ import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -94,6 +96,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
+	@Transactional(readOnly = true)
 	public boolean existsByUsernameIgnoreCase(String username) {
 		return coreUserRepo.existsByUsernameIgnoreCase(username);
 	}
@@ -133,10 +136,8 @@ public class CoreUserServiceImpl implements CoreUserService {
 	/**
 	 * Build a LoginUser object from CoreUser and CoreUserApp.
 	 *
-	 * @param coreUser
-	 * 		the user entity
-	 * @param userAppAccess
-	 * 		the user's app access entity
+	 * @param coreUser      the user entity
+	 * @param userAppAccess the user's app access entity
 	 *
 	 * @return LoginUser object with permissions, groups, and roles
 	 */
@@ -207,6 +208,33 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
+	public List<CoreUser> findAllByIdIn(Collection<Long> ids) {
+		//return coreUserRepo.;
+	}
+	
+	@Override
+	public void deleteByIds(Collection<Long> ids) {
+	
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<CoreUser> findByUsernameIgnoreCase(String username) {
+		return coreUserRepo.findFirstByUsernameIgnoreCase(username);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<CoreUser> findByUsernameIgnoreCaseIncludingDeleted(String username) {
+		return coreUserRepo.findByUsernameIgnoreCaseIncludingDeleted(username);
+	}
+	
+	@Override
+	public JpaRepository<CoreUser, Long> getRepository() {
+		return this.coreUserRepo;
+	}
+	
+	@Override
 	@Transactional
 	public CoreUser findOrCreate(String username, String fullName, String email, String rawPassword) {
 		// Chuẩn hóa username
@@ -223,11 +251,6 @@ public class CoreUserServiceImpl implements CoreUserService {
 					// Ví dụ: newUser.setUserType(...)
 					return coreUserRepo.save(newUser);
 				});
-	}
-	
-	@Override
-	public Optional<CoreUser> findByIdEvenIfDeleted(Long id) {
-		return coreUserRepo.findByIdEvenIfDeleted(id);
 	}
 	
 }

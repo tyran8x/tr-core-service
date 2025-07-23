@@ -18,11 +18,24 @@ public interface CoreTagAssignmentRepo extends JpaRepository<CoreTagAssignment, 
 	
 	boolean existsByTagCodeAndTaggableValueAndTaggableType(String tagCode, String taggableValue, String taggableType);
 	
-	@Query("SELECT cta FROM CoreTagAssignment cta WHERE cta.taggableType = :type AND cta.taggableValue = :value")
-	List<CoreTagAssignment> findAllByTaggableIncludingDeleted(@Param("type") String taggableType, @Param("value") String taggableValue);
-	
 	@Query("SELECT cta FROM CoreTagAssignment cta WHERE cta.taggableType = :type AND cta.taggableValue = :value AND cta.tagCode = :tagCode")
 	List<CoreTagAssignment> findAllByTaggableAndTagCodeIncludingDeleted(@Param("type") String taggableType, @Param("value") String taggableValue,
 			@Param("tagCode") String tagCode);
+	
+	/**
+	 * Tìm tất cả các bản ghi gán thẻ cho một đối tượng cụ thể, BAO GỒM CẢ ĐÃ BỊ XÓA MỀM.
+	 * Cần thiết cho logic đồng bộ hóa (AssociationSyncHelper).
+	 */
+	@Query("SELECT ta FROM CoreTagAssignment ta WHERE ta.taggableType = :type AND ta.taggableValue = :value")
+	List<CoreTagAssignment> findAllByTaggableIncludingDeleted(@Param("type") String taggableType, @Param("value") String taggableValue);
+	
+	/**
+	 * Kiểm tra xem một thẻ tag (dựa trên code) có đang được sử dụng ở bất kỳ đâu không.
+	 *
+	 * @param tagCode Mã của thẻ tag.
+	 *
+	 * @return true nếu đang được sử dụng, ngược lại false.
+	 */
+	boolean existsByTagCode(String tagCode);
 	
 }

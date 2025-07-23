@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
+import vn.tr.common.satoken.utils.LoginHelper;
+import vn.tr.common.web.data.dto.BulkOperationResult;
 import vn.tr.common.web.data.dto.DeleteData;
 import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.business.CoreRoleBusiness;
@@ -14,11 +16,17 @@ import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 import vn.tr.core.data.dto.CoreRoleData;
 import vn.tr.core.data.validator.CoreRoleValidator;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
+/**
+ * Controller quản lý các nghiệp vụ cho CoreRole.
+ * Mọi thao tác đều yêu cầu ngữ cảnh ứng dụng hợp lệ.
+ *
+ * @author tyran8x
+ * @version 2.1
+ */
 @RestController
-@RequestMapping(value = "/roles")
+@RequestMapping("/roles")
 @RequiredArgsConstructor
 public class CoreRoleController {
 	
@@ -30,62 +38,105 @@ public class CoreRoleController {
 		binder.addValidators(coreRoleValidator);
 	}
 	
-	@PostMapping(value = {""})
-	@Log(title = "create CoreRole", businessType = BusinessType.DELETE)
+	/**
+	 * Tạo mới một vai trò.
+	 *
+	 * @param coreRoleData Dữ liệu của vai trò cần tạo.
+	 *
+	 * @return Dữ liệu của vai trò sau khi tạo thành công.
+	 */
+	@PostMapping
+	@Log(title = "Tạo mới Vai trò", businessType = BusinessType.INSERT)
 	public R<CoreRoleData> create(@Valid @RequestBody CoreRoleData coreRoleData) {
-		coreRoleData = coreRoleBusiness.create(coreRoleData);
-		return R.ok(coreRoleData);
+		String appCodeContext = LoginHelper.getAppCode();
+		return R.ok(coreRoleBusiness.create(coreRoleData, appCodeContext));
 	}
 	
-	@DeleteMapping(value = {"/{id}"})
-	@Log(title = "Delete CoreRole", businessType = BusinessType.DELETE)
-	public R<Void> delete(@PathVariable("id") Long id) {
-		coreRoleBusiness.delete(id);
+	/**
+	 * Cập nhật thông tin một vai trò.
+	 *
+	 * @param id           ID của vai trò cần cập nhật.
+	 * @param coreRoleData Dữ liệu mới của vai trò.
+	 *
+	 * @return Dữ liệu của vai trò sau khi cập nhật.
+	 */
+	@PutMapping("/{id}")
+	@Log(title = "Cập nhật Vai trò", businessType = BusinessType.UPDATE)
+	public R<CoreRoleData> update(@PathVariable Long id, @Valid @RequestBody CoreRoleData coreRoleData) {
+		String appCodeContext = LoginHelper.getAppCode();
+		return R.ok(coreRoleBusiness.update(id, coreRoleData, appCodeContext));
+	}
+	
+	/**
+	 * Xóa một vai trò duy nhất (xóa mềm).
+	 *
+	 * @param id ID của vai trò cần xóa.
+	 *
+	 * @return R.ok() nếu thành công.
+	 */
+	@DeleteMapping("/{id}")
+	@Log(title = "Xóa Vai trò", businessType = BusinessType.DELETE)
+	public R<Void> delete(@PathVariable Long id) {
+		String appCodeContext = LoginHelper.getAppCode();
+		coreRoleBusiness.delete(id, appCodeContext);
 		return R.ok();
 	}
 	
-	@DeleteMapping(value = "")
-	@Log(title = "bulkDelete CoreRole", businessType = BusinessType.DELETE)
-	public R<Void> bulkDelete(@Valid @RequestBody DeleteData deleteData) {
-		if (deleteData.getIds() == null || deleteData.getIds().isEmpty()) {
-			return R.fail("Danh sách ID không được để trống.");
-		}
-		coreRoleBusiness.bulkDelete(deleteData.getIds());
-		return R.ok();
+	/**
+	 * Xóa hàng loạt vai trò (xóa mềm).
+	 *
+	 * @param deleteData Đối tượng chứa danh sách các ID cần xóa.
+	 *
+	 * @return Một báo cáo chi tiết về kết quả xóa của từng ID.
+	 */
+	@DeleteMapping
+	@Log(title = "Xóa hàng loạt Vai trò", businessType = BusinessType.DELETE)
+	public R<BulkOperationResult<Long>> bulkDelete(@Valid @RequestBody DeleteData deleteData) {
+		String appCodeContext = LoginHelper.getAppCode();
+		return R.ok(coreRoleBusiness.bulkDelete(deleteData.getIds(), appCodeContext));
 	}
 	
-	@GetMapping(value = {"/", ""})
-	@Log(title = "FindAll CoreRole", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+	/**
+	 * Lấy thông tin chi tiết của một vai trò.
+	 *
+	 * @param id ID của vai trò.
+	 *
+	 * @return Dữ liệu chi tiết của vai trò.
+	 */
+	@GetMapping("/{id}")
+	@Log(title = "Lấy chi tiết Vai trò", businessType = BusinessType.DETAIL)
+	public R<CoreRoleData> findById(@PathVariable long id) {
+		String appCodeContext = LoginHelper.getAppCode();
+		return R.ok(coreRoleBusiness.findById(id, appCodeContext));
+	}
+	
+	/**
+	 * Tìm kiếm và trả về danh sách vai trò có phân trang.
+	 *
+	 * @param criteria Các tiêu chí tìm kiếm.
+	 *
+	 * @return Kết quả phân trang của danh sách vai trò.
+	 */
+	@GetMapping
+	@Log(title = "Tìm kiếm Vai trò (phân trang)", businessType = BusinessType.FINDALL)
 	public R<PagedResult<CoreRoleData>> findAll(CoreRoleSearchCriteria criteria) {
-		PagedResult<CoreRoleData> pageCoreRoleData = coreRoleBusiness.findAll(criteria);
-		return R.ok(pageCoreRoleData);
+		String appCodeContext = LoginHelper.getAppCode();
+		return R.ok(coreRoleBusiness.findAll(criteria, appCodeContext));
 	}
 	
-	@GetMapping(value = {"/list"})
-	@Log(title = "getAll CoreRole", businessType = BusinessType.FINDALL, isSaveRequestData = false)
-	public R<List<CoreRoleData>> getAll(CoreRoleSearchCriteria criteria) {
-		List<CoreRoleData> coreRoleDatas = coreRoleBusiness.getAll(criteria);
-		return R.ok(coreRoleDatas);
+	/**
+	 * Đồng bộ hóa (thay thế hoàn toàn) danh sách quyền hạn cho một vai trò.
+	 *
+	 * @param roleId          ID của vai trò.
+	 * @param permissionCodes Danh sách các mã quyền hạn mới.
+	 *
+	 * @return Dữ liệu của vai trò sau khi cập nhật quyền hạn.
+	 */
+	@PutMapping("/{roleId}/permissions")
+	@Log(title = "Đồng bộ Quyền hạn cho Vai trò", businessType = BusinessType.UPDATE)
+	public R<CoreRoleData> synchronizePermissions(@PathVariable Long roleId, @RequestBody Set<String> permissionCodes) {
+		String appCodeContext = LoginHelper.getAppCode();
+		CoreRoleData updatedRole = coreRoleBusiness.synchronizePermissionsForRole(roleId, permissionCodes, appCodeContext);
+		return R.ok(updatedRole);
 	}
-	
-	@GetMapping(value = {"/{id}"})
-	@Log(title = "findById CoreRole", businessType = BusinessType.DETAIL, isSaveRequestData = false)
-	public R<CoreRoleData> findById(@PathVariable("id") long id) {
-		CoreRoleData coreRoleData = coreRoleBusiness.findById(id);
-		return R.ok(coreRoleData);
-	}
-	
-	@GetMapping(value = {"/get/{id}"})
-	public R<CoreRoleData> getById(@PathVariable("id") Long id) {
-		Optional<CoreRoleData> optionalCoreRoleData = coreRoleBusiness.getById(id);
-		return R.ok(optionalCoreRoleData.orElse(null));
-	}
-	
-	@PutMapping(value = {"/{id}"})
-	@Log(title = "update CoreRole", businessType = BusinessType.UPDATE)
-	public R<CoreRoleData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreRoleData coreRoleData) {
-		coreRoleData = coreRoleBusiness.update(id, coreRoleData);
-		return R.ok(coreRoleData);
-	}
-	
 }

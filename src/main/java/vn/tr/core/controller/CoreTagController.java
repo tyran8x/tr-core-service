@@ -5,9 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
-import vn.tr.common.encrypt.annotation.ApiEncrypt;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
+import vn.tr.common.satoken.utils.LoginHelper;
+import vn.tr.common.web.data.dto.BulkOperationResult;
 import vn.tr.common.web.data.dto.DeleteData;
 import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.business.CoreTagBusiness;
@@ -16,78 +17,127 @@ import vn.tr.core.data.dto.CoreTagData;
 import vn.tr.core.data.validator.CoreTagValidator;
 
 import java.util.List;
-import java.util.Optional;
 
+/**
+ * Controller quản lý CoreTag, một tài nguyên toàn cục.
+ * Các thao tác ghi (Create, Update, Delete) yêu cầu quyền Super Admin.
+ *
+ * @author tyran8x
+ * @version 2.1
+ */
 @RestController
-@RequestMapping(value = "/tags")
+@RequestMapping("/tags")
 @RequiredArgsConstructor
 public class CoreTagController {
 	
 	private final CoreTagBusiness coreTagBusiness;
 	private final CoreTagValidator coreTagValidator;
 	
+	/**
+	 * Đăng ký validator tùy chỉnh cho CoreTagData.
+	 *
+	 * @param binder WebDataBinder
+	 */
 	@InitBinder("coreTagData")
 	public void initBinder(WebDataBinder binder) {
 		binder.addValidators(coreTagValidator);
 	}
 	
-	@PostMapping(value = {""})
-	@Log(title = "create CoreTag", businessType = BusinessType.DELETE)
-	public R<CoreTagData> create(@Valid @RequestBody CoreTagData coreTagData) {
-		coreTagData = coreTagBusiness.create(coreTagData);
-		return R.ok(coreTagData);
+	/**
+	 * Tạo mới một thẻ tag. Yêu cầu quyền Super Admin.
+	 *
+	 * @param data Dữ liệu thẻ tag cần tạo.
+	 *
+	 * @return Dữ liệu thẻ tag sau khi tạo thành công.
+	 */
+	@PostMapping
+	@Log(title = "Tạo mới Thẻ tag", businessType = BusinessType.INSERT)
+	public R<CoreTagData> create(@Valid @RequestBody CoreTagData data) {
+		return R.ok(coreTagBusiness.create(data, LoginHelper.isSuperAdmin()));
 	}
 	
-	@DeleteMapping(value = {"/{id}"})
-	@Log(title = "Delete CoreTag", businessType = BusinessType.DELETE)
-	public R<Void> delete(@PathVariable("id") Long id) {
-		coreTagBusiness.delete(id);
+	/**
+	 * Cập nhật thông tin một thẻ tag. Yêu cầu quyền Super Admin.
+	 *
+	 * @param id   ID của thẻ tag cần cập nhật.
+	 * @param data Dữ liệu mới.
+	 *
+	 * @return Dữ liệu sau khi cập nhật.
+	 */
+	@PutMapping("/{id}")
+	@Log(title = "Cập nhật Thẻ tag", businessType = BusinessType.UPDATE)
+	public R<CoreTagData> update(@PathVariable Long id, @Valid @RequestBody CoreTagData data) {
+		return R.ok(coreTagBusiness.update(id, data, LoginHelper.isSuperAdmin()));
+	}
+	
+	/**
+	 * Xóa một thẻ tag (xóa mềm). Yêu cầu quyền Super Admin.
+	 *
+	 * @param id ID của thẻ tag cần xóa.
+	 *
+	 * @return R.ok() nếu thành công.
+	 */
+	@DeleteMapping("/{id}")
+	@Log(title = "Xóa Thẻ tag", businessType = BusinessType.DELETE)
+	public R<Void> delete(@PathVariable Long id) {
+		coreTagBusiness.delete(id, LoginHelper.isSuperAdmin());
 		return R.ok();
 	}
 	
-	@DeleteMapping(value = "")
-	@Log(title = "bulkDelete CoreTag", businessType = BusinessType.DELETE)
-	public R<Void> bulkDelete(@Valid @RequestBody DeleteData deleteData) {
-		if (deleteData.getIds() == null || deleteData.getIds().isEmpty()) {
-			return R.fail("Danh sách ID không được để trống.");
-		}
-		coreTagBusiness.bulkDelete(deleteData.getIds());
-		return R.ok();
+	/**
+	 * Xóa hàng loạt thẻ tag (xóa mềm). Yêu cầu quyền Super Admin.
+	 *
+	 * @param deleteData Đối tượng chứa danh sách các ID cần xóa.
+	 *
+	 * @return Báo cáo chi tiết về kết quả xóa của từng ID.
+	 */
+	@DeleteMapping
+	@Log(title = "Xóa hàng loạt Thẻ tag", businessType = BusinessType.DELETE)
+	public R<BulkOperationResult<Long>> bulkDelete(@Valid @RequestBody DeleteData deleteData) {
+		return R.ok(coreTagBusiness.bulkDelete(deleteData.getIds(), LoginHelper.isSuperAdmin()));
 	}
 	
-	@ApiEncrypt(response = true)
-	@GetMapping(value = {"/", ""})
-	@Log(title = "FindAll CoreTag", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+	/**
+	 * Lấy thông tin chi tiết của một thẻ tag.
+	 *
+	 * @param id ID cần tìm.
+	 *
+	 * @return Dữ liệu chi tiết.
+	 */
+	@GetMapping("/{id}")
+	@Log(title = "Lấy chi tiết Thẻ tag", businessType = BusinessType.DETAIL)
+	public R<CoreTagData> findById(@PathVariable long id) {
+		return R.ok(coreTagBusiness.findById(id));
+	}
+	
+	/**
+	 * Tìm kiếm và trả về danh sách thẻ tag có phân trang.
+	 *
+	 * @param criteria Các tiêu chí để tìm kiếm.
+	 *
+	 * @return Kết quả phân trang.
+	 */
+	@GetMapping
+	@Log(title = "Tìm kiếm Thẻ tag (phân trang)", businessType = BusinessType.FINDALL)
 	public R<PagedResult<CoreTagData>> findAll(CoreTagSearchCriteria criteria) {
-		PagedResult<CoreTagData> pageCoreTagData = coreTagBusiness.findAll(criteria);
-		return R.ok(pageCoreTagData);
+		return R.ok(coreTagBusiness.findAll(criteria));
 	}
 	
-	@GetMapping(value = {"/list"})
-	@Log(title = "getAll CoreTag", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+	/**
+	 * Lấy toàn bộ danh sách thẻ tag (không phân trang), thường dùng cho các dropdown.
+	 *
+	 * @param criteria Các tiêu chí để lọc (nếu có).
+	 *
+	 * @return Danh sách đầy đủ các thẻ tag.
+	 */
+	@GetMapping("/list")
+	@Log(title = "Lấy danh sách Thẻ tag", businessType = BusinessType.FINDALL)
 	public R<List<CoreTagData>> getAll(CoreTagSearchCriteria criteria) {
-		List<CoreTagData> coreTagDatas = coreTagBusiness.getAll(criteria);
-		return R.ok(coreTagDatas);
+		// Giả sử có một phương thức getAll trong Business
+		// return R.ok(coreTagBusiness.getAll(criteria));
+		// Nếu không, có thể lấy trang đầu tiên với kích thước lớn
+		criteria.setPage(0);
+		criteria.setSize(1000); // Giới hạn hợp lý
+		return R.ok(coreTagBusiness.findAll(criteria).getContent());
 	}
-	
-	@GetMapping(value = {"/{id}"})
-	@Log(title = "findById CoreTag", businessType = BusinessType.DETAIL, isSaveRequestData = false)
-	public R<CoreTagData> findById(@PathVariable("id") long id) {
-		CoreTagData coreTagData = coreTagBusiness.findById(id);
-		return R.ok(coreTagData);
-	}
-	
-	@GetMapping(value = {"/get/{id}"})
-	public R<CoreTagData> getById(@PathVariable("id") Long id) {
-		Optional<CoreTagData> optionalCoreTagData = coreTagBusiness.getById(id);
-		return R.ok(optionalCoreTagData.orElse(null));
-	}
-	
-	@PutMapping(value = {"/{id}"})
-	@Log(title = "update CoreTag", businessType = BusinessType.UPDATE)
-	public R<CoreTagData> update(@PathVariable("id") Long id, @Valid @RequestBody CoreTagData coreTagData) {
-		coreTagData = coreTagBusiness.update(id, coreTagData);
-		return R.ok(coreTagData);
-	}
-	
 }

@@ -17,6 +17,8 @@ public class CoreModuleSearchCriteria extends BaseSearchCriteria {
 	
 	private String code;
 	
+	private String appCode;
+	
 	private LifecycleStatus status;
 	
 }

@@ -1,6 +1,5 @@
 package vn.tr.core.data.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,9 +13,6 @@ import vn.tr.common.web.data.dto.BaseData;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class CoreTagData extends BaseData {
-	
-	@JsonIgnore
-	private String appCode;
 	
 	@JsonDeserialize(using = XssPlainTextJsonDeserializer.class)
 	private String description;

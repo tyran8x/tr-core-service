@@ -1,8 +1,14 @@
 package vn.tr.core.dao.service;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import vn.tr.core.dao.model.CorePermission;
+import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreRolePermission;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CoreRolePermissionService {
 	
@@ -19,5 +25,18 @@ public interface CoreRolePermissionService {
 	void refreshRolePermsCache(String roleMa);
 	
 	void refreshRolePermsCache(String oldRoleMa, String newRoleMa);
+	
+	// --- Hỗ trợ AssociationSyncHelper ---
+	List<CoreRolePermission> findByRoleCodeAndAppCodeIncludingDeleted(String roleCode, String appCode);
+	
+	JpaRepository<CoreRolePermission, Long> getRepository();
+	
+	// --- Truy vấn nghiệp vụ ---
+	Set<String> findPermissionCodesByRoleCodesAndAppCode(Collection<String> roleCodes, String appCode);
+	
+	// --- Kiểm tra ràng buộc ---
+	boolean isRoleInUse(CoreRole role);
+	
+	boolean isPermissionInUse(CorePermission permission);
 	
 }

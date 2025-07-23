@@ -2,14 +2,13 @@ package vn.tr.core.dao.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import vn.tr.core.dao.model.CoreApp;
+import org.springframework.data.jpa.repository.JpaRepository;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
-import vn.tr.core.data.dto.CoreRoleData;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface CoreRoleService {
 	
@@ -35,12 +34,12 @@ public interface CoreRoleService {
 	
 	boolean existsByIdAndAppCode(long id, String appCode);
 	
-	boolean existsByCodeIgnoreCase(String code);
+	List<CoreRole> findAllByIds(Collection<Long> ids);
 	
-	void deleteByIds(Set<Long> ids);
+	void deleteByIds(Collection<Long> ids);
 	
-	CoreRole findOrCreate(CoreApp coreApp, String roleCode, String roleName);
+	Optional<CoreRole> findByCodeAndAppCodeIncludingDeleted(String code, String appCode);
 	
-	CoreRoleData upsert(CoreRoleData roleData);
+	JpaRepository<CoreRole, Long> getRepository();
 	
 }

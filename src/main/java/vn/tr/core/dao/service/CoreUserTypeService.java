@@ -2,12 +2,13 @@ package vn.tr.core.dao.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import vn.tr.core.dao.model.CoreUserType;
 import vn.tr.core.data.criteria.CoreUserTypeSearchCriteria;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface CoreUserTypeService {
 	
@@ -23,18 +24,22 @@ public interface CoreUserTypeService {
 	
 	List<CoreUserType> findAll(CoreUserTypeSearchCriteria coreUserTypeSearchCriteria);
 	
-	boolean existsByIdNotAndCodeIgnoreCase(long id, String code);
+	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode);
 	
-	boolean existsByIdNotAndNameIgnoreCase(long id, String name);
+	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode);
 	
-	boolean existsByCodeIgnoreCase(String code);
+	boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode);
 	
-	boolean existsByNameIgnoreCase(String name);
+	boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode);
 	
-	boolean existsById(long id);
+	boolean existsByIdAndAppCode(long id, String appCode);
 	
-	void deleteByIds(Set<Long> ids);
+	List<CoreUserType> findAllByIds(Collection<Long> ids);
 	
-	CoreUserType findOrCreate(String code, String name);
+	void deleteByIds(Collection<Long> ids);
+	
+	Optional<CoreUserType> findByCodeAndAppCodeIncludingDeleted(String code, String appCode);
+	
+	JpaRepository<CoreUserType, Long> getRepository();
 	
 }

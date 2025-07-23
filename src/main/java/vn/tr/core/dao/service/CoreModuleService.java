@@ -2,12 +2,13 @@ package vn.tr.core.dao.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import vn.tr.core.dao.model.CoreModule;
 import vn.tr.core.data.criteria.CoreModuleSearchCriteria;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface CoreModuleService {
 	
@@ -33,14 +34,12 @@ public interface CoreModuleService {
 	
 	boolean existsByIdAndAppCode(long id, String appCode);
 	
-	void deleteByIds(Set<Long> ids);
+	List<CoreModule> findAllByIds(Collection<Long> ids);
 	
-	Set<String> findAllCodesByAppCode(String appCode);
+	void deleteByIds(Collection<Long> ids);
 	
-	CoreModule findOrCreate(String code, String name, String appCode);
+	Optional<CoreModule> findByCodeAndAppCodeIncludingDeleted(String code, String appCode);
 	
-	Optional<CoreModule> findByCodeSafely(String appCode, String code);
-	
-	List<CoreModule> findAllByAppCode(String appCode);
+	JpaRepository<CoreModule, Long> getRepository();
 	
 }

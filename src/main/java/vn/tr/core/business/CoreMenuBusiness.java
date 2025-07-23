@@ -46,7 +46,7 @@ public class CoreMenuBusiness {
 		return buildTree(dtoList);
 	}
 	
-	public void bulkDelete(Set<Long> ids) {
+	public void bulkDelete(Collection<Long> ids) {
 		coreMenuService.deleteByIds(ids);
 	}
 	

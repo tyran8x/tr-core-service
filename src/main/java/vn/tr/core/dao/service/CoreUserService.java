@@ -2,13 +2,14 @@ package vn.tr.core.dao.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.JpaRepository;
 import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.enums.LoginType;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -52,8 +53,16 @@ public interface CoreUserService {
 	
 	void logout();
 	
-	CoreUser findOrCreate(String username, String fullName, String email, String rawPassword);
+	List<CoreUser> findAllByIdIn(Collection<Long> ids);
 	
-	Optional<CoreUser> findByIdEvenIfDeleted(@Param("id") Long id);
+	void deleteByIds(Collection<Long> ids);
+	
+	// --- Business Logic Support ---
+	Optional<CoreUser> findByUsernameIgnoreCase(String username);
+	
+	Optional<CoreUser> findByUsernameIgnoreCaseIncludingDeleted(String username);
+	
+	// --- Helper Support ---
+	JpaRepository<CoreUser, Long> getRepository();
 	
 }

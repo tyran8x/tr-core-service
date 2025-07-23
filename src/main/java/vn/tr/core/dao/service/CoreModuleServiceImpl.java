@@ -4,15 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreModule;
 import vn.tr.core.data.criteria.CoreModuleSearchCriteria;
 
-import java.util.Comparator;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -77,67 +78,36 @@ public class CoreModuleServiceImpl implements CoreModuleService {
 	}
 	
 	@Override
-	@Transactional
-	public void deleteByIds(Set<Long> ids) {
+	public List<CoreModule> findAllByIds(Collection<Long> ids) {
 		if (ids.isEmpty()) {
-			return;
+			return Collections.emptyList();
 		}
-		coreModuleRepo.softDeleteByIds(ids);
-	}
-	
-	@Override
-	@Transactional(readOnly = true)
-	public Set<String> findAllCodesByAppCode(String appCode) {
-		return coreModuleRepo.findAllCodesByAppCode(appCode);
+		return coreModuleRepo.findAllById(ids);
 	}
 	
 	@Override
 	@Transactional
-	public CoreModule findOrCreate(String code, String name, String appCode) {
-		String normalizedCode = code.toLowerCase();
-		String normalizedAppCode = appCode.toLowerCase();
-		
-		return findByCodeSafely(normalizedAppCode, normalizedCode)
-				.orElseGet(() -> {
-					CoreModule newModule = new CoreModule();
-					newModule.setAppCode(normalizedAppCode);
-					newModule.setCode(normalizedCode);
-					newModule.setName(name);
-					return coreModuleRepo.save(newModule);
-				});
-	}
-	
-	@Transactional(readOnly = true)
-	public Optional<CoreModule> findByCodeSafely(String appCode, String code) {
-		List<CoreModule> foundModules = coreModuleRepo.findByAppCodeIgnoreCaseAndCodeIgnoreCase(appCode, code);
-		
-		if (foundModules.isEmpty()) {
-			return Optional.empty();
+	public void deleteByIds(Collection<Long> ids) {
+		if (!ids.isEmpty()) {
+			coreModuleRepo.softDeleteByIds(ids);
 		}
-		
-		// Ưu tiên bản ghi khớp chính xác cả kiểu chữ
-		Optional<CoreModule> exactMatch = foundModules.stream()
-				.filter(module -> module.getAppCode().equals(appCode) && module.getCode().equals(code))
-				.findFirst();
-		
-		if (exactMatch.isPresent()) {
-			return exactMatch;
-		}
-		
-		if (foundModules.size() > 1) {
-			log.warn("Cảnh báo dữ liệu không nhất quán: Tìm thấy {} bản ghi cho module code '{}' trong app '{}'. " +
-							"Hệ thống sẽ ưu tiên bản ghi có ID nhỏ nhất.",
-					foundModules.size(), code, appCode);
-			return foundModules.stream().min(Comparator.comparing(CoreModule::getId));
-		}
-		
-		return Optional.of(foundModules.getFirst());
 	}
 	
 	@Override
-	@Transactional(readOnly = true)
-	public List<CoreModule> findAllByAppCode(String appCode) {
-		return coreModuleRepo.findAllByAppCode(appCode);
+	public Optional<CoreModule> findByCodeAndAppCodeIncludingDeleted(String code, String appCode) {
+		List<CoreModule> results = coreModuleRepo.findAllByCodeAndAppCodeIncludingDeletedSorted(code, appCode);
+		if (results.isEmpty()) return Optional.empty();
+		if (results.size() > 1) {
+			log.warn(
+					"CẢNH BÁO DỮ LIỆU TRÙNG LẶP: Tìm thấy {} bản ghi CoreModule cho code='{}' và appCode='{}'. Hệ thống sẽ tự động chọn bản ghi ưu tiên (ID={}).",
+					results.size(), code, appCode, results.getFirst().getId());
+		}
+		return Optional.of(results.getFirst());
+	}
+	
+	@Override
+	public JpaRepository<CoreModule, Long> getRepository() {
+		return this.coreModuleRepo;
 	}
 	
 }

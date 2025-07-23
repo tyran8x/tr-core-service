@@ -8,27 +8,47 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreUser;
 
+import java.util.Collection;
 import java.util.Optional;
-import java.util.Set;
 
+/**
+ * Repository interface cho thực thể CoreUser.
+ *
+ * @author tyran8x
+ * @version 2.0
+ */
 @Repository
 public interface CoreUserRepo extends JpaRepository<CoreUser, Long>, JpaSpecificationExecutor<CoreUser> {
 	
-	boolean existsByEmailIgnoreCase(String email);
+	/**
+	 * Tìm một người dùng theo username (không phân biệt hoa thường).
+	 * Chỉ trả về các bản ghi đang hoạt động.
+	 */
+	Optional<CoreUser> findFirstByUsernameIgnoreCase(String username);
 	
+	/**
+	 * Tìm một người dùng theo username (không phân biệt hoa thường),
+	 * BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM.
+	 * Cần thiết cho logic Upsert.
+	 */
+	@Query("SELECT u FROM CoreUser u WHERE lower(u.username) = lower(:username)")
+	Optional<CoreUser> findByUsernameIgnoreCaseIncludingDeleted(@Param("username") String username);
+	
+	/**
+	 * Kiểm tra sự tồn tại của một người dùng theo username (không phân biệt hoa thường).
+	 */
 	boolean existsByUsernameIgnoreCase(String username);
 	
-	boolean existsByIdNotAndUsernameIgnoreCase(long id, String username);
-	
-	Optional<CoreUser> findFirstByUsernameIgnoreCase(String username);
+	/**
+	 * Thực hiện xóa mềm cho một tập hợp các ID người dùng.
+	 *
+	 * @param ids Collection các ID của người dùng cần xóa.
+	 */
+	@Modifying(clearAutomatically = true)
+	@Query("UPDATE CoreUser u SET u.deletedAt = CURRENT_TIMESTAMP WHERE u.id IN :ids")
+	void softDeleteByIds(@Param("ids") Collection<Long> ids);
 	
 	Optional<CoreUser> findFirstByEmailIgnoreCase(String email);
 	
-	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CoreWorkSpaceItem g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
-	void softDeleteByIds(@Param("ids") Set<Long> ids);
-	
-	@Query("SELECT u FROM CoreUser u WHERE u.id = :id")
-	Optional<CoreUser> findByIdEvenIfDeleted(@Param("id") Long id);
-	
+	boolean existsByEmailIgnoreCase(String email);
 }

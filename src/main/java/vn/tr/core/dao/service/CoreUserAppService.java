@@ -1,26 +1,62 @@
 package vn.tr.core.dao.service;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import vn.tr.core.dao.model.CoreUserApp;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
+/**
+ * Interface cho Service Layer của CoreUserApp.
+ * Cung cấp các "viên gạch" để tầng Business xây dựng các nghiệp vụ phức tạp.
+ *
+ * @author tyran8x
+ * @version 2.0
+ */
 public interface CoreUserAppService {
 	
-	void deleteById(Long id);
-	
-	boolean existsById(Long id);
-	
-	Optional<CoreUserApp> findById(Long id);
+	List<CoreUserApp> findByUsernameIncludingDeleted(String username);
 	
 	CoreUserApp save(CoreUserApp coreUserApp);
 	
-	void synchronizeUserApps(String username, Set<String> newAppCodes);
+	void deleteById(Long id);
 	
-	Optional<CoreUserApp> findByUsernameAndAppCode(String username, String appCode);
+	JpaRepository<CoreUserApp, Long> getRepository();
+	
+	List<CoreUserApp> findByUsername(String username);
 	
 	Set<String> findActiveAppCodesByUsername(String username);
 	
-	void assignUserToApp(String username, String appCode, String defaultUserType);
+	boolean isUserInApp(String username, String appCode);
 	
+	Optional<CoreUserApp> findByUsernameAndAppCode(String username, String appCode);
+	
+	/**
+	 * Lấy danh sách app code đang hoạt động cho một tập hợp người dùng.
+	 * Tối ưu cho việc hiển thị danh sách, tránh N+1 query.
+	 *
+	 * @param usernames Collection các username cần truy vấn.
+	 *
+	 * @return Một Map với key là username và value là Set các app code.
+	 */
+	Map<String, Set<String>> findActiveAppCodesForUsers(Collection<String> usernames);
+	
+	// --- Các phương thức kiểm tra ràng buộc ---
+	
+	/**
+	 * Kiểm tra xem một App có đang được sử dụng (gán cho user) hay không.
+	 *
+	 * @param appCode Mã của ứng dụng.
+	 *
+	 * @return true nếu đang được sử dụng, ngược lại false.
+	 */
+	boolean isAppInUse(String appCode);
+	
+	/**
+	 * Kiểm tra xem một UserType có đang được sử dụng hay không.
+	 *
+	 * @param userTypeCode Mã của loại người dùng.
+	 *
+	 * @return true nếu đang được sử dụng, ngược lại false.
+	 */
+	boolean isUserTypeInUse(String userTypeCode);
 }

@@ -1,19 +1,23 @@
 package vn.tr.core.dao.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.core.dao.model.CoreApp;
 import vn.tr.core.data.criteria.CoreAppSearchCriteria;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CoreAppServiceImpl implements CoreAppService {
 	
 	private final CoreAppRepo coreAppRepo;
@@ -21,6 +25,14 @@ public class CoreAppServiceImpl implements CoreAppService {
 	@Override
 	public Optional<CoreApp> findById(Long id) {
 		return coreAppRepo.findById(id);
+	}
+	
+	@Override
+	public List<CoreApp> findAllByIds(Collection<Long> ids) {
+		if (ids.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return coreAppRepo.findAllById(ids);
 	}
 	
 	@Override
@@ -34,8 +46,11 @@ public class CoreAppServiceImpl implements CoreAppService {
 	}
 	
 	@Override
-	public boolean existsById(Long id) {
-		return coreAppRepo.existsById(id);
+	@Transactional
+	public void deleteByIds(Collection<Long> ids) {
+		if (!ids.isEmpty()) {
+			coreAppRepo.softDeleteByIds(ids);
+		}
 	}
 	
 	@Override
@@ -46,6 +61,22 @@ public class CoreAppServiceImpl implements CoreAppService {
 	@Override
 	public List<CoreApp> findAll(CoreAppSearchCriteria coreAppSearchCriteria) {
 		return coreAppRepo.findAll(CoreAppSpecifications.quickSearch(coreAppSearchCriteria));
+	}
+	
+	@Override
+	public Optional<CoreApp> findByCodeIgnoreCaseIncludingDeleted(String code) {
+		List<CoreApp> results = coreAppRepo.findAllByCodeIgnoreCaseIncludingDeletedSorted(code);
+		if (results.isEmpty()) return Optional.empty();
+		if (results.size() > 1) {
+			log.warn("CẢNH BÁO DỮ LIỆU TRÙNG LẶP: Tìm thấy {} bản ghi CoreApp cho code='{}'. Hệ thống sẽ tự động chọn bản ghi ưu tiên (ID={}).",
+					results.size(), code, results.getFirst().getId());
+		}
+		return Optional.of(results.getFirst());
+	}
+	
+	@Override
+	public JpaRepository<CoreApp, Long> getRepository() {
+		return this.coreAppRepo;
 	}
 	
 	@Override
@@ -69,29 +100,8 @@ public class CoreAppServiceImpl implements CoreAppService {
 	}
 	
 	@Override
-	public boolean existsById(long id) {
+	public boolean existsById(Long id) {
 		return coreAppRepo.existsById(id);
-	}
-	
-	@Override
-	@Transactional
-	public void deleteByIds(Set<Long> ids) {
-		if (ids.isEmpty()) {
-			return;
-		}
-		coreAppRepo.softDeleteByIds(ids);
-	}
-	
-	@Override
-	@Transactional
-	public CoreApp findOrCreate(String code, String name) {
-		return coreAppRepo.findFirstByCodeIgnoreCase(code)
-				.orElseGet(() -> {
-					CoreApp newApp = new CoreApp();
-					newApp.setCode(code);
-					newApp.setName(name);
-					return coreAppRepo.save(newApp);
-				});
 	}
 	
 }

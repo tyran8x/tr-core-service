@@ -17,6 +17,8 @@ public class CoreRoleSearchCriteria extends BaseSearchCriteria {
 	
 	private String code;
 	
+	private String appCode;
+	
 	private LifecycleStatus status;
 	
 }

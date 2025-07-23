@@ -9,8 +9,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreRole;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 
 @Repository
 public interface CoreRoleRepo extends JpaRepository<CoreRole, Long>, JpaSpecificationExecutor<CoreRole> {
@@ -25,13 +25,21 @@ public interface CoreRoleRepo extends JpaRepository<CoreRole, Long>, JpaSpecific
 	
 	boolean existsByIdAndAppCode(long id, @Nullable String appCode);
 	
-	boolean existsByCodeIgnoreCase(String code);
+	/**
+	 * Tìm kiếm Role theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM.
+	 * Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động và được cập nhật gần nhất.
+	 *
+	 * @param code    Mã của module.
+	 * @param appCode Mã của ứng dụng.
+	 *
+	 * @return Một danh sách các CoreRole tìm thấy, đã được sắp xếp.
+	 */
+	@Query("SELECT m FROM CoreRole m WHERE m.code = :code AND m.appCode = :appCode ORDER BY m.deletedAt ASC NULLS FIRST, m.updatedAt DESC")
+	List<CoreRole> findAllByCodeAndAppCodeIncludingDeletedSorted(@Param("code") String code, @Param("appCode") String appCode);
 	
+	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CoreRole g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
-	void softDeleteByIds(@Param("ids") Set<Long> ids);
-	
-	@Query("SELECT r FROM CoreRole r WHERE r.code = :code AND r.appCode = :appCode")
-	Optional<CoreRole> findByCodeAndAppCodeEvenIfDeleted(@Param("code") String code, @Param("appCode") String appCode);
+	@Query("UPDATE CoreRole m SET m.deletedAt = CURRENT_TIMESTAMP WHERE m.id IN :ids")
+	void softDeleteByIds(@Param("ids") Collection<Long> ids);
 	
 }

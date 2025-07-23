@@ -14,11 +14,15 @@ public interface CoreTagMapper {
 	List<CoreTagData> toData(List<CoreTag> coreTags);
 	
 	@Mapping(target = "id", ignore = true)
+	@Mapping(target = "createdBy", ignore = true)
+	@Mapping(target = "createdAt", ignore = true)
+	@Mapping(target = "updatedBy", ignore = true)
+	@Mapping(target = "updatedAt", ignore = true)
+	@Mapping(target = "deletedAt", ignore = true)
 	CoreTag toEntity(CoreTagData coreTagData);
 	
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "appCode", ignore = true) // Luôn luôn ignore ở đây
 	@Mapping(target = "createdBy", ignore = true)
 	@Mapping(target = "createdAt", ignore = true)
 	@Mapping(target = "updatedBy", ignore = true)

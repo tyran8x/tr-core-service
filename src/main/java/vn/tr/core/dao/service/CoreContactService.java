@@ -1,11 +1,9 @@
 package vn.tr.core.dao.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import vn.tr.common.core.domain.data.CoreContactData;
 import vn.tr.core.dao.model.CoreContact;
-import vn.tr.core.data.criteria.CoreContactSearchCriteria;
-import vn.tr.core.data.dto.CoreContactData;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,19 +17,25 @@ public interface CoreContactService {
 	
 	boolean existsById(Long id);
 	
-	Page<CoreContact> findAll(CoreContactSearchCriteria coreContactSearchCriteria, Pageable pageable);
+	/**
+	 * Đồng bộ hóa (thêm/sửa/xóa) danh sách liên hệ cho một chủ sở hữu cụ thể trong một ứng dụng.
+	 *
+	 * @param ownerType       Loại chủ sở hữu (vd: "CoreUser", "HrmDonVi").
+	 * @param ownerValue      Giá trị định danh của chủ sở hữu (vd: username, donViId).
+	 * @param appCode         Mã ứng dụng.
+	 * @param contactDataList Collection các DTO chứa thông tin liên hệ mới.
+	 *
+	 * @return Danh sách các thực thể CoreContact đã được đồng bộ hóa.
+	 */
+	List<CoreContact> synchronizeContactsForOwnerInApp(
+			String ownerType,
+			String ownerValue,
+			String appCode,
+			Collection<CoreContactData> contactDataList);
 	
-	List<CoreContact> findAll(CoreContactSearchCriteria coreContactSearchCriteria);
-	
-	boolean existsById(long id);
-	
-	void saveAll(Iterable<CoreContact> coreContacts);
-	
-	void synchronizeContactsForOwnerInApp(String ownerType, String ownerValue, String appCode, String primaryEmail,
-			List<CoreContactData> newContactDtos);
-	
+	/**
+	 * Lấy danh sách liên hệ đang hoạt động cho một chủ sở hữu.
+	 */
 	List<CoreContact> findActiveByOwnerInApp(String ownerType, String ownerValue, String appCode);
-	
-	List<CoreContact> findAllActiveByOwner(String ownerType, String ownerValue);
 	
 }

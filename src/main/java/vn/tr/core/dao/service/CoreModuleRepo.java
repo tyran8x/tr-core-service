@@ -9,8 +9,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreModule;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @Repository
 public interface CoreModuleRepo extends JpaRepository<CoreModule, Long>, JpaSpecificationExecutor<CoreModule> {
@@ -25,15 +25,21 @@ public interface CoreModuleRepo extends JpaRepository<CoreModule, Long>, JpaSpec
 	
 	boolean existsByIdAndAppCode(long id, @Nullable String appCode);
 	
+	/**
+	 * Tìm kiếm Module theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM.
+	 * Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động và được cập nhật gần nhất.
+	 *
+	 * @param code    Mã của module.
+	 * @param appCode Mã của ứng dụng.
+	 *
+	 * @return Một danh sách các CoreModule tìm thấy, đã được sắp xếp.
+	 */
+	@Query("SELECT m FROM CoreModule m WHERE m.code = :code AND m.appCode = :appCode ORDER BY m.deletedAt ASC NULLS FIRST, m.updatedAt DESC")
+	List<CoreModule> findAllByCodeAndAppCodeIncludingDeletedSorted(@Param("code") String code, @Param("appCode") String appCode);
+	
+	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CoreModule g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
-	void softDeleteByIds(@Param("ids") Set<Long> ids);
-	
-	@Query("SELECT p.code FROM CoreModule p WHERE p.appCode = :appCode")
-	Set<String> findAllCodesByAppCode(@Param("appCode") String appCode);
-	
-	List<CoreModule> findByAppCodeIgnoreCaseAndCodeIgnoreCase(String appCode, String code);
-	
-	List<CoreModule> findAllByAppCode(String appCode);
+	@Query("UPDATE CoreModule m SET m.deletedAt = CURRENT_TIMESTAMP WHERE m.id IN :ids")
+	void softDeleteByIds(@Param("ids") Collection<Long> ids);
 	
 }

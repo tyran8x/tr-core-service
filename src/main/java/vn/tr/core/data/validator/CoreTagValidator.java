@@ -7,7 +7,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
-import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.service.CoreTagService;
 import vn.tr.core.data.dto.CoreTagData;
 
@@ -38,30 +37,24 @@ public class CoreTagValidator implements Validator {
 		
 		CoreTagData data = (CoreTagData) target;
 		
-		String appCode = LoginHelper.getAppCode();
-//		if (appCode == null) {
-//			errors.reject(ERROR_APP_ID_NOT_FOUND, "Không thể xác định ứng dụng hiện tại.");
-//			return;
-//		}
-		
-		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), appCode, true)) {
+		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), true)) {
 			errors.rejectValue("code", ERROR_CODE_DUPLICATE, "Mã đã tồn tại.");
 		}
 		
-		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), appCode, false)) {
+		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), false)) {
 			errors.rejectValue("name", ERROR_NAME_DUPLICATE, "Tên đã tồn tại.");
 		}
 		
 	}
 	
-	private boolean isDuplicate(Long id, String value, String appCode, boolean isCode) {
+	private boolean isDuplicate(Long id, String value, boolean isCode) {
 		if (id != null) {
 			return isCode
-					? coreTagService.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, value, appCode)
-					: coreTagService.existsByIdNotAndNameIgnoreCaseAndAppCode(id, value, appCode);
+					? coreTagService.existsByIdNotAndCodeIgnoreCase(id, value)
+					: coreTagService.existsByIdNotAndNameIgnoreCase(id, value);
 		}
 		return isCode
-				? coreTagService.existsByCodeIgnoreCaseAndAppCode(value, appCode)
-				: coreTagService.existsByNameIgnoreCaseAndAppCode(value, appCode);
+				? coreTagService.existsByCodeIgnoreCase(value)
+				: coreTagService.existsByNameIgnoreCase(value);
 	}
 }

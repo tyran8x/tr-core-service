@@ -8,12 +8,19 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreApp;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 
+/**
+ * Repository interface cho thực thể CoreApp.
+ *
+ * @author tyran8x
+ * @version 2.3
+ */
 @Repository
 public interface CoreAppRepo extends JpaRepository<CoreApp, Long>, JpaSpecificationExecutor<CoreApp> {
 	
+	// --- Validation Methods ---
 	boolean existsByIdNotAndCodeIgnoreCase(long id, String code);
 	
 	boolean existsByIdNotAndNameIgnoreCase(long id, String name);
@@ -22,11 +29,14 @@ public interface CoreAppRepo extends JpaRepository<CoreApp, Long>, JpaSpecificat
 	
 	boolean existsByNameIgnoreCase(String name);
 	
-	boolean existsById(long id);
+	// --- Query Methods ---
+	List<CoreApp> findAllByCodeIn(Collection<String> codes);
 	
-	Optional<CoreApp> findFirstByCodeIgnoreCase(String code);
+	@Query("SELECT a FROM CoreApp a WHERE a.code = :code ORDER BY a.deletedAt ASC NULLS FIRST, a.updatedAt DESC")
+	List<CoreApp> findAllByCodeIgnoreCaseIncludingDeletedSorted(@Param("code") String code);
 	
+	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CoreApp g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
-	void softDeleteByIds(@Param("ids") Set<Long> ids);
+	@Query("UPDATE CoreApp a SET a.deletedAt = CURRENT_TIMESTAMP WHERE a.id IN :ids")
+	void softDeleteByIds(@Param("ids") Collection<Long> ids);
 }

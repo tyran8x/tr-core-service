@@ -5,38 +5,38 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 import vn.tr.core.dao.model.CoreTag;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
+/**
+ * Repository interface cho thực thể CoreTag.
+ *
+ * @author tyran8x
+ * @version 2.3
+ */
 @Repository
 public interface CoreTagRepo extends JpaRepository<CoreTag, Long>, JpaSpecificationExecutor<CoreTag> {
 	
-	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, @Nullable String appCode);
+	// --- Validation Methods ---
+	boolean existsByIdNotAndCodeIgnoreCase(long id, String code);
 	
-	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, @Nullable String appCode);
+	boolean existsByIdNotAndNameIgnoreCase(long id, String name);
 	
-	boolean existsByCodeIgnoreCaseAndAppCode(String code, @Nullable String appCode);
+	boolean existsByCodeIgnoreCase(String code);
 	
-	boolean existsByNameIgnoreCaseAndAppCode(String name, @Nullable String appCode);
+	boolean existsByNameIgnoreCase(String name);
 	
-	boolean existsByIdAndAppCode(long id, @Nullable String appCode);
+	// --- Query Methods ---
+	List<CoreTag> findAllByCodeIn(Collection<String> codes);
 	
-	boolean existsById(long id);
+	@Query("SELECT a FROM CoreTag a WHERE a.code = :code ORDER BY a.deletedAt ASC NULLS FIRST, a.updatedAt DESC")
+	List<CoreTag> findAllByCodeIgnoreCaseIncludingDeletedSorted(@Param("code") String code);
 	
-	Optional<CoreTag> findFirstByCodeIgnoreCase(String code);
-	
+	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CoreTag g SET g.deletedAt = CURRENT_TIMESTAMP WHERE g.id IN :ids")
-	void softDeleteByIds(@Param("ids") Set<Long> ids);
-	
-	List<CoreTag> findByCodeIn(Set<String> codes);
-	
-	@Query("SELECT t FROM CoreTag t WHERE t.code = :code")
-	List<CoreTag> findAllByCodeEvenIfDeleted(@Param("code") String code);
-	
+	@Query("UPDATE CoreTag a SET a.deletedAt = CURRENT_TIMESTAMP WHERE a.id IN :ids")
+	void softDeleteByIds(@Param("ids") Collection<Long> ids);
 }
