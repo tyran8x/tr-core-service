@@ -21,7 +21,6 @@ public class CoreAppInitializationService {
 	
 	// --- Constants ---
 	private static final String SYSTEM_APP_CODE = "SYSTEM";
-	private static final String NON_DELETABLE_TAG = "NON_DELETABLE"; // Mã tag
 	// --- Dependencies ---
 	private final CoreAppService coreAppService;
 	private final CoreRoleService coreRoleService;

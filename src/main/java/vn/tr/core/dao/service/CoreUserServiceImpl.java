@@ -7,6 +7,7 @@ import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -53,13 +54,14 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
+	@Cacheable(value = "coreUser", key = "#id")
 	public Optional<CoreUser> findById(Long id) {
 		return coreUserRepo.findById(id);
 	}
 	
 	@Override
-	public CoreUser save(CoreUser coreRole) {
-		return coreUserRepo.save(coreRole);
+	public CoreUser save(CoreUser coreUser) {
+		return coreUserRepo.save(coreUser);
 	}
 	
 	@Override
@@ -107,11 +109,13 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
+	@Cacheable(value = "coreUser", key = "'username:' + #username.toLowerCase()")
 	public Optional<CoreUser> findFirstByUsernameIgnoreCase(String username) {
 		return coreUserRepo.findFirstByUsernameIgnoreCase(username);
 	}
 	
 	@Override
+	@Cacheable(value = "coreUser", key = "'email:' + #email.toLowerCase()")
 	public Optional<CoreUser> findFirstByEmailIgnoreCase(String email) {
 		return coreUserRepo.findFirstByEmailIgnoreCase(email);
 	}
@@ -126,6 +130,16 @@ public class CoreUserServiceImpl implements CoreUserService {
 		SpringUtils.context().publishEvent(loginInfoEvent);
 	}
 	
+	/**
+	 * Build a LoginUser object from CoreUser and CoreUserApp.
+	 *
+	 * @param coreUser
+	 * 		the user entity
+	 * @param userAppAccess
+	 * 		the user's app access entity
+	 *
+	 * @return LoginUser object with permissions, groups, and roles
+	 */
 	@Override
 	public LoginUser buildLoginUser(CoreUser coreUser, CoreUserApp userAppAccess) {
 		LoginUser loginUser = new LoginUser();

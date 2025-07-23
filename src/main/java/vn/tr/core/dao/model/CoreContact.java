@@ -8,7 +8,6 @@ import org.hibernate.annotations.SQLRestriction;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.jpa.entity.BaseEntity;
 import vn.tr.common.jpa.entity.Identifiable;
-import vn.tr.common.jpa.entity.SoftDeletable;
 
 @Entity
 @Table(name = "core_contact")
@@ -20,7 +19,7 @@ import vn.tr.common.jpa.entity.SoftDeletable;
 @AllArgsConstructor
 @SQLDelete(sql = "UPDATE core_contact SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
-public class CoreContact extends BaseEntity implements Identifiable<Long>, SoftDeletable {
+public class CoreContact extends BaseEntity implements Identifiable<Long> {
 	
 	@Id
 	@Column(name = "id", unique = true, nullable = false)
