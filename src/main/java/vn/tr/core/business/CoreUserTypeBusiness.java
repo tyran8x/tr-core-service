@@ -46,46 +46,45 @@ public class CoreUserTypeBusiness {
 	/**
 	 * Tạo mới một loại người dùng. Yêu cầu quyền Super Admin.
 	 *
-	 * @param data         DTO chứa thông tin.
-	 * @param isSuperAdmin Cờ xác định người dùng có phải là Super Admin không.
+	 * @param data           DTO chứa thông tin.
+	 * @param appCodeContext Mã của ứng dụng mà nhóm thuộc về.
 	 *
 	 * @return Dữ liệu của loại người dùng sau khi đã được tạo.
 	 */
-	public CoreUserTypeData create(CoreUserTypeData data, boolean isSuperAdmin) {
-		checkSuperAdminPermission(isSuperAdmin);
-		return upsertByCode(data);
+	public CoreUserTypeData create(CoreUserTypeData data, String appCodeContext) {
+		data.setAppCode(appCodeContext);
+		return upsertByCode(data, appCodeContext);
 	}
 	
-	private void checkSuperAdminPermission(boolean isSuperAdmin) {
-		if (!isSuperAdmin) {
-			throw new PermissionDeniedException("Thao tác này yêu cầu quyền Super Admin.");
-		}
-	}
-	
-	private CoreUserTypeData upsertByCode(CoreUserTypeData data) {
+	private CoreUserTypeData upsertByCode(CoreUserTypeData data, String appCodeContext) {
 		CoreUserType userType = genericUpsertHelper.upsert(
 				data,
-				() -> coreUserTypeService.findByCodeIgnoreCaseIncludingDeleted(data.getCode()),
+				() -> coreUserTypeService.findByCodeAndAppCodeIncludingDeleted(data.getCode(), appCodeContext),
 				() -> coreUserTypeMapper.toEntity(data),
 				coreUserTypeMapper::updateEntityFromData,
-				coreUserTypeService.getRepository()
-		                                                  );
+				coreUserTypeService.getRepository());
 		return coreUserTypeMapper.toData(userType);
 	}
 	
 	/**
 	 * Cập nhật thông tin một loại người dùng. Yêu cầu quyền Super Admin.
 	 *
-	 * @param id           ID của loại người dùng cần cập nhật.
-	 * @param data         Dữ liệu mới.
-	 * @param isSuperAdmin Cờ xác định người dùng có phải là Super Admin không.
+	 * @param id             ID của loại người dùng cần cập nhật.
+	 * @param data           Dữ liệu mới.
+	 * @param appCodeContext Mã của ứng dụng mà nhóm thuộc về.
 	 *
 	 * @return Dữ liệu của loại người dùng sau khi đã được cập nhật.
 	 */
-	public CoreUserTypeData update(Long id, CoreUserTypeData data, boolean isSuperAdmin) {
-		checkSuperAdminPermission(isSuperAdmin);
-		coreUserTypeService.findById(id).orElseThrow(() -> new EntityNotFoundException(CoreUserType.class, id));
-		return upsertByCode(data);
+	public CoreUserTypeData update(Long id, CoreUserTypeData data, String appCodeContext) {
+		
+		CoreUserType existingCoreUserType = coreUserTypeService.findById(id).orElseThrow(() -> new EntityNotFoundException(CoreUserType.class, id));
+		// Kiểm tra quyền sở hữu trước khi thực hiện
+		if (!existingCoreUserType.getAppCode().equals(appCodeContext)) {
+			throw new PermissionDeniedException("Không có quyền cập nhật nhóm thuộc ứng dụng khác.");
+		}
+		
+		data.setAppCode(appCodeContext);
+		return upsertByCode(data, appCodeContext);
 	}
 	
 	/**
@@ -100,6 +99,12 @@ public class CoreUserTypeBusiness {
 				.orElseThrow(() -> new EntityNotFoundException(CoreUserType.class, id));
 		validateDeletable(userType);
 		coreUserTypeService.deleteByIds(List.of(id));
+	}
+	
+	private void checkSuperAdminPermission(boolean isSuperAdmin) {
+		if (!isSuperAdmin) {
+			throw new PermissionDeniedException("Thao tác này yêu cầu quyền Super Admin.");
+		}
 	}
 	
 	private void validateDeletable(CoreUserType userType) {

@@ -4,8 +4,8 @@ import vn.tr.common.core.domain.model.LoginBody;
 import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.exception.ServiceException;
 import vn.tr.common.core.utils.SpringUtils;
-import vn.tr.core.data.CoreClientData;
 import vn.tr.core.data.LoginResult;
+import vn.tr.core.data.dto.CoreClientData;
 
 /**
  * Interface định nghĩa "hợp đồng" cho các chiến lược xác thực khác nhau trong hệ thống.
@@ -19,10 +19,8 @@ public interface IAuthStrategy {
 	 * (SỬA) Điểm vào (Entry Point) để điều phối việc đăng nhập. Tên mới: executeLogin để phân biệt với phương thức instance. Nó tìm và ủy quyền cho
 	 * chiến lược phù hợp.
 	 *
-	 * @param loginBody
-	 * 		Đối tượng chứa thông tin đăng nhập.
-	 * @param coreClientData
-	 * 		Dữ liệu của client.
+	 * @param loginBody      Đối tượng chứa thông tin đăng nhập.
+	 * @param coreClientData Dữ liệu của client.
 	 *
 	 * @return Kết quả đăng nhập chứa token.
 	 */
@@ -49,10 +47,8 @@ public interface IAuthStrategy {
 	/**
 	 * (SỬA) Điểm vào (Entry Point) để điều phối việc đăng ký. Tên mới: executeRegister. Nó tìm và ủy quyền cho chiến lược đăng ký mặc định.
 	 *
-	 * @param registerBody
-	 * 		Đối tượng chứa thông tin đăng ký.
-	 * @param coreClientData
-	 * 		Dữ liệu của client.
+	 * @param registerBody   Đối tượng chứa thông tin đăng ký.
+	 * @param coreClientData Dữ liệu của client.
 	 */
 	static void executeRegister(RegisterBody registerBody, CoreClientData coreClientData) {
 		if (!SpringUtils.containsBean(DEFAULT_REGISTER_STRATEGY_BEAN_NAME)) {

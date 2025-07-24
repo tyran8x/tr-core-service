@@ -13,8 +13,8 @@ import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.websocket.dto.WebSocketMessageDto;
 import vn.tr.common.websocket.utils.WebSocketUtils;
 import vn.tr.core.dao.service.CoreUserService;
-import vn.tr.core.data.CoreClientData;
 import vn.tr.core.data.LoginResult;
+import vn.tr.core.data.dto.CoreClientData;
 import vn.tr.core.security.service.IAuthStrategy;
 
 import java.util.List;

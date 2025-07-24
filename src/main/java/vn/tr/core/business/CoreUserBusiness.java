@@ -17,15 +17,14 @@ import vn.tr.common.jpa.helper.GenericUpsertHelper;
 import vn.tr.common.web.data.dto.BulkOperationResult;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.common.web.utils.PagedResult;
-import vn.tr.core.dao.model.CoreUser;
-import vn.tr.core.dao.model.CoreUserApp;
-import vn.tr.core.dao.model.CoreUserGroup;
-import vn.tr.core.dao.model.CoreUserRole;
+import vn.tr.core.dao.model.*;
 import vn.tr.core.dao.service.*;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 import vn.tr.core.data.dto.CoreContactData;
 import vn.tr.core.data.dto.CoreUserData;
+import vn.tr.core.data.dto.CoreWorkSpaceItemData;
 import vn.tr.core.data.mapper.CoreUserMapper;
+import vn.tr.core.data.mapper.CoreWorkSpaceItemMapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -61,6 +60,8 @@ public class CoreUserBusiness {
 	// Helpers & Event Publisher
 	private final GenericUpsertHelper genericUpsertHelper;
 	private final AssociationSyncHelper associationSyncHelper;
+	private final CoreWorkSpaceItemService coreWorkSpaceItemService;
+	private final CoreWorkSpaceItemMapper coreWorkSpaceItemMapper;
 	
 	/**
 	 * Tạo mới một người dùng.
@@ -187,21 +188,6 @@ public class CoreUserBusiness {
 		syncUserTags(user, userData.getTagCodes());
 	}
 	
-	private void syncUserContacts(CoreUser user, String appCodeContext, Collection<CoreContactData> contacts) {
-		if (contacts != null) {
-			coreContactService.synchronizeContactsForOwnerInApp(CoreUser.class.getSimpleName(), user.getUsername(), appCodeContext, contacts);
-		}
-	}
-	
-	/**
-	 * **HÀM MỚI:** Đóng gói logic đồng bộ hóa thẻ tag cho người dùng.
-	 */
-	private void syncUserTags(CoreUser user, Set<String> tagCodes) {
-		if (tagCodes != null) {
-			coreTagAssignmentService.synchronizeTagsForTaggable(CoreUser.class.getSimpleName(), user.getUsername(), tagCodes);
-		}
-	}
-	
 	/**
 	 * Map Entity sang DTO và tải các quan hệ liên quan.
 	 */
@@ -254,6 +240,21 @@ public class CoreUserBusiness {
 	// =================================================================================================================
 	// Private Orchestration & Helper Methods
 	// =================================================================================================================
+	
+	private void syncUserContacts(CoreUser user, String appCodeContext, Collection<CoreContactData> contacts) {
+		if (contacts != null) {
+			coreContactService.synchronizeContactsForOwnerInApp(CoreUser.class.getSimpleName(), user.getUsername(), appCodeContext, contacts);
+		}
+	}
+	
+	/**
+	 * **HÀM MỚI:** Đóng gói logic đồng bộ hóa thẻ tag cho người dùng.
+	 */
+	private void syncUserTags(CoreUser user, Set<String> tagCodes) {
+		if (tagCodes != null) {
+			coreTagAssignmentService.synchronizeTagsForTaggable(CoreUser.class.getSimpleName(), user.getUsername(), tagCodes);
+		}
+	}
 	
 	/**
 	 * Map một danh sách Entities sang DTOs và tải các quan hệ một cách tối ưu (tránh N+1).
@@ -418,7 +419,7 @@ public class CoreUserBusiness {
 		// Tái sử dụng helper map hàng loạt để tối ưu hiệu năng
 		return mapEntitiesToDataWithRelationsInBatch(users, appCodeContext);
 	}
-	
+
 	@Transactional
 	public void updateStatus(String username, LifecycleStatus newStatus, String appCodeContext) {
 		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(username)
@@ -429,5 +430,26 @@ public class CoreUserBusiness {
 		
 		user.setStatus(newStatus);
 		coreUserService.save(user);
+	}
+	
+	@Transactional(readOnly = true)
+	public List<CoreWorkSpaceItemData> getUserWorkspace(String username, String appCodeContext) {
+		List<CoreWorkSpaceItem> items = coreWorkSpaceItemService.findActiveWorkspaceByOwner(
+				CoreUser.class.getSimpleName(),
+				username,
+				appCodeContext
+		                                                                                   );
+		return coreWorkSpaceItemMapper.toData(items);
+	}
+	
+	@Transactional
+	public List<CoreWorkSpaceItemData> updateUserWorkspace(String username, String appCodeContext, List<CoreWorkSpaceItemData> items) {
+		List<CoreWorkSpaceItem> savedItems = coreWorkSpaceItemService.synchronizeWorkspace(
+				CoreUser.class.getSimpleName(),
+				username,
+				appCodeContext,
+				items
+		                                                                                  );
+		return coreWorkSpaceItemMapper.toData(savedItems);
 	}
 }

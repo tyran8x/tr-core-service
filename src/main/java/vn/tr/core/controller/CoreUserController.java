@@ -19,6 +19,7 @@ import vn.tr.core.data.criteria.CoreUserSearchCriteria;
 import vn.tr.core.data.dto.CoreUserChangePasswordData;
 import vn.tr.core.data.dto.CoreUserChangeStatusData;
 import vn.tr.core.data.dto.CoreUserData;
+import vn.tr.core.data.dto.CoreWorkSpaceItemData;
 import vn.tr.core.data.validator.CoreUserValidator;
 
 import java.util.List;
@@ -214,5 +215,31 @@ public class CoreUserController {
 		// Nếu là Super Admin, appCode là null, sẽ lấy toàn bộ thông tin
 		CoreUserData coreUserData = coreUserBusiness.findById(loginUser.getUserId(), loginUser.getAppCode());
 		return R.ok(coreUserData);
+	}
+	
+	/**
+	 * Lấy cây workspace của người dùng đang đăng nhập.
+	 *
+	 * @param appCode Ngữ cảnh ứng dụng.
+	 *
+	 * @return Danh sách các item trong workspace.
+	 */
+	@GetMapping("/me/workspace")
+	public R<List<CoreWorkSpaceItemData>> getMyWorkspace(@AppCode String appCode) {
+		return R.ok(coreUserBusiness.getUserWorkspace(LoginHelper.getUsername(), appCode));
+	}
+	
+	/**
+	 * Cập nhật (đồng bộ hóa) toàn bộ cây workspace của người dùng đang đăng nhập.
+	 *
+	 * @param items   Danh sách các item mới.
+	 * @param appCode Ngữ cảnh ứng dụng.
+	 *
+	 * @return Danh sách các item sau khi đã đồng bộ.
+	 */
+	@PutMapping("/me/workspace")
+	@Log(title = "Cập nhật Workspace cá nhân", businessType = BusinessType.UPDATE)
+	public R<List<CoreWorkSpaceItemData>> updateMyWorkspace(@RequestBody List<CoreWorkSpaceItemData> items, @AppCode String appCode) {
+		return R.ok(coreUserBusiness.updateUserWorkspace(LoginHelper.getUsername(), appCode, items));
 	}
 }

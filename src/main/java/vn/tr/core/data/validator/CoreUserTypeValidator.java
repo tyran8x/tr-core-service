@@ -44,24 +44,24 @@ public class CoreUserTypeValidator implements Validator {
 //			return;
 //		}
 		
-		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), true)) {
+		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), appCode, true)) {
 			errors.rejectValue("code", ERROR_CODE_DUPLICATE, "Mã đã tồn tại.");
 		}
 		
-		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), false)) {
+		if (StrUtil.isNotBlank(data.getName()) && isDuplicate(data.getId(), data.getName(), appCode, false)) {
 			errors.rejectValue("name", ERROR_NAME_DUPLICATE, "Tên đã tồn tại.");
 		}
 		
 	}
 	
-	private boolean isDuplicate(Long id, String value, boolean isCode) {
+	private boolean isDuplicate(Long id, String value, String appCode, boolean isCode) {
 		if (id != null) {
 			return isCode
-					? coreUserTypeService.existsByIdNotAndCodeIgnoreCase(id, value)
-					: coreUserTypeService.existsByIdNotAndNameIgnoreCase(id, value);
+					? coreUserTypeService.existsByIdNotAndCodeIgnoreCaseAndAppCode(id, value, appCode)
+					: coreUserTypeService.existsByIdNotAndNameIgnoreCaseAndAppCode(id, value, appCode);
 		}
 		return isCode
-				? coreUserTypeService.existsByCodeIgnoreCase(value)
-				: coreUserTypeService.existsByNameIgnoreCase(value);
+				? coreUserTypeService.existsByCodeIgnoreCaseAndAppCode(value, appCode)
+				: coreUserTypeService.existsByNameIgnoreCaseAndAppCode(value, appCode);
 	}
 }

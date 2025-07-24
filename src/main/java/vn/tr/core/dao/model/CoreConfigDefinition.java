@@ -2,6 +2,7 @@ package vn.tr.core.dao.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -15,7 +16,7 @@ import vn.tr.common.jpa.entity.Identifiable;
 @Getter
 @Setter
 @ToString
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @SQLDelete(sql = "UPDATE core_config_definition SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")

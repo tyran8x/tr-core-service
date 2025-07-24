@@ -51,7 +51,8 @@ public class CoreUserTypeController {
 	@PostMapping
 	@Log(title = "Tạo mới Loại người dùng", businessType = BusinessType.INSERT)
 	public R<CoreUserTypeData> create(@Valid @RequestBody CoreUserTypeData data) {
-		return R.ok(coreUserTypeBusiness.create(data, LoginHelper.isSuperAdmin()));
+		String appCodeContext = LoginHelper.getAppCode();
+		return R.ok(coreUserTypeBusiness.create(data, appCodeContext));
 	}
 	
 	/**
@@ -65,7 +66,8 @@ public class CoreUserTypeController {
 	@PutMapping("/{id}")
 	@Log(title = "Cập nhật Loại người dùng", businessType = BusinessType.UPDATE)
 	public R<CoreUserTypeData> update(@PathVariable Long id, @Valid @RequestBody CoreUserTypeData data) {
-		return R.ok(coreUserTypeBusiness.update(id, data, LoginHelper.isSuperAdmin()));
+		String appCodeContext = LoginHelper.getAppCode();
+		return R.ok(coreUserTypeBusiness.update(id, data, appCodeContext));
 	}
 	
 	/**

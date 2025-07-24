@@ -23,8 +23,8 @@ import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.dao.service.CoreUserAppService;
 import vn.tr.core.dao.service.CoreUserService;
-import vn.tr.core.data.CoreClientData;
 import vn.tr.core.data.LoginResult;
+import vn.tr.core.data.dto.CoreClientData;
 import vn.tr.core.security.service.IAuthStrategy;
 
 import java.util.Optional;
@@ -140,10 +140,8 @@ public class EmailAuthStrategy implements IAuthStrategy {
 	/**
 	 * Helper method để xác thực mã OTP.
 	 *
-	 * @param email
-	 * 		Email của người dùng.
-	 * @param otpCode
-	 * 		Mã OTP người dùng nhập.
+	 * @param email   Email của người dùng.
+	 * @param otpCode Mã OTP người dùng nhập.
 	 */
 	private void validateOtp(String email, String otpCode) {
 		if (otpCode == null || otpCode.isBlank()) {

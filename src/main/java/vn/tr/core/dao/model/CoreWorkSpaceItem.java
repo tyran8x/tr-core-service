@@ -50,7 +50,7 @@ public class CoreWorkSpaceItem extends BaseCommonEntity {
 	@Column(name = "item_config", columnDefinition = "jsonb")
 	private String itemConfig;
 	
-	@Column(name = "app_id")
+	@Column(name = "app_code")
 	private String appCode;
 	
 }

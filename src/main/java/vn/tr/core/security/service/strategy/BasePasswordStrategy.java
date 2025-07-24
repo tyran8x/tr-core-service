@@ -21,8 +21,8 @@ import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.dao.service.CoreUserAppService;
 import vn.tr.core.dao.service.CoreUserService;
-import vn.tr.core.data.CoreClientData;
 import vn.tr.core.data.LoginResult;
+import vn.tr.core.data.dto.CoreClientData;
 import vn.tr.core.security.service.IAuthStrategy;
 
 import java.util.Optional;

@@ -1,38 +1,44 @@
 package vn.tr.core.dao.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import vn.tr.core.dao.model.CoreWorkSpaceItem;
-import vn.tr.core.data.criteria.CoreWorkSpaceItemSearchCriteria;
+import vn.tr.core.data.dto.CoreWorkSpaceItemData;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
+/**
+ * Interface cho CoreWorkSpaceItemService, đóng vai trò như một Domain Service.
+ * Cung cấp nghiệp vụ "đồng bộ hóa workspace" có thể tái sử dụng.
+ *
+ * @author tyran8x
+ * @version 2.0
+ */
 public interface CoreWorkSpaceItemService {
 	
-	Optional<CoreWorkSpaceItem> findById(Long id);
+	/**
+	 * Đồng bộ hóa (thêm/sửa/xóa) toàn bộ cây workspace cho một chủ sở hữu.
+	 *
+	 * @param ownerType       Loại chủ sở hữu (vd: "CoreUser").
+	 * @param ownerValue      Giá trị định danh của chủ sở hữu (vd: username).
+	 * @param appCode         Mã ứng dụng.
+	 * @param newItemDataList Collection các DTO chứa trạng thái mới của workspace.
+	 *
+	 * @return Danh sách các thực thể CoreWorkSpaceItem đã được đồng bộ hóa.
+	 */
+	List<CoreWorkSpaceItem> synchronizeWorkspace(
+			String ownerType,
+			String ownerValue,
+			String appCode,
+			Collection<CoreWorkSpaceItemData> newItemDataList
+	                                            );
 	
-	CoreWorkSpaceItem save(CoreWorkSpaceItem coreWorkSpaceItem);
+	/**
+	 * Lấy cây workspace đang hoạt động cho một chủ sở hữu.
+	 */
+	List<CoreWorkSpaceItem> findActiveWorkspaceByOwner(String ownerType, String ownerValue, String appCode);
 	
-	void delete(Long id);
-	
-	boolean existsById(Long id);
-	
-	Page<CoreWorkSpaceItem> findAll(CoreWorkSpaceItemSearchCriteria coreWorkSpaceItemSearchCriteria, Pageable pageable);
-	
-	List<CoreWorkSpaceItem> findAll(CoreWorkSpaceItemSearchCriteria coreWorkSpaceItemSearchCriteria);
-	
-	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode);
-	
-	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode);
-	
-	boolean existsByCodeIgnoreCaseAndAppCode(String code, String appCode);
-	
-	boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode);
-	
-	boolean existsByIdAndAppCode(long id, String appCode);
-	
-	void deleteByIds(Set<Long> ids);
-	
+	/**
+	 * Kiểm tra xem một item có item con hay không.
+	 */
+	boolean hasChildren(Long parentId);
 }

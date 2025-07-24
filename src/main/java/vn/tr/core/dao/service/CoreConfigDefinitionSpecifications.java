@@ -2,32 +2,24 @@ package vn.tr.core.dao.service;
 
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import vn.tr.common.jpa.helper.CriteriaBuilderHelper;
 import vn.tr.core.dao.model.CoreConfigDefinition;
+import vn.tr.core.dao.model.CoreConfigDefinition_;
+import vn.tr.core.data.criteria.CoreConfigDefinitionSearchCriteria;
 
-import java.util.ArrayList;
-import java.util.List;
-
-class CoreConfigDefinitionSpecifications {
+public class CoreConfigDefinitionSpecifications {
 	
 	private CoreConfigDefinitionSpecifications() {
 	
 	}
 	
-	public static Specification<CoreConfigDefinition> quickSearch(final String maUngDung, final String code, final Boolean trangThai) {
+	public static Specification<CoreConfigDefinition> quickSearch(final CoreConfigDefinitionSearchCriteria criteria) {
 		return (root, query, cb) -> {
-			List<Predicate> predicates = new ArrayList<>();
-			predicates.add(cb.equal(root.<String>get("daXoa"), false));
-			
-			if (maUngDung != null && !maUngDung.isEmpty()) {
-				predicates.add(cb.equal(root.<String>get("maUngDung"), maUngDung));
-			}
-			if (code != null && !code.isEmpty()) {
-				predicates.add(cb.equal(root.<String>get("code"), code));
-			}
-			if (trangThai != null) {
-				predicates.add(cb.equal(root.<String>get("trangThai"), trangThai));
-			}
-			return cb.and(predicates.toArray(new Predicate[]{}));
+			Predicate textSearchCondition = CriteriaBuilderHelper.createOrUnaccentedLike(cb, root, criteria.getSearch(),
+					CoreConfigDefinition_.key, CoreConfigDefinition_.defaultValue);
+			Predicate statusCondition = CriteriaBuilderHelper.createEquals(cb, root, CoreConfigDefinition_.status, criteria.getStatus());
+			Predicate idsCondition = CriteriaBuilderHelper.createIn(cb, root, CoreConfigDefinition_.id, criteria.getIds());
+			return CriteriaBuilderHelper.and(cb, textSearchCondition, statusCondition, idsCondition);
 		};
 	}
 }
