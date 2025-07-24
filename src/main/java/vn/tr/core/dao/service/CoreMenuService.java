@@ -29,12 +29,15 @@ public interface CoreMenuService {
 	
 	List<CoreMenu> findAllByAppCodeIncludingDeleted(String appCode);
 	
-	void markAllAsPendingDeletionForApp(String appCode);
-	
-	int deletePendingMenusForApp(String appCode);
-	
 	List<CoreMenu> findAllByAppCode(String appCode);
 	
 	boolean hasChildren(Long menuId);
+	
+	void saveAll(Iterable<CoreMenu> menus);
+	
+	/**
+	 * BỔ SUNG: Xóa mềm một danh sách các thực thể menu.
+	 */
+	void softDeleteAll(List<CoreMenu> menusToDelete);
 	
 }

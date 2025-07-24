@@ -19,7 +19,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Service chịu trách nhiệm đồng bộ hóa cấu trúc Menu và Quyền từ Frontend.
+ * Service chịu trách nhiệm đồng bộ hóa cấu trúc Menu, Module và Quyền hạn từ một cấu trúc routes được định nghĩa ở Frontend. Dịch vụ này giúp tự động
+ * hóa việc quản lý các tài nguyên RBAC cơ bản, giảm thiểu sai sót do con người.
+ *
+ * @author tyran8x
+ * @version 2.0
  */
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,13 @@ public class CoreSyncService {
 	private final CoreModuleService coreModuleService;
 	private final ObjectMapper objectMapper;
 	
+	/**
+	 * Đồng bộ hóa toàn bộ cấu trúc routes từ Frontend vào database của core-service. Thao tác này sẽ thêm mới/cập nhật các Module, Permission, Menu
+	 * và xóa mềm các Menu không còn tồn tại.
+	 *
+	 * @param appCode        Mã của ứng dụng cần đồng bộ hóa.
+	 * @param routesAsObject Dữ liệu routes từ Frontend, thường là một List<Map<String, Object>>.
+	 */
 	@Transactional
 	public void syncRoutesFromFrontend(String appCode, Object routesAsObject) {
 		log.info("Bắt đầu đồng bộ hóa routes cho app: {}", appCode);
@@ -38,67 +49,127 @@ public class CoreSyncService {
 		
 		List<RouteRecordRawData> routeRecordRaws = objectMapper.convertValue(routesAsObject, new TypeReference<>() {
 		});
-		
 		if (routeRecordRaws == null || routeRecordRaws.isEmpty()) {
-			log.info("Danh sách routes trống, không có gì để đồng bộ.");
+			log.warn("Danh sách routes trống cho app '{}', không có gì để đồng bộ.", appCode);
+			// Cân nhắc xóa tất cả menu của app này nếu nghiệp vụ yêu cầu
 			return;
 		}
 		
-		// --- BƯỚC 1: Đánh dấu tất cả menu hiện có là "chờ xóa" ---
-		coreMenuService.markAllAsPendingDeletionForApp(appCode);
+		// --- BƯỚC 1: Tải trước toàn bộ dữ liệu hiện có để thao tác in-memory, tránh N+1 query ---
+		Map<String, CoreModule> existingModulesMap = coreModuleService.findAllByAppCode(appCode).stream()
+				.collect(Collectors.toMap(CoreModule::getCode, Function.identity()));
 		
-		// --- BƯỚC 2: Thu thập, tạo mới và đồng bộ Modules & Permissions ---
-		Set<String> moduleCodesFromFE = extractModuleCodes(routeRecordRaws);
-		syncModules(moduleCodesFromFE, appCode);
+		Map<String, CorePermission> existingPermissionsMap = corePermissionService.findAllByAppCode(appCode).stream()
+				.collect(Collectors.toMap(CorePermission::getCode, Function.identity()));
 		
-		Set<String> permissionCodesFromFE = new HashSet<>();
-		collectAllPermissionCodesRecursively(routeRecordRaws, permissionCodesFromFE);
-		syncPermissions(permissionCodesFromFE, appCode);
+		Map<String, CoreMenu> existingMenusMap = coreMenuService.findAllByAppCode(appCode).stream()
+				.collect(Collectors.toMap(CoreMenu::getCode, Function.identity()));
 		
-		// --- BƯỚC 3: Xây dựng và lưu lại cấu trúc Menu theo kiểu cây ---
-		saveMenuHierarchy(routeRecordRaws, null, appCode);
+		// --- BƯỚC 2: Đồng bộ Modules và Permissions (thêm mới nếu chưa có) ---
+		syncModules(routeRecordRaws, appCode, existingModulesMap);
+		syncPermissions(routeRecordRaws, appCode, existingPermissionsMap, existingModulesMap);
 		
-		// --- BƯỚC 4: Dọn dẹp các menu không còn tồn tại ---
-		int deletedCount = coreMenuService.deletePendingMenusForApp(appCode);
-		log.info("Đã xóa {} menu không còn tồn tại.", deletedCount);
+		// --- BƯỚC 3: Xây dựng và đồng bộ Menu theo cấu trúc cây (Upsert) ---
+		List<CoreMenu> allMenusToUpsert = new ArrayList<>();
+		Set<String> activeMenuCodes = new HashSet<>();
+		upsertMenuHierarchy(routeRecordRaws, null, appCode, existingMenusMap, allMenusToUpsert, activeMenuCodes);
 		
-		log.info("Hoàn thành đồng bộ hóa routes. Tổng thời gian: {}ms", System.currentTimeMillis() - start);
+		// --- BƯỚC 4: Xác định và xóa mềm các menu không còn tồn tại ---
+		Set<String> menuCodesToDelete = existingMenusMap.keySet();
+		menuCodesToDelete.removeAll(activeMenuCodes);
+		
+		if (!menuCodesToDelete.isEmpty()) {
+			List<CoreMenu> menusToDelete = menuCodesToDelete.stream()
+					.map(existingMenusMap::get)
+					.collect(Collectors.toList());
+			coreMenuService.softDeleteAll(menusToDelete);
+			log.info("Đã xóa mềm {} menu không còn tồn tại cho app '{}'.", menusToDelete.size(), appCode);
+		}
+		
+		// --- BƯỚC 5: Lưu tất cả các thay đổi (thêm mới/cập nhật) cho Menu ---
+		if (!allMenusToUpsert.isEmpty()) {
+			coreMenuService.saveAll(allMenusToUpsert);
+			log.info("Đã lưu {} thay đổi cho menu của app '{}'.", allMenusToUpsert.size(), appCode);
+		}
+		
+		log.info("Hoàn thành đồng bộ hóa routes cho app '{}'. Tổng thời gian: {}ms", appCode, System.currentTimeMillis() - start);
 	}
 	
-	private void saveMenuHierarchy(List<RouteRecordRawData> routeDataList, @Nullable Long parentId, String appCode) {
+	private void syncModules(List<RouteRecordRawData> routes, String appCode, Map<String, CoreModule> existingModulesMap) {
+		Set<String> moduleCodesFromFE = routes.stream()
+				.map(RouteRecordRawData::getName).filter(StringUtils::isNotBlank).collect(Collectors.toSet());
+		
+		List<CoreModule> modulesToCreate = moduleCodesFromFE.stream()
+				.filter(code -> !existingModulesMap.containsKey(code))
+				.map(code -> CoreModule.builder().appCode(appCode).code(code).name(code).build())
+				.collect(Collectors.toList());
+		
+		if (!modulesToCreate.isEmpty()) {
+			List<CoreModule> savedModules = coreModuleService.saveAll(modulesToCreate);
+			savedModules.forEach(module -> existingModulesMap.put(module.getCode(), module));
+			log.info("Đã tự động tạo {} module mới cho app '{}'.", savedModules.size(), appCode);
+		}
+	}
+	
+	private void syncPermissions(List<RouteRecordRawData> routes, String appCode, Map<String, CorePermission> existingPermissionsMap,
+			Map<String, CoreModule> modulesMap) {
+		Set<String> permissionCodesFromFE = new HashSet<>();
+		collectAllPermissionCodesRecursively(routes, permissionCodesFromFE);
+		
+		List<CorePermission> permissionsToCreate = permissionCodesFromFE.stream()
+				.filter(code -> !existingPermissionsMap.containsKey(code))
+				.map(code -> {
+					String moduleCode = extractModuleCodeFromPermissionCode(code).orElse(null);
+					CoreModule module = (moduleCode != null) ? modulesMap.get(moduleCode) : null;
+					return CorePermission.builder()
+							.appCode(appCode)
+							.code(code)
+							.name(generatePermissionNameFromCode(code))
+							.moduleId(module != null ? module.getId() : null)
+							.build();
+				})
+				.collect(Collectors.toList());
+		
+		if (!permissionsToCreate.isEmpty()) {
+			corePermissionService.saveAll(permissionsToCreate);
+			log.info("Đã tự động tạo {} permission mới cho app '{}'.", permissionsToCreate.size(), appCode);
+		}
+	}
+	
+	private void upsertMenuHierarchy(List<RouteRecordRawData> routeDataList, @Nullable Long parentId, String appCode,
+			Map<String, CoreMenu> existingMenusMap, List<CoreMenu> allMenusToUpsert, Set<String> activeMenuCodes) {
 		int order = 0;
 		for (RouteRecordRawData routeData : routeDataList) {
-			if (StringUtils.isBlank(routeData.getName())) {
-				continue;
-			}
+			String menuCode = routeData.getName();
+			if (StringUtils.isBlank(menuCode)) continue;
+			
 			order++;
+			activeMenuCodes.add(menuCode);
 			
-			CoreMenu menu = coreMenuService.findByCodeSafely(appCode, routeData.getName()).orElseGet(CoreMenu::new);
-			
+			CoreMenu menu = existingMenusMap.getOrDefault(menuCode, new CoreMenu());
 			mapRouteToMenuEntity(menu, routeData, parentId, order, appCode);
-			
-			CoreMenu savedMenu = coreMenuService.save(menu);
+			allMenusToUpsert.add(menu);
 			
 			if (routeData.getChildren() != null && !routeData.getChildren().isEmpty()) {
-				saveMenuHierarchy(routeData.getChildren(), savedMenu.getId(), appCode);
+				// Để xử lý parentId cho các menu mới tạo, ta cần lưu menu cha trước để lấy ID.
+				// Điều này phá vỡ tối ưu "saveAll một lần".
+				// Một cách tiếp cận thực dụng là hy sinh một chút hiệu năng để đảm bảo tính đúng đắn.
+				CoreMenu savedParent = coreMenuService.save(menu);
+				upsertMenuHierarchy(routeData.getChildren(), savedParent.getId(), appCode, existingMenusMap, allMenusToUpsert, activeMenuCodes);
 			}
 		}
 	}
 	
 	private void mapRouteToMenuEntity(CoreMenu menu, RouteRecordRawData routeData, @Nullable Long parentId, int order, String appCode) {
 		menu.setAppCode(appCode);
-		
-		// Hoặc không cần làm gì nếu mặc định đã là null
 		menu.setParentId(parentId);
 		menu.setCode(routeData.getName());
 		menu.setName(routeData.getMeta() != null && StringUtils.isNotBlank(routeData.getMeta().getTitle())
 				? routeData.getMeta().getTitle()
 				: routeData.getName());
-		menu.setCode(routeData.getName());
 		menu.setPath(routeData.getPath());
 		menu.setComponent(routeData.getComponent());
 		menu.setSortOrder(order);
-		menu.setIsPendingDeletion(false);
 		
 		if (routeData.getMeta() != null) {
 			menu.setIcon(routeData.getMeta().getIcon());
@@ -106,17 +177,10 @@ public class CoreSyncService {
 			try {
 				menu.setExtraMeta(objectMapper.writeValueAsString(routeData.getMeta()));
 			} catch (JsonProcessingException e) {
-				log.error("mapRouteToMenuEntity: {}", e.getMessage());
+				log.error("Lỗi khi serialize meta cho menu '{}': {}", menu.getCode(), e.getMessage());
+				menu.setExtraMeta("{}");
 			}
-			
 		}
-	}
-	
-	private Set<String> extractModuleCodes(List<RouteRecordRawData> routes) {
-		return routes.stream()
-				.map(RouteRecordRawData::getName)
-				.filter(StringUtils::isNotBlank)
-				.collect(Collectors.toSet());
 	}
 	
 	private void collectAllPermissionCodesRecursively(List<RouteRecordRawData> routes, Set<String> permissions) {
@@ -127,46 +191,6 @@ public class CoreSyncService {
 			if (route.getChildren() != null && !route.getChildren().isEmpty()) {
 				collectAllPermissionCodesRecursively(route.getChildren(), permissions);
 			}
-		}
-	}
-	
-	private void syncModules(Set<String> moduleCodesFromFE, String appCode) {
-		if (moduleCodesFromFE.isEmpty()) return;
-		
-		Set<String> existingModuleCodes = coreModuleService.findAllCodesByAppCode(appCode);
-		moduleCodesFromFE.stream()
-				.filter(code -> !existingModuleCodes.contains(code))
-				.forEach(code -> coreModuleService.findOrCreate(code, code, appCode));
-	}
-	
-	private void syncPermissions(Set<String> permissionCodesFromFE, String appCode) {
-		if (permissionCodesFromFE.isEmpty()) return;
-		
-		Set<String> existingPermissionCodes = corePermissionService.findAllCodesByAppCode(appCode);
-		
-		Set<String> newPermissionCodes = permissionCodesFromFE.stream()
-				.filter(code -> !existingPermissionCodes.contains(code))
-				.collect(Collectors.toSet());
-		
-		if (!newPermissionCodes.isEmpty()) {
-			Map<String, CoreModule> modulesMap = coreModuleService.findAllByAppCode(appCode).stream()
-					.collect(Collectors.toMap(CoreModule::getCode, Function.identity()));
-			
-			List<CorePermission> permissionsToCreate = newPermissionCodes.stream()
-					.map(code -> {
-						String moduleCode = extractModuleCodeFromPermissionCode(code).orElse(null);
-						CoreModule module = (moduleCode != null) ? modulesMap.get(moduleCode) : null;
-						
-						return CorePermission.builder()
-								.appCode(appCode)
-								.code(code)
-								.name(generatePermissionNameFromCode(code))
-								.moduleId(module != null ? module.getId() : null)
-								.build();
-					})
-					.collect(Collectors.toList());
-			corePermissionService.saveAll(permissionsToCreate);
-			log.info("Đã tự động tạo {} permission mới cho app '{}'.", newPermissionCodes.size(), appCode);
 		}
 	}
 	

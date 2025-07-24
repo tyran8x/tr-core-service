@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -103,18 +104,6 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	}
 	
 	@Override
-	@Transactional
-	public void markAllAsPendingDeletionForApp(String appCode) {
-		coreMenuRepo.markAllAsPendingDeletionForApp(appCode);
-	}
-	
-	@Override
-	@Transactional
-	public int deletePendingMenusForApp(String appCode) {
-		return coreMenuRepo.softDeletePendingMenusForApp(appCode);
-	}
-	
-	@Override
 	@Transactional(readOnly = true)
 	public List<CoreMenu> findAllByAppCode(String appCode) {
 		return coreMenuRepo.findAllByAppCode(appCode);
@@ -124,6 +113,23 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	@Transactional(readOnly = true)
 	public boolean hasChildren(Long menuId) {
 		return coreMenuRepo.existsByParentId(menuId);
+	}
+	
+	@Override
+	public void saveAll(Iterable<CoreMenu> menus) {
+		coreMenuRepo.saveAll(menus);
+	}
+	
+	@Override
+	@Transactional
+	public void softDeleteAll(List<CoreMenu> menusToDelete) {
+		if (menusToDelete.isEmpty()) {
+			return;
+		}
+		List<Long> idsToDelete = menusToDelete.stream()
+				.map(CoreMenu::getId)
+				.collect(Collectors.toList());
+		coreMenuRepo.softDeleteByIds(idsToDelete);
 	}
 	
 }

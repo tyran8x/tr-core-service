@@ -25,9 +25,11 @@ public interface CoreModuleRepo extends JpaRepository<CoreModule, Long>, JpaSpec
 	
 	boolean existsByIdAndAppCode(long id, @Nullable String appCode);
 	
+	List<CoreModule> findAllByAppCode(String appCode);
+	
 	/**
-	 * Tìm kiếm Module theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM.
-	 * Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động và được cập nhật gần nhất.
+	 * Tìm kiếm Module theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM. Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động và được cập
+	 * nhật gần nhất.
 	 *
 	 * @param code    Mã của module.
 	 * @param appCode Mã của ứng dụng.

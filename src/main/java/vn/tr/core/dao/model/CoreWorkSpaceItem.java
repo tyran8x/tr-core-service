@@ -1,10 +1,8 @@
 package vn.tr.core.dao.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -16,7 +14,9 @@ import vn.tr.common.jpa.entity.BaseCommonEntity;
 @Getter
 @Setter
 @ToString
-@RequiredArgsConstructor
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
 @SQLDelete(sql = "UPDATE core_workspace_item SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class CoreWorkSpaceItem extends BaseCommonEntity {

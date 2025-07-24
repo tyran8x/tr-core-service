@@ -110,4 +110,14 @@ public class CoreModuleServiceImpl implements CoreModuleService {
 		return this.coreModuleRepo;
 	}
 	
+	@Override
+	public List<CoreModule> findAllByAppCode(String appCode) {
+		return coreModuleRepo.findAllByAppCode(appCode);
+	}
+	
+	@Override
+	public List<CoreModule> saveAll(Iterable<CoreModule> modules) {
+		return coreModuleRepo.saveAll(modules);
+	}
+	
 }

@@ -23,14 +23,6 @@ public interface CoreMenuRepo extends JpaRepository<CoreMenu, Long>, JpaSpecific
 	@Query("SELECT m FROM CoreMenu m WHERE m.appCode = :appCode")
 	List<CoreMenu> findAllByAppCodeIncludingDeleted(@Param("appCode") String appCode);
 	
-	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CoreMenu m SET m.isPendingDeletion = true WHERE m.appCode = :appCode AND m.deletedAt IS NULL")
-	void markAllAsPendingDeletionForApp(@Param("appCode") String appCode);
-	
-	@Modifying(clearAutomatically = true)
-	@Query("UPDATE CoreMenu m SET m.deletedAt = CURRENT_TIMESTAMP WHERE m.isPendingDeletion = true AND m.appCode = :appCode AND m.deletedAt IS NULL")
-	int softDeletePendingMenusForApp(@Param("appCode") String appCode);
-	
 	List<CoreMenu> findAllByAppCode(String appCode);
 	
 	boolean existsByParentId(Long parentId);

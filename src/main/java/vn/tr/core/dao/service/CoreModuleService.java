@@ -42,4 +42,11 @@ public interface CoreModuleService {
 	
 	JpaRepository<CoreModule, Long> getRepository();
 	
+	List<CoreModule> findAllByAppCode(String appCode);
+	
+	/**
+	 * BỔ SUNG: Lưu một danh sách các module.
+	 */
+	List<CoreModule> saveAll(Iterable<CoreModule> modules);
+	
 }

@@ -1,6 +1,5 @@
 package vn.tr.core.dao.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
@@ -159,10 +158,5 @@ public class CoreMenu extends BaseCommonEntity {
 	@JdbcTypeCode(SqlTypes.JSON)
 	@Column(name = "extra_meta", columnDefinition = "JSONB")
 	private String extraMeta;
-	
-	@JsonIgnore
-	@Column(name = "is_pending_deletion")
-	@Builder.Default
-	private Boolean isPendingDeletion = false;
 	
 }
