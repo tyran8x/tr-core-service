@@ -38,24 +38,23 @@ public class EmailAuthStrategy implements IAuthStrategy {
 	private final CoreUserAppService coreUserAppService;
 	
 	@Override
-	public LoginResult performLogin(LoginBody loginBody, CoreClientData coreClientData) {
+	public LoginResult performLogin(LoginBody loginBody, CoreClientData coreClientData, String appCode) {
 		if (!(loginBody instanceof EmailLoginBody emailLoginBody)) {
 			throw new ServiceException("Dữ liệu không hợp lệ cho grant type email.");
 		}
 		
 		String email = emailLoginBody.getEmail();
-		String otpCode = emailLoginBody.getCode(); // Giả sử 'code' là mã OTP
-		String appCode = emailLoginBody.getAppCode();
+		String otpCode = emailLoginBody.getCode();
 		
 		if (appCode == null || appCode.isBlank()) {
-			throw new ServiceException("App code là bắt buộc.");
+			appCode = emailLoginBody.getAppCode();
 		}
 		
 		// 1. Xác thực mã OTP
 		validateOtp(email, otpCode);
 		
 		// 2. Tìm người dùng bằng email
-		CoreUser coreUser = coreUserService.findFirstByEmailIgnoreCase(email) // <-- Tìm bằng email
+		CoreUser coreUser = coreUserService.findFirstByEmailIgnoreCase(email)
 				.orElseThrow(() -> new UserException("user.not.exists", email));
 		
 		// 3. Kiểm tra quyền truy cập ứng dụng

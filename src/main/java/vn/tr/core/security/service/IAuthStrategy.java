@@ -24,7 +24,7 @@ public interface IAuthStrategy {
 	 *
 	 * @return Kết quả đăng nhập chứa token.
 	 */
-	static LoginResult executeLogin(LoginBody loginBody, CoreClientData coreClientData) {
+	static LoginResult executeLogin(LoginBody loginBody, CoreClientData coreClientData, String appCode) {
 		String grantType = loginBody.getGrantType();
 		if (grantType == null || grantType.isBlank()) {
 			throw new ServiceException("Grant type không được để trống.");
@@ -36,13 +36,13 @@ public interface IAuthStrategy {
 		}
 		IAuthStrategy instance = SpringUtils.getBean(beanName);
 		// Gọi phương thức instance để thực thi logic
-		return instance.performLogin(loginBody, coreClientData);
+		return instance.performLogin(loginBody, coreClientData, appCode);
 	}
 	
 	/**
 	 * (SỬA) Phương thức instance để thực thi logic đăng nhập cụ thể. Tên mới: performLogin.
 	 */
-	LoginResult performLogin(LoginBody loginBody, CoreClientData coreClientData);
+	LoginResult performLogin(LoginBody loginBody, CoreClientData coreClientData, String appCode);
 	
 	/**
 	 * (SỬA) Điểm vào (Entry Point) để điều phối việc đăng ký. Tên mới: executeRegister. Nó tìm và ủy quyền cho chiến lược đăng ký mặc định.

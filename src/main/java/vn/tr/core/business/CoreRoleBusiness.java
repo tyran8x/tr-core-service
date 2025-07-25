@@ -65,14 +65,13 @@ public class CoreRoleBusiness {
 		return upsertByCode(data, appCodeContext);
 	}
 	
-	private CoreRoleData upsertByCode(CoreRoleData data, String appCodeContext) {
+	private CoreRoleData upsertByCode(CoreRoleData coreRoleData, String appCodeContext) {
 		CoreRole role = genericUpsertHelper.upsert(
-				data,
-				() -> coreRoleService.findByCodeAndAppCodeIncludingDeleted(data.getCode(), appCodeContext),
-				() -> coreRoleMapper.toEntity(data),
+				coreRoleData,
+				() -> coreRoleService.findByCodeAndAppCodeIncludingDeleted(coreRoleData.getCode(), appCodeContext),
+				() -> coreRoleMapper.toEntity(coreRoleData),
 				coreRoleMapper::updateEntityFromData,
-				coreRoleService.getRepository()
-		                                          );
+				coreRoleService.getRepository());
 		role.setAppCode(appCodeContext);
 		CoreRole savedRole = coreRoleService.save(role);
 		return coreRoleMapper.toData(savedRole);

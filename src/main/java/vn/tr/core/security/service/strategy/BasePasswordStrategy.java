@@ -39,7 +39,7 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 	protected final CoreUserAppService coreUserAppService;
 	
 	@Override
-	public LoginResult performLogin(LoginBody loginBody, CoreClientData coreClientData) {
+	public LoginResult performLogin(LoginBody loginBody, CoreClientData coreClientData, String appCode) {
 		if (!(loginBody instanceof PasswordLoginBody passwordBody)) {
 			throw new ServiceException("Dữ liệu không hợp lệ cho grant type password.");
 		}
@@ -49,9 +49,8 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 		
 		String username = passwordBody.getUsername();
 		String password = passwordBody.getPassword();
-		String appCode = passwordBody.getAppCode();
 		if (appCode == null || appCode.isBlank()) {
-			throw new ServiceException("App code là bắt buộc.");
+			appCode = passwordBody.getAppCode();
 		}
 		
 		CoreUser coreUser = coreUserService.findFirstByUsernameIgnoreCase(username)
@@ -75,6 +74,36 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 		
 		return createLoginResult(coreClientData);
 	}
+	
+	/**
+	 * Lớp con có thể override để thêm logic validate trước khi đăng nhập (ví dụ: captcha).
+	 */
+	protected void preLoginValidate(PasswordLoginBody passwordBody) {
+		// Mặc định không làm gì
+	}
+	
+	// --- CÁC HOOK METHOD CHO LỚP CON OVERRIDE ---
+	
+	private SaLoginParameter createLoginParameter(CoreClientData coreClientData, LoginUser loginUser) {
+		SaLoginParameter saLoginParameter = new SaLoginParameter();
+		saLoginParameter.setDeviceType(coreClientData.getDeviceType());
+		saLoginParameter.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
+		saLoginParameter.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
+		saLoginParameter.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
+		saLoginParameter.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
+		return saLoginParameter;
+	}
+	
+	private LoginResult createLoginResult(CoreClientData coreClientData) {
+		LoginResult loginResult = new LoginResult();
+		loginResult.setAccessToken(StpUtil.getTokenValue());
+		loginResult.setExpireIn(StpUtil.getTokenTimeout());
+		loginResult.setClientId(coreClientData.getClientId());
+		loginResult.setTokenType(StpUtil.getTokenName());
+		return loginResult;
+	}
+	
+	// --- CÁC PHƯƠNG THỨC HELPER ---
 	
 	@Override
 	@Transactional
@@ -113,40 +142,10 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 		coreUserService.recordLoginInfo(username, Constants.REGISTER, MessageUtils.message("user.register.success"));
 	}
 	
-	// --- CÁC HOOK METHOD CHO LỚP CON OVERRIDE ---
-	
 	/**
 	 * Lớp con có thể override để thêm logic validate trước khi đăng ký (ví dụ: captcha).
 	 */
 	protected void preRegisterValidate(RegisterBody registerBody) {
 		// Mặc định không làm gì
-	}
-	
-	/**
-	 * Lớp con có thể override để thêm logic validate trước khi đăng nhập (ví dụ: captcha).
-	 */
-	protected void preLoginValidate(PasswordLoginBody passwordBody) {
-		// Mặc định không làm gì
-	}
-	
-	// --- CÁC PHƯƠNG THỨC HELPER ---
-	
-	private SaLoginParameter createLoginParameter(CoreClientData coreClientData, LoginUser loginUser) {
-		SaLoginParameter saLoginParameter = new SaLoginParameter();
-		saLoginParameter.setDeviceType(coreClientData.getDeviceType());
-		saLoginParameter.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
-		saLoginParameter.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
-		saLoginParameter.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
-		saLoginParameter.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
-		return saLoginParameter;
-	}
-	
-	private LoginResult createLoginResult(CoreClientData coreClientData) {
-		LoginResult loginResult = new LoginResult();
-		loginResult.setAccessToken(StpUtil.getTokenValue());
-		loginResult.setExpireIn(StpUtil.getTokenTimeout());
-		loginResult.setClientId(coreClientData.getClientId());
-		loginResult.setTokenType(StpUtil.getTokenName());
-		return loginResult;
 	}
 }

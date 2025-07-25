@@ -10,6 +10,7 @@ import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.utils.ValidatorUtils;
 import vn.tr.common.encrypt.annotation.ApiEncrypt;
 import vn.tr.common.satoken.utils.LoginHelper;
+import vn.tr.common.web.annotation.AppCode;
 import vn.tr.common.websocket.dto.WebSocketMessageDto;
 import vn.tr.common.websocket.utils.WebSocketUtils;
 import vn.tr.core.dao.service.CoreUserService;
@@ -30,11 +31,11 @@ public class AuthController {
 	private final CoreUserService coreUserService;
 	private final ScheduledExecutorService scheduledExecutorService;
 	
-	@ApiEncrypt
 	@PostMapping("/login")
-	public R<LoginResult> login(@RequestBody LoginBody loginBody) {
+	public R<LoginResult> login(@RequestBody LoginBody loginBody, @AppCode String appCode) {
 		ValidatorUtils.validate(loginBody);
 		
+		log.info("APPCODE: {}", appCode);
 		String clientId = loginBody.getClientId();
 		CoreClientData coreClientData = new CoreClientData();
 		//		// client grantType
@@ -43,7 +44,7 @@ public class AuthController {
 		//		} else if (!UserConstants.NORMAL.equals(client.getTrangThai())) {
 		//			return R.fail(MessageUtils.message("auth.grant.type.blocked"));
 		//		}
-		LoginResult loginResult = IAuthStrategy.executeLogin(loginBody, coreClientData);
+		LoginResult loginResult = IAuthStrategy.executeLogin(loginBody, coreClientData, appCode);
 		
 		Long userId = LoginHelper.getUserId();
 		scheduledExecutorService.schedule(() -> {

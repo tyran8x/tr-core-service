@@ -1,5 +1,7 @@
 package vn.tr.core.controller;
 
+import cn.dev33.satoken.annotation.SaCheckPermission;
+import cn.dev33.satoken.annotation.SaCheckRole;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,8 @@ public class CoreMenuController {
 		binder.addValidators(coreMenuValidator);
 	}
 	
+	@SaCheckRole("CoreMenuList")
+	@SaCheckPermission("CoreMenuList")
 	@GetMapping("/tree")
 	@Log(title = "Lấy cây Menu", businessType = BusinessType.LIST, isSaveRequestData = false)
 	public R<List<CoreMenuData>> getMenuTree() {

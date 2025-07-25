@@ -132,10 +132,8 @@ public class CoreUserServiceImpl implements CoreUserService {
 	/**
 	 * Build a LoginUser object from CoreUser and CoreUserApp.
 	 *
-	 * @param coreUser
-	 * 		the user entity
-	 * @param userAppAccess
-	 * 		the user's app access entity
+	 * @param coreUser      the user entity
+	 * @param userAppAccess the user's app access entity
 	 *
 	 * @return LoginUser object with permissions, groups, and roles
 	 */
@@ -149,6 +147,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 		loginUser.setPermissionCodes(corePermissionService.findAllCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
 		loginUser.setGroupCodes(coreUserGroupService.findActiveGroupCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
 		loginUser.setRoleCodes(coreUserRoleService.findActiveRoleCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
+		log.info("LoginUser: {}", loginUser);
 		return loginUser;
 	}
 	

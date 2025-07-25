@@ -2,10 +2,9 @@ package vn.tr.core.data.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import vn.tr.common.web.data.dto.BaseData;
+import vn.tr.common.core.enums.LifecycleStatus;
 
 import java.util.List;
 import java.util.Set;
@@ -13,8 +12,9 @@ import java.util.Set;
 @Data
 @SuperBuilder
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class CoreUserData extends BaseData {
+public class CoreUserData {
+	
+	private Long id;
 	
 	private String username;
 	
@@ -37,4 +37,11 @@ public class CoreUserData extends BaseData {
 	
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String password;
+	
+	private LifecycleStatus status;
+	
+	@JsonProperty("statusName")
+	public String getStatusName() {
+		return LifecycleStatus.getLabelByStatus(this.status);
+	}
 }

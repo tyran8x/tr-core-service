@@ -7,7 +7,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.enums.UserType;
-import vn.tr.core.business.*;
+import vn.tr.core.business.CoreAppBusiness;
+import vn.tr.core.business.CoreRoleBusiness;
+import vn.tr.core.business.CoreUserBusiness;
+import vn.tr.core.business.CoreUserTypeBusiness;
 import vn.tr.core.data.dto.CoreAppData;
 import vn.tr.core.data.dto.CoreRoleData;
 import vn.tr.core.data.dto.CoreUserData;
@@ -28,13 +31,10 @@ import java.util.Set;
 @Slf4j
 public class CoreAppInitializationService {
 	
-	// --- Dependencies (giờ đây là các lớp Business) ---
 	private final CoreAppBusiness coreAppBusiness;
 	private final CoreRoleBusiness coreRoleBusiness;
 	private final CoreUserBusiness coreUserBusiness;
 	private final CoreUserTypeBusiness coreUserTypeBusiness;
-	private final CoreTagBusiness coreTagBusiness;
-	// ... có thể cần CoreTagAssignmentService nếu logic assignTag không nằm trong Business
 	
 	/**
 	 * Phương thức này được tự động gọi sau khi service được khởi tạo.
@@ -66,19 +66,17 @@ public class CoreAppInitializationService {
 		// Tầng Business đã có logic upsert, chúng ta chỉ cần gọi create.
 		// Quyền Super Admin được giả định là true vì đây là tiến trình hệ thống.
 		CoreAppData systemApp = coreAppBusiness.create(
-				CoreAppData.builder().code("SYSTEM").name("Hệ thống Chung").status(LifecycleStatus.ACTIVE).build(),
-				true // isSuperAdmin
-		                                              );
+				CoreAppData.builder().code("SYSTEM").name("Hệ thống Chung").status(LifecycleStatus.ACTIVE).build(), true);
 		
 		// 2. Tạo các Loại Người dùng (User Type)
-		upsertUserType(UserType.INTERNAL.getCode(), "Người dùng Nội bộ");
-		upsertUserType(UserType.EXTERNAL.getCode(), "Người dùng Ngoài");
-		upsertUserType(UserType.PARTNER.getCode(), "Đối tác Tích hợp");
+		upsertUserType(systemApp.getCode(), UserType.INTERNAL.getCode(), "Người dùng Nội bộ");
+		upsertUserType(systemApp.getCode(), UserType.EXTERNAL.getCode(), "Người dùng Ngoài");
+		upsertUserType(systemApp.getCode(), UserType.PARTNER.getCode(), "Đối tác Tích hợp");
 		
 		// 3. Tạo các Vai trò (Role) toàn cục
 		// Tham số appCodeContext là null vì chúng ta đang thao tác trên app SYSTEM với quyền Super Admin
-		upsertRole(null, "ROLE_SUPER_ADMIN", "Quản trị viên Cấp cao nhất", "SYSTEM");
-		upsertRole(null, "ROLE_USER", "Người dùng Cơ bản", "SYSTEM");
+		upsertRole("ROLE_SUPER_ADMIN", "Quản trị viên Cấp cao nhất", systemApp.getCode());
+		upsertRole("ROLE_USER", "Người dùng Cơ bản", systemApp.getCode());
 		
 		// 4. Tạo và cấu hình tài khoản 'root'
 		CoreUserData rootUserData = CoreUserData.builder()
@@ -103,31 +101,29 @@ public class CoreAppInitializationService {
 		log.info("Khởi tạo dữ liệu cho ứng dụng: {}...", appCode);
 		
 		// 1. Tạo App
-		CoreAppData app = coreAppBusiness.create(
-				CoreAppData.builder().code(appCode).name(appName).status(LifecycleStatus.ACTIVE).build(),
-				true // isSuperAdmin
-		                                        );
-		String upperAppCode = app.getCode().toUpperCase();
+		CoreAppData coreAppData = coreAppBusiness.create(CoreAppData.builder().code(appCode).name(appName).status(LifecycleStatus.ACTIVE).build(),
+				true);
+		String upperAppCode = coreAppData.getCode().toUpperCase();
 		
 		// 2. Tạo các vai trò
 		String adminRoleCode = "ROLE_" + upperAppCode + "_ADMIN";
-		upsertRole(null, adminRoleCode, "Quản trị viên " + app.getName(), app.getCode());
-		upsertRole(null, "ROLE_" + upperAppCode + "_USER", "Người dùng " + app.getName(), app.getCode());
+		upsertRole(adminRoleCode, "Quản trị viên " + coreAppData.getName(), coreAppData.getCode());
+		upsertRole("ROLE_" + upperAppCode + "_USER", "Người dùng " + coreAppData.getName(), coreAppData.getCode());
 		
 		for (Map.Entry<String, String> entry : customRoles.entrySet()) {
-			upsertRole(null, entry.getKey(), entry.getValue(), app.getCode());
+			upsertRole(entry.getKey(), entry.getValue(), coreAppData.getCode());
 		}
 		
 		// 3. Tạo và cấu hình tài khoản admin cho App
 		CoreUserData appAdminData = CoreUserData.builder()
 				.username(adminUsername)
-				.fullName("Admin " + app.getName())
+				.fullName("Admin " + coreAppData.getName())
 				.email(adminUsername + "@system.local")
 				.password("Admin@123")
 				.status(LifecycleStatus.ACTIVE)
 				.userTypeCode(UserType.INTERNAL.getCode())
-				.apps(Set.of(app.getCode())) // Gán vào app này
-				.roles(Set.of(adminRoleCode)) // Gán vai trò Admin của app này
+				.apps(Set.of(coreAppData.getCode()))
+				.roles(Set.of(adminRoleCode))
 				.build();
 		
 		// Gọi CoreUserBusiness.create. Super Admin (context null) đang tạo user cho một app cụ thể.
@@ -136,15 +132,14 @@ public class CoreAppInitializationService {
 	
 	// --- Private Helper Methods for Upserting ---
 	
-	private void upsertUserType(String code, String name) {
+	private void upsertUserType(String appCodeContext, String code, String name) {
 		CoreUserTypeData data = CoreUserTypeData.builder().code(code).name(name).status(LifecycleStatus.ACTIVE).build();
-		// Giả sử CoreUserTypeBusiness.create đã có logic upsert
-		coreUserTypeBusiness.create(data, null); // isSuperAdmin
+		coreUserTypeBusiness.create(data, appCodeContext);
 	}
 	
-	private void upsertRole(String appCodeContext, String code, String name, String appCodeForRole) {
-		CoreRoleData data = CoreRoleData.builder().code(code).name(name).status(LifecycleStatus.ACTIVE).appCode(appCodeForRole).build();
-		// Giả sử CoreRoleBusiness.create đã có logic upsert
+	private void upsertRole(String appCodeContext, String code, String name) {
+		log.info("AppCode: {}, code: {}, name : {}", appCodeContext, code, name);
+		CoreRoleData data = CoreRoleData.builder().code(code).name(name).status(LifecycleStatus.ACTIVE).appCode(appCodeContext).build();
 		coreRoleBusiness.create(data, appCodeContext);
 	}
 }

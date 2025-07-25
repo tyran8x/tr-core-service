@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
-import vn.tr.common.satoken.annotation.AppCode;
+import vn.tr.common.web.annotation.AppCode;
 import vn.tr.common.web.data.dto.BulkOperationResult;
 import vn.tr.common.web.data.dto.DeleteData;
 import vn.tr.common.web.utils.PagedResult;
