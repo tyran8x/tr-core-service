@@ -1,12 +1,17 @@
 package vn.tr.core.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.exception.base.InvalidEntityException;
+import vn.tr.common.excel.core.ExcelResult;
+import vn.tr.common.excel.utils.ExcelUtil;
 import vn.tr.common.log.annotation.Log;
 import vn.tr.common.log.enums.BusinessType;
 import vn.tr.common.satoken.utils.LoginHelper;
@@ -16,12 +21,11 @@ import vn.tr.common.web.data.dto.DeleteData;
 import vn.tr.common.web.utils.PagedResult;
 import vn.tr.core.business.CoreUserBusiness;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
-import vn.tr.core.data.dto.CoreUserChangePasswordData;
-import vn.tr.core.data.dto.CoreUserChangeStatusData;
-import vn.tr.core.data.dto.CoreUserData;
-import vn.tr.core.data.dto.CoreWorkSpaceItemData;
+import vn.tr.core.data.dto.*;
 import vn.tr.core.data.validator.CoreUserValidator;
+import vn.tr.core.listener.CoreUserImportListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -241,5 +245,18 @@ public class CoreUserController {
 	@Log(title = "Cập nhật Workspace cá nhân", businessType = BusinessType.UPDATE)
 	public R<List<CoreWorkSpaceItemData>> updateMyWorkspace(@RequestBody List<CoreWorkSpaceItemData> items, @AppCode String appCode) {
 		return R.ok(coreUserBusiness.updateUserWorkspace(LoginHelper.getUsername(), appCode, items));
+	}
+	
+	@Log(title = "User Management", businessType = BusinessType.IMPORT)
+	@PostMapping(value = "/importData", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public R<Void> importData(@RequestPart("file") MultipartFile file, boolean updateSupport) throws Exception {
+		ExcelResult<CoreUserImportData> result = ExcelUtil.importExcel(file.getInputStream(), CoreUserImportData.class,
+				new CoreUserImportListener(updateSupport));
+		return R.ok(result.getAnalysis());
+	}
+	
+	@PostMapping("/importTemplate")
+	public void importTemplate(HttpServletResponse response) {
+		ExcelUtil.exportExcel(new ArrayList<>(), "User data", CoreUserImportData.class, response);
 	}
 }

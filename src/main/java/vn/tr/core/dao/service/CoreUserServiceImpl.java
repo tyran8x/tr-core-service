@@ -122,7 +122,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 	@Override
 	public void recordLoginInfo(String userName, String status, String message) {
 		LoginInfoEvent loginInfoEvent = new LoginInfoEvent();
-		loginInfoEvent.setUserName(userName);
+		loginInfoEvent.setUsername(userName);
 		loginInfoEvent.setStatus(status);
 		loginInfoEvent.setMessage(message);
 		loginInfoEvent.setRequest(ServletUtils.getRequest());

@@ -37,7 +37,7 @@ public class CoreMenuController {
 		binder.addValidators(coreMenuValidator);
 	}
 	
-	@SaCheckRole("CoreMenuList")
+	@SaCheckRole("ROLE_SYT_ADMIN")
 	@SaCheckPermission("CoreMenuList")
 	@GetMapping("/tree")
 	@Log(title = "Lấy cây Menu", businessType = BusinessType.LIST, isSaveRequestData = false)
