@@ -1,93 +1,60 @@
+# ===================================================================
+# LOCAL OVERRIDE CONFIGURATION
+# ===================================================================
+# Kích hoạt profile này bằng cách đặt biến môi trường SPRING_PROFILES_ACTIVE=local
+
 server:
   port: 8989
-  servlet:
-    context-path: /
-  undertow:
-    max-http-post-size: -1
-    buffer-size: 512
-    direct-buffers: true
-    threads:
-      io: 8
-      worker: 256
-  shutdown: immediate
-eureka:
-  client:
-    register-with-eureka: false
-    serviceUrl:
-      defaultZone: http://localhost:8061/eureka
-core:
-  attachment:
-    host:
-      download: 'https://api.dnict.vn/v2/core'
+
 spring:
+  # Cấu hình kết nối DB cho môi trường local
   datasource:
-    url: jdbc:postgresql://localhost:5432/dev_core_service
+    url: jdbc:postgresql://10.49.41.112:5432/dev_core_service
     username: postgres
-    password: DnictPro@123
+    # Vẫn khuyến khích dùng biến môi trường cho local để tạo thói quen tốt
+    password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  # Cấu hình JPA cho local, 'validate' an toàn hơn 'update'
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    properties:
-      hibernate:
-        order_by:
-          default_null_ordering: last
-  jackson:
-    serialization:
-      FAIL_ON_EMPTY_BEANS: false
-      WRITE_DATES_AS_TIMESTAMPS: false
+  # Cấu hình Redis cho local
   data:
     redis:
-      host: localhost
+      host: 10.49.41.112
       port: 6379
-      password: 'DnictPro@123'
-      timeout: 10s
-      lettuce:
-        pool:
-          max-active: 8
-          max-wait: -1
-          max-idle: 8
-          min-idle: 0
-      ssl:
-        enabled: false
-  cache:
-    type: redis
-    redis:
-      time-to-live: 3600000
-      cache-null-values: true
-      enable-statistics: false
+      password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123}
+  # Cấu hình user bảo mật cho local
+  security:
+    user:
+      name: admin
+      password: "{noop}localpassword" # {noop} để không cần mã hóa password
+  cloud:
+    config:
+      enabled: false # Tắt Spring Cloud Config
+  boot:
+    admin:
+      client:
+        enabled: false # Tắt Spring Boot Admin Client
+# Vô hiệu hóa Eureka client khi chạy local
+eureka:
+  client:
+    enabled: false
 
-captcha:
-  enable: true
-  type: CHAR
-  category: CIRCLE
-  numberLength: 1
-  charLength: 4
-
+# Sa-Token cấu hình cho local debugging
 sa-token:
-  token-name: X-Token
-  # Whether to allow concurrent logins from the same account (if true, allow simultaneous logins, if false, new logins will replace old logins)
-  is-concurrent: true
-  # When multiple people log in to the same account, whether to share a token (if true, all logins share a token, if false, a new token is created for each login)
-  is-share: true
+  # Bật log chi tiết để dễ dàng debug
   is-log: true
-  # jwt
-  jwt-secret-key: DnictPro@123
-  token-style: uuid
+  jwt-secret-key: ${JWT_SECRET_KEY:DnictPro@123} # Dùng key khác cho local
 
-
-redisson:
-  keyPrefix: 'tr'
-  threads: 4
-  nettyThreads: 8
-  singleServerConfig:
-    clientName: ${app.name}
-    connectionMinimumIdleSize: 8
-    connectionPoolSize: 32
-    idleConnectionTimeout: 10000
-    timeout: 3000
-    subscriptionConnectionPoolSize: 50
-
-client:
-  notification-service:
-    url: http://api.dev.dnict.vn/v1/notification
+# Logging cho local
+logging:
+  level:
+    root: INFO
+    vn.tr: DEBUG # Bật log DEBUG cho code của bạn
+    cn.dev33.satoken: DEBUG # Bật log DEBUG cho Sa-Token
+    org.springframework.web: DEBUG # Xem chi tiết request/response
+    org.hibernate.SQL: DEBUG # Xem câu lệnh SQL được tạo ra

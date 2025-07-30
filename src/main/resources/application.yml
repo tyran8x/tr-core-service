@@ -1,69 +1,171 @@
+# ===================================================================
+# TR-CORE-SERVICE: CẤU HÌNH CƠ SỞ (BASE CONFIGURATION)
+# Phù hợp cho môi trường Production.
+# Các giá trị nhạy cảm và thay đổi theo môi trường được cung cấp qua
+# biến môi trường (ví dụ: Docker, Kubernetes) hoặc file .env (cho local).
+# ===================================================================
+
+# ===================================================================
+# 1. SERVER CONFIGURATION
+# ===================================================================
 server:
   port: 8989
   servlet:
     context-path: /
+  # Sử dụng Undertow cho hiệu suất cao trong môi trường non-blocking
   undertow:
-    max-http-post-size: -1
-    buffer-size: 512
-    direct-buffers: true
     threads:
-      io: 8
-      worker: 256
-  shutdown: immediate
+      io: ${UNDERTOW_IO_THREADS:16}        # Số luồng I/O nên tương đương số lõi CPU
+      worker: ${UNDERTOW_WORKER_THREADS:256}  # Số luồng xử lý tác vụ
+    direct-buffers: true
+    max-http-post-size: 100MB # Cho phép upload file lớn
+  # Tắt server một cách mượt mà, xử lý nốt các request đang chạy
+  shutdown: graceful
+  # Bật nén GZIP/Brotli để giảm băng thông
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css,image/svg+xml
+    min-response-size: 2048 # Chỉ nén response > 2KBadmin-server
+
+# ===================================================================
+# 2. SPRING FRAMEWORK
+# ===================================================================
 spring:
   application:
     name: tr-core-service
-  messages:
-    basename: i18n/messages # Đường dẫn message bundles
-  freemarker:
-    suffix: .ftl # Hậu tố file template Freemarker
+  # Kích hoạt profile theo biến môi trường. Mặc định là 'prod' để an toàn.
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:prod}
+  # Cấu hình để Spring Boot đọc file .env (hữu ích cho môi trường local)
   config:
-    import: "optional:configserver:"
-
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://10.49.41.112:5432/core_service}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123}
-  data:
-    redis:
-      host: ${SPRING_DATA_REDIS_HOST:10.49.41.112}
-      port: ${SPRING_DATA_REDIS_PORT:6379}
-      password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123}
-      timeout: ${SPRING_DATA_REDIS_TIMEOUT:10s}
-      lettuce:
-        pool:
-          max-active: ${REDIS_POOL_MAX_ACTIVE:8}
-          max-wait: ${REDIS_POOL_MAX_WAIT:-1ms} # Chờ vô hạn
-          max-idle: ${REDIS_POOL_MAX_IDLE:8}
-          min-idle: ${REDIS_POOL_MIN_IDLE:0}
-      ssl:
-        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:false}
-      repositories:
-        enabled: false # Tắt Spring Data Redis repositories nếu không dùng
-  boot:
-    admin:
-      client:
-        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://10.49.41.112:9090}
+    import:
+      - "optional:configserver:http://10.49.41.112:8888"
+  messages:
+    basename: i18n/messages
   servlet:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
+
+  # --- Datasource (PostgreSQL with HikariCP) ---
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://10.49.41.112:5432/core_service}
+    username: ${SPRING_DATASOURCE_USERNAME} # BẮT BUỘC cung cấp qua env
+    password: ${SPRING_DATASOURCE_PASSWORD} # BẮT BUỘC cung cấp qua env
+    driver-class-name: org.postgresql.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: HikariPool-CoreService
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:20}
+      minimum-idle: ${HIKARI_MIN_IDLE:5}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # --- Redis (Lettuce Pool) ---
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:10.49.41.112}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD} # BẮT BUỘC cung cấp qua env
+      timeout: 10s
+      ssl:
+        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:false}
+      lettuce:
+        pool:
+          max-active: ${REDIS_POOL_MAX_ACTIVE:32}
+          max-idle: ${REDIS_POOL_MAX_IDLE:16}
+          min-idle: ${REDIS_POOL_MIN_IDLE:4}
+
+  # --- Kafka ---
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:10.49.41.112:9092}
+    properties:
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ${spring.application.name} # Sử dụng tên ứng dụng làm group-id
+      auto-offset-reset: latest
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      missing-topics-fatal: false
+
+  # --- Spring Security ---
+  # Dùng để bảo vệ các endpoint quản trị (Actuator, DevOps Dashboard)
+  security:
+    user:
+      name: ${SECURITY_USER_NAME}       # BẮT BUỘC cung cấp qua env
+      password: ${SECURITY_USER_PASSWORD} # BẮT BUỘC cung cấp qua env
+      roles: ADMIN
+
+  boot:
+    admin:
+      client:
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://10.49.41.112:9090}
+
+# ===================================================================
+# 3. SA-TOKEN: AUTHENTICATION & AUTHORIZATION
+# ===================================================================
+sa-token:
+  token-name: X-Token
+  timeout: 604800
+  active-timeout: 259200
+  is-concurrent: true
+  is-share: true
+  token-style: jwt
+  jwt-secret-key: ${JWT_SECRET_KEY} # BẮT BUỘC cung cấp qua env, không có giá trị mặc định
+  is-log: false
+
+# ===================================================================
+# 4. MANAGEMENT & OBSERVABILITY
+# ===================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics, logfile
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+
+logging:
+  config: classpath:logback.xml
+  file:
+    path: ${LOGGING_FILE_PATH:/opt/logs}
+  level:
+    root: INFO
+    vn.tr: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+    cn.dev33.satoken: WARN
+
+# ===================================================================
+# 5. MICROSERVICE INFRASTRUCTURE
+# ===================================================================
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8061/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
   instance:
     prefer-ip-address: true
 
+# ===================================================================
+# 6. APPLICATION SPECIFIC CONFIGURATION
+# ===================================================================
 app:
   name: Tr-Pro-App
-  version: ${revision}
+  version: '@project.version@' # Lấy phiên bản từ Maven/Gradle
   copyrightYear: 2025
-  service:
-    # Ưu tiên biến môi trường APP_SERVICE_HOME, mặc định 10.49.41.112 cho dev
-    home: ${APP_SERVICE_HOME:http://10.49.41.112:8989/}
-    # Ưu tiên biến môi trường APP_SERVICE_SECURITY, mặc định 10.49.41.112 cho dev
-    security: ${APP_SERVICE_SECURITY:http://10.49.41.112:8989/login}
+
 core:
   attachment:
     host:
@@ -74,8 +176,8 @@ core:
 
 user:
   password:
-    maxRetryCount: 5
-    lockTime: 10
+    maxRetryCount: ${USER_PASSWORD_MAX_RETRY:5}
+    lockTime: ${USER_PASSWORD_LOCK_TIME:10} # Đơn vị: phút
 
 captcha:
   enable: ${CAPTCHA_ENABLED:true}
@@ -85,97 +187,56 @@ captcha:
   charLength: 4
 
 redisson:
-  keyPrefix: ${REDISSON_KEY_PREFIX:tr} # Tiền tố cho key trong Redis
+  keyPrefix: ${REDISSON_KEY_PREFIX:${spring.application.name}} # Tiền tố key Redisson
   threads: ${REDISSON_THREADS:4}
   nettyThreads: ${REDISSON_NETTY_THREADS:8}
-  singleServerConfig: # Giả định đang dùng Redis đơn
-    clientName: ${spring.application.name} # Dùng tên ứng dụng làm client name
+  singleServerConfig:
+    clientName: ${spring.application.name}
     connectionMinimumIdleSize: ${REDISSON_POOL_MIN_IDLE:8}
     connectionPoolSize: ${REDISSON_POOL_MAX_SIZE:32}
-    idleConnectionTimeout: ${REDISSON_IDLE_TIMEOUT:10000} # ms
-    timeout: ${REDISSON_CMD_TIMEOUT:3000} # ms
+    idleConnectionTimeout: ${REDISSON_IDLE_TIMEOUT:10000}
+    timeout: ${REDISSON_CMD_TIMEOUT:3000}
     subscriptionConnectionPoolSize: ${REDISSON_SUB_POOL_SIZE:50}
 
 websocket:
   enabled: ${WEBSOCKET_ENABLED:true}
   path: /resource/websocket
-  allowedOrigins: ${WEBSOCKET_ALLOWED_ORIGINS:} # Để trống nếu không có biến môi trường -> an toàn hơn '*'
-
-error:
-  handling:
-    http-status-in-json-response: true
-    handle-filter-chain-exceptions: true
-    exception-logging: WITH_STACKTRACE
-
-sa-token:
-  token-name: X-Token #X-Token
-  is-concurrent: true # Cho phép đăng nhập đồng thời
-  is-share: true      # Chia sẻ token giữa các lần đăng nhập đồng thời
-  is-log: false        # Bật log của Sa-Token
-
-  # jwt: # Block này có vẻ không dùng vì token-style là uuid? Nếu dùng JWT thì cần key
-  jwt-secret-key: ${SA_TOKEN_JWT_SECRET:DnictPro@123}
-  token-style: uuid # Đang dùng UUID làm token
+  # BẮT BUỘC: Cấu hình chính xác tên miền frontend của bạn để tránh tấn công CSRF/CORS
+  allowedOrigins: ${WEBSOCKET_ALLOWED_ORIGINS}
 
 security:
-  # Danh sách các đường dẫn không cần xác thực (thường là tài nguyên tĩnh, trang lỗi, swagger)
+  # Các đường dẫn này sẽ được bỏ qua bởi Sa-Token Interceptor.
+  # Lưu ý: /actuator/** và /sa-token/devops đã được gỡ bỏ khỏi đây
+  # vì chúng sẽ được bảo vệ bởi Spring Security.
   excludes:
-    - /*.html
-    - /**/*.html
-    - /**/*.css
-    - /**/*.js
+    - /css/**
+    - /js/**
+    - /img/**
+    - /assets/**
     - /favicon.ico
     - /error
-    - /*/api-docs/** # Cho phép truy cập Swagger/OpenAPI docs
-    # Thêm các endpoint công khai khác nếu cần: /public/**, /actuator/health/readiness, /actuator/health/liveness
+    - /doc.html
+    - /swagger-ui.html
+    - /swagger-ui/**
+    - /webjars/**
+    - /v3/api-docs/**
+    - /auth/login
+    - /auth/logout
+    - /auth/register
+    - /auth/captcha/code
+    - /mobile/**
+    - /attachment/download/**
+    - /webhook/**
+    - /p/**
+    - /eureka/**
 
-# --- API Decryption Configuration ---
 api-decrypt:
-  # 是否开启全局接口加密
-  enabled: true
-  # AES Encryption header identification
+  enabled: ${API_DECRYPT_ENABLED:false}
   headerFlag: encrypt-key
-  # Response encryption public key. Public and private key of asymmetric algorithm. For example: SM2, RSA users should replace it by themselves.
-  # 对应前端解密私钥 MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAmc3CuPiGL/LcIIm7zryCEIbl1SPzBkr75E2VMtxegyZ1lYRD+7TZGAPkvIsBcaMs6Nsy0L78n2qh+lIZMpLH8wIDAQABAkEAk82Mhz0tlv6IVCyIcw/s3f0E+WLmtPFyR9/WtV3Y5aaejUkU60JpX4m5xNR2VaqOLTZAYjW8Wy0aXr3zYIhhQQIhAMfqR9oFdYw1J9SsNc+CrhugAvKTi0+BF6VoL6psWhvbAiEAxPPNTmrkmrXwdm/pQQu3UOQmc2vCZ5tiKpW10CgJi8kCIFGkL6utxw93Ncj4exE/gPLvKcT+1Emnoox+O9kRXss5AiAMtYLJDaLEzPrAWcZeeSgSIzbL+ecokmFKSDDcRske6QIgSMkHedwND1olF8vlKsJUGK3BcdtM8w4Xq7BpSBwsloE=
-  publicKey: MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAJnNwrj4hi/y3CCJu868ghCG5dUj8wZK++RNlTLcXoMmdZWEQ/u02RgD5LyLAXGjLOjbMtC+/J9qofpSGTKSx/MCAwEAAQ==
-  # 请求解密私钥 非对称算法的公私钥 如：SM2，RSA 使用者请自行更换
-  # 对应前端加密公钥 MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKoR8mX0rGKLqzcWmOzbfj64K8ZIgOdHnzkXSOVOZbFu/TJhZ7rFAN+eaGkl3C4buccQd/EjEsj9ir7ijT7h96MCAwEAAQ==
-  privateKey: MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAqhHyZfSsYourNxaY7Nt+PrgrxkiA50efORdI5U5lsW79MmFnusUA355oaSXcLhu5xxB38SMSyP2KvuKNPuH3owIDAQABAkAfoiLyL+Z4lf4Myxk6xUDgLaWGximj20CUf+5BKKnlrK+Ed8gAkM0HqoTt2UZwA5E2MzS4EI2gjfQhz5X28uqxAiEA3wNFxfrCZlSZHb0gn2zDpWowcSxQAgiCstxGUoOqlW8CIQDDOerGKH5OmCJ4Z21v+F25WaHYPxCFMvwxpcw99EcvDQIgIdhDTIqD2jfYjPTY8Jj3EDGPbH2HHuffvflECt3Ek60CIQCFRlCkHpi7hthhYhovyloRYsM+IS9h/0BzlEAuO0ktMQIgSPT3aFAgJYwKpqRYKlLDVcflZFCKY7u3UP8iWi1Qw0Y=
-
-# --- CAS Configuration (Central Authentication Service) ---
-cas:
-  service:
-    # Ưu tiên biến môi trường CAS_SERVICE_LOGIN
-    login: ${CAS_SERVICE_LOGIN:https://dangnhap.danang.gov.vn/cas/login}
-    # Ưu tiên biến môi trường CAS_SERVICE_LOGOUT
-    logout: ${CAS_SERVICE_LOGOUT:https://dangnhap.danang.gov.vn/cas/logout}
-  url:
-    # Ưu tiên biến môi trường CAS_URL_PREFIX
-    prefix: ${CAS_URL_PREFIX:https://dangnhap.danang.gov.vn/cas}
-
-# --- Actuator Endpoints Configuration ---
-management:
-  endpoints:
-    web:
-      exposure:
-        # !!! QUAN TRỌNG: Chỉ expose các endpoint cần thiết, không dùng '*' !!!
-        include: health, info, metrics, prometheus # Các endpoint phổ biến để giám sát
-        # Có thể thêm: loggers (cần bảo mật), logfile (nếu đã cấu hình logging.file.name)
-        # exclude: env, configprops, heapdump, threaddump # Luôn loại trừ các endpoint nhạy cảm
-  endpoint:
-    health:
-      # Chỉ hiển thị chi tiết health khi được ủy quyền (kết hợp Spring Security cho /actuator)
-      show-details: when_authorized # An toàn hơn 'always'
-
-logging:
-  level:
-    vn.tr: ${LOGGING_LEVEL_VN_TR:INFO}
-    org.springframework: ${LOGGING_LEVEL_SPRINGFRAMEWORK:WARN}
-    org.mybatis.spring.mapper: ${LOGGING_LEVEL_MYBATIS:ERROR} # Giảm log của MyBatis
-  config: classpath:logback.xml
-  file:
-    name: ${LOG_PATH:/opt/logs}/${spring.application.name:tr-core-service}/sys-info.log
+  # BÍ MẬT: Các key này phải được cung cấp qua biến môi trường.
+  publicKey: ${API_DECRYPT_PUBLIC_KEY}
+  privateKey: ${API_DECRYPT_PRIVATE_KEY}
 
 client:
   notification-service:
-    url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://10.49.41.112:8000/v1/notification}
+    url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://notification-service:8000/v1/notification}

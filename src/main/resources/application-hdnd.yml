@@ -17,7 +17,7 @@ eureka:
 core:
   attachment:
     host:
-      download: 'https://csdlgtvt.danang.gov.vn:8080/v2/core'
+      download: 'http://49.156.54.41:8000/v2/core'
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/core_sys_service
