@@ -5,7 +5,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @EnableFeignClients
-@SpringBootApplication(scanBasePackages = {"vn.tr.core", "vn.tr.common"})
+@SpringBootApplication(scanBasePackages = {"vn.tr"})
 public class TrCoreServiceApplication {
 	
 	public static void main(String[] args) {
