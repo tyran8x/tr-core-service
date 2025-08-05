@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>vn.tr</groupId>
+        <groupId>io.github.tyran8x</groupId>
         <artifactId>tr-pro-app</artifactId>
         <version>1.0.0</version>
         <relativePath/>
@@ -23,85 +23,85 @@
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-jpa</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-core</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-web</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-redis</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-log</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-security</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-ratelimiter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-mail</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-sms</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-satoken</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-encrypt</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-websocket</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-feign</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <dependency>
-            <groupId>vn.tr</groupId>
+            <groupId>io.github.tyran8x</groupId>
             <artifactId>tr-common-excel</artifactId>
             <version>${revision}</version>
         </dependency>
