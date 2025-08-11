@@ -138,15 +138,12 @@ management:
         enabled: true
 
 logging:
-  config: classpath:logback.xml
-  file:
-    path: ${LOGGING_FILE_PATH:/opt/logs}
   level:
-    root: INFO
-    vn.tr: INFO
-    org.springframework: WARN
-    org.hibernate: WARN
-    cn.dev33.satoken: WARN
+    vn.tr: ${LOGGING_LEVEL_VN_TR:INFO}
+    org.springframework: ${LOGGING_LEVEL_SPRINGFRAMEWORK:WARN}
+  config: classpath:logback-spring.xml
+  file:
+    name: ${LOG_PATH:/opt/logs}/${spring.application.name:tr-config-service}/sys-info.log
 
 # ===================================================================
 # 5. MICROSERVICE INFRASTRUCTURE
