@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.tr.common.core.utils.StringUtils;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 
@@ -130,6 +131,17 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 				.map(CoreMenu::getId)
 				.collect(Collectors.toList());
 		coreMenuRepo.softDeleteByIds(idsToDelete);
+	}
+	
+	@Override
+	@Transactional
+	public void softDeleteAllByAppCode(String appCode) {
+		if (StringUtils.isBlank(appCode)) {
+			log.warn("Yêu cầu xóa mềm menu nhưng appCode bị trống. Thao tác bị hủy bỏ.");
+			return;
+		}
+		log.info("Thực hiện xóa mềm tất cả menu cho appCode: {}", appCode);
+		coreMenuRepo.softDeleteAllByAppCode(appCode);
 	}
 	
 }

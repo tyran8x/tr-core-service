@@ -118,7 +118,7 @@ public class CoreMenuController {
 	public R<Void> syncRoutes(@RequestHeader(name = "X-App-Code") String appCode, @RequestBody Object object) {
 		log.info("APP-CODE: {}", appCode);
 		try {
-			coreSyncService.syncRoutesFromFrontend(appCode, object);
+			coreSyncService.dispatchAndSyncRoutes(appCode, object);
 			return R.ok("Đồng bộ hóa routes thành công.");
 		} catch (Exception e) {
 			// Ghi log lỗi chi tiết

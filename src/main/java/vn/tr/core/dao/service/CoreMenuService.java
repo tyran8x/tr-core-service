@@ -40,4 +40,6 @@ public interface CoreMenuService {
 	 */
 	void softDeleteAll(List<CoreMenu> menusToDelete);
 	
+	void softDeleteAllByAppCode(String appCode);
+	
 }

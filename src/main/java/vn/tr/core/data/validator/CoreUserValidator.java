@@ -54,8 +54,5 @@ public class CoreUserValidator implements Validator {
 			errors.rejectValue("password", "NotNull", "Mật khẩu không được để trống khi tạo mới.");
 		}
 		
-		if (StringUtils.isBlank(userDto.getFullName())) {
-			errors.rejectValue("fullName", "NotNull", "Họ và tên không được để trống.");
-		}
 	}
 }

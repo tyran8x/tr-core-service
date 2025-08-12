@@ -9,11 +9,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.tr.core.adapter.LegacyRouteAdapter;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.dao.model.CoreModule;
 import vn.tr.core.dao.model.CorePermission;
 import vn.tr.core.data.dto.RouteRecordRawData;
+import vn.tr.core.data.dto.RouterData;
+import vn.tr.core.data.dto.RouterMetaData;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,65 +38,136 @@ public class CoreSyncService {
 	private final CorePermissionService corePermissionService;
 	private final CoreModuleService coreModuleService;
 	private final ObjectMapper objectMapper;
+	private final LegacyRouteAdapter legacyRouteAdapter;
 	
 	/**
-	 * Đồng bộ hóa toàn bộ cấu trúc routes từ Frontend vào database của core-service. Thao tác này sẽ thêm mới/cập nhật các Module, Permission, Menu
-	 * và xóa mềm các Menu không còn tồn tại.
+	 * [API CÔNG KHAI DUY NHẤT]
+	 * Tự động nhận dạng, chuyển đổi và đồng bộ hóa routes từ Frontend.
 	 *
-	 * @param appCode        Mã của ứng dụng cần đồng bộ hóa.
-	 * @param routesAsObject Dữ liệu routes từ Frontend, thường là một List<Map<String, Object>>.
+	 * @param appCode        Mã ứng dụng.
+	 * @param routesAsObject Dữ liệu routes thô, có thể là định dạng cũ hoặc mới.
 	 */
 	@Transactional
-	public void syncRoutesFromFrontend(String appCode, Object routesAsObject) {
-		log.info("Bắt đầu đồng bộ hóa routes cho app: {}", appCode);
-		long start = System.currentTimeMillis();
+	public void dispatchAndSyncRoutes(String appCode, Object routesAsObject) {
+		log.info("Bắt đầu dispatch và đồng bộ hóa routes cho app: {}", appCode);
 		
-		List<RouteRecordRawData> routeRecordRaws = objectMapper.convertValue(routesAsObject, new TypeReference<>() {
-		});
-		if (routeRecordRaws == null || routeRecordRaws.isEmpty()) {
-			log.warn("Danh sách routes trống cho app '{}', không có gì để đồng bộ.", appCode);
-			// Cân nhắc xóa tất cả menu của app này nếu nghiệp vụ yêu cầu
+		List<RouteRecordRawData> standardRoutes;
+		if (isLegacyFormat(routesAsObject)) {
+			log.info("Phát hiện định dạng router cũ (legacy). Bắt đầu chuyển đổi...");
+			List<RouterData> legacyRoutes = objectMapper.convertValue(routesAsObject, new TypeReference<>() {
+			});
+			standardRoutes = legacyRouteAdapter.transform(legacyRoutes);
+		} else {
+			log.info("Phát hiện định dạng router chuẩn.");
+			standardRoutes = objectMapper.convertValue(routesAsObject, new TypeReference<>() {
+			});
+		}
+		syncStandardRoutes(appCode, standardRoutes);
+	}
+	
+	private boolean isLegacyFormat(Object routesAsObject) {
+		if (!(routesAsObject instanceof List) || ((List<?>) routesAsObject).isEmpty()) {
+			return false;
+		}
+		
+		Object firstRoute = ((List<?>) routesAsObject).getFirst();
+		
+		try {
+			// **THỬ** chuyển đổi đối tượng đầu tiên thành DTO chuẩn (RouteRecordRawData).
+			// Chúng ta không quan tâm đến kết quả, chỉ quan tâm nó có thành công hay không.
+			objectMapper.convertValue(firstRoute, RouteRecordRawData.class);
+			
+			// Nếu không có exception nào được ném ra, có nghĩa là quá trình chuyển đổi thành công.
+			// => Đây là định dạng chuẩn.
+			log.debug("Phát hiện định dạng router chuẩn (Trial Deserialization thành công).");
+			return false; // **Không phải** legacy
+			
+		} catch (IllegalArgumentException e) {
+			// Nếu `convertValue` ném ra exception (ví dụ: do có các trường không mong muốn
+			// như 'alwaysShow', hoặc kiểu dữ liệu không khớp), chúng ta bắt nó.
+			// => Đây là định dạng cũ (legacy).
+			log.debug("Trial Deserialization sang định dạng chuẩn thất bại. Giả định đây là định dạng legacy. Lỗi: {}", e.getMessage());
+			return true; // **Là** legacy
+		}
+	}
+	
+	/**
+	 * [LOGIC LÕI - PRIVATE] Thực hiện đồng bộ hóa từ định dạng chuẩn.
+	 */
+	private void syncStandardRoutes(String appCode, List<RouteRecordRawData> standardRoutes) {
+		long start = System.currentTimeMillis();
+		if (standardRoutes.isEmpty()) {
+			log.warn("Danh sách routes chuẩn trống cho app '{}'. Xóa tất cả menu liên quan.", appCode);
+			coreMenuService.softDeleteAllByAppCode(appCode);
 			return;
 		}
 		
-		// --- BƯỚC 1: Tải trước toàn bộ dữ liệu hiện có để thao tác in-memory, tránh N+1 query ---
 		Map<String, CoreModule> existingModulesMap = coreModuleService.findAllByAppCode(appCode).stream()
 				.collect(Collectors.toMap(CoreModule::getCode, Function.identity()));
-		
 		Map<String, CorePermission> existingPermissionsMap = corePermissionService.findAllByAppCode(appCode).stream()
 				.collect(Collectors.toMap(CorePermission::getCode, Function.identity()));
-		
-		Map<String, CoreMenu> existingMenusMap = coreMenuService.findAllByAppCode(appCode).stream()
+		Map<String, CoreMenu> existingMenusMap = coreMenuService.findAllByAppCodeIncludingDeleted(appCode).stream()
 				.collect(Collectors.toMap(CoreMenu::getCode, Function.identity()));
 		
-		// --- BƯỚC 2: Đồng bộ Modules và Permissions (thêm mới nếu chưa có) ---
-		syncModules(routeRecordRaws, appCode, existingModulesMap);
-		syncPermissions(routeRecordRaws, appCode, existingPermissionsMap, existingModulesMap);
+		syncModules(standardRoutes, appCode, existingModulesMap);
+		syncPermissions(standardRoutes, appCode, existingPermissionsMap, existingModulesMap);
 		
-		// --- BƯỚC 3: Xây dựng và đồng bộ Menu theo cấu trúc cây (Upsert) ---
 		List<CoreMenu> allMenusToUpsert = new ArrayList<>();
 		Set<String> activeMenuCodes = new HashSet<>();
-		upsertMenuHierarchy(routeRecordRaws, null, appCode, existingMenusMap, allMenusToUpsert, activeMenuCodes);
+		Map<String, String> parentChildMap = new HashMap<>();
 		
-		// --- BƯỚC 4: Xác định và xóa mềm các menu không còn tồn tại ---
-		Set<String> menuCodesToDelete = existingMenusMap.keySet();
-		menuCodesToDelete.removeAll(activeMenuCodes);
+		// Pass 1: Tạo/Cập nhật thực thể
+		processRoutesRecursively(standardRoutes, null, appCode, existingMenusMap, allMenusToUpsert, activeMenuCodes, parentChildMap);
+		coreMenuService.saveAll(allMenusToUpsert);
 		
-		if (!menuCodesToDelete.isEmpty()) {
-			List<CoreMenu> menusToDelete = menuCodesToDelete.stream()
-					.map(existingMenusMap::get)
-					.collect(Collectors.toList());
-			coreMenuService.softDeleteAll(menusToDelete);
+		// Pass 2: Cập nhật parentId
+		Map<String, CoreMenu> savedMenuMap = allMenusToUpsert.stream().collect(Collectors.toMap(CoreMenu::getCode, Function.identity()));
+		existingMenusMap.forEach(savedMenuMap::putIfAbsent); // Gộp cả các menu không thay đổi
+		
+		List<CoreMenu> menusToUpdateParent = new ArrayList<>();
+		updateParentIdsRecursivelyPass2(standardRoutes, null, savedMenuMap, menusToUpdateParent);
+		if (!menusToUpdateParent.isEmpty()) {
+			coreMenuService.saveAll(menusToUpdateParent);
+		}
+		
+		// Pass 3: Xóa mềm
+		List<CoreMenu> menusToDelete = new ArrayList<>();
+		for (CoreMenu existingMenu : existingMenusMap.values()) {
+			if (existingMenu.getDeletedAt() == null && !activeMenuCodes.contains(existingMenu.getCode())) {
+				existingMenu.setDeletedAt(LocalDateTime.now());
+				menusToDelete.add(existingMenu);
+			}
+		}
+		if (!menusToDelete.isEmpty()) {
+			coreMenuService.saveAll(menusToDelete);
 			log.info("Đã xóa mềm {} menu không còn tồn tại cho app '{}'.", menusToDelete.size(), appCode);
 		}
-		
-		// --- BƯỚC 5: Lưu tất cả các thay đổi (thêm mới/cập nhật) cho Menu ---
-		if (!allMenusToUpsert.isEmpty()) {
-			coreMenuService.saveAll(allMenusToUpsert);
-			log.info("Đã lưu {} thay đổi cho menu của app '{}'.", allMenusToUpsert.size(), appCode);
+		log.info("Hoàn thành đồng bộ hóa lõi cho app '{}'. Tổng thời gian: {}ms", appCode, System.currentTimeMillis() - start);
+	}
+	
+	private void processRoutesRecursively(List<RouteRecordRawData> routes, @Nullable String parentCode, String appCode,
+			Map<String, CoreMenu> existingMenusMap, List<CoreMenu> allMenusToUpsert,
+			Set<String> activeMenuCodes, Map<String, String> parentChildMap) {
+		int order = 0;
+		for (RouteRecordRawData routeData : routes) {
+			String menuCode = routeData.getName();
+			if (StringUtils.isBlank(menuCode)) continue;
+			
+			order++;
+			activeMenuCodes.add(menuCode);
+			if (parentCode != null) {
+				parentChildMap.put(menuCode, parentCode);
+			}
+			
+			CoreMenu menu = existingMenusMap.getOrDefault(menuCode, new CoreMenu());
+			mapRouteToMenuEntity(menu, routeData, order, appCode);
+			allMenusToUpsert.add(menu);
+			
+			if (routeData.getChildren() != null && !routeData.getChildren().isEmpty()) {
+				processRoutesRecursively(routeData.getChildren(), menuCode, appCode, existingMenusMap, allMenusToUpsert, activeMenuCodes,
+						parentChildMap);
+			}
 		}
-		
-		log.info("Hoàn thành đồng bộ hóa routes cho app '{}'. Tổng thời gian: {}ms", appCode, System.currentTimeMillis() - start);
 	}
 	
 	private void syncModules(List<RouteRecordRawData> routes, String appCode, Map<String, CoreModule> existingModulesMap) {
@@ -136,50 +211,82 @@ public class CoreSyncService {
 		}
 	}
 	
-	private void upsertMenuHierarchy(List<RouteRecordRawData> routeDataList, @Nullable Long parentId, String appCode,
-			Map<String, CoreMenu> existingMenusMap, List<CoreMenu> allMenusToUpsert, Set<String> activeMenuCodes) {
-		int order = 0;
-		for (RouteRecordRawData routeData : routeDataList) {
+	/**
+	 * Pass 2: Duyệt lại cây và cập nhật parentId chính xác sau khi tất cả menu đã có ID.
+	 */
+	private void updateParentIdsRecursivelyPass2(List<RouteRecordRawData> routes, @Nullable CoreMenu parent,
+			Map<String, CoreMenu> savedMenuMap, List<CoreMenu> menusToUpdateParent) {
+		for (RouteRecordRawData routeData : routes) {
 			String menuCode = routeData.getName();
 			if (StringUtils.isBlank(menuCode)) continue;
 			
-			order++;
-			activeMenuCodes.add(menuCode);
+			CoreMenu currentMenu = savedMenuMap.get(menuCode);
+			if (currentMenu == null) continue;
 			
-			CoreMenu menu = existingMenusMap.getOrDefault(menuCode, new CoreMenu());
-			mapRouteToMenuEntity(menu, routeData, parentId, order, appCode);
-			allMenusToUpsert.add(menu);
+			Long parentId = (parent != null) ? parent.getId() : null;
+			if (!Objects.equals(currentMenu.getParentId(), parentId)) {
+				currentMenu.setParentId(parentId);
+				menusToUpdateParent.add(currentMenu);
+			}
 			
 			if (routeData.getChildren() != null && !routeData.getChildren().isEmpty()) {
-				// Để xử lý parentId cho các menu mới tạo, ta cần lưu menu cha trước để lấy ID.
-				// Điều này phá vỡ tối ưu "saveAll một lần".
-				// Một cách tiếp cận thực dụng là hy sinh một chút hiệu năng để đảm bảo tính đúng đắn.
-				CoreMenu savedParent = coreMenuService.save(menu);
-				upsertMenuHierarchy(routeData.getChildren(), savedParent.getId(), appCode, existingMenusMap, allMenusToUpsert, activeMenuCodes);
+				updateParentIdsRecursivelyPass2(routeData.getChildren(), currentMenu, savedMenuMap, menusToUpdateParent);
 			}
 		}
 	}
 	
-	private void mapRouteToMenuEntity(CoreMenu menu, RouteRecordRawData routeData, @Nullable Long parentId, int order, String appCode) {
+	/**
+	 * **SỬA LỖI TẠI ĐÂY: Xóa tham số parentId không cần thiết**
+	 * Map dữ liệu từ DTO của route sang thực thể CoreMenu.
+	 *
+	 * @param menu      Thực thể CoreMenu để điền dữ liệu vào.
+	 * @param routeData DTO chứa dữ liệu từ Frontend.
+	 * @param order     Thứ tự của menu trong cấp của nó.
+	 * @param appCode   Mã ứng dụng.
+	 */
+	private void mapRouteToMenuEntity(CoreMenu menu, RouteRecordRawData routeData, int order, String appCode) {
 		menu.setAppCode(appCode);
-		menu.setParentId(parentId);
 		menu.setCode(routeData.getName());
-		menu.setName(routeData.getMeta() != null && StringUtils.isNotBlank(routeData.getMeta().getTitle())
-				? routeData.getMeta().getTitle()
-				: routeData.getName());
 		menu.setPath(routeData.getPath());
-		menu.setComponent(routeData.getComponent());
 		menu.setSortOrder(order);
+		menu.setDeletedAt(null); // Kích hoạt lại nếu nó đã bị xóa mềm
 		
-		if (routeData.getMeta() != null) {
-			menu.setIcon(routeData.getMeta().getIcon());
-			menu.setIsHidden(Boolean.TRUE.equals(routeData.getMeta().getHideInMenu()));
+		// Xử lý các trường từ Vue 2/legacy format
+		menu.setRedirect(routeData.getRedirect());
+		//menu.setIsAlwaysShow(Boolean.TRUE.equals(routeData.getAlwaysShow()));
+		
+		// Xử lý component với logic ưu tiên
+		String finalComponent = "Layout"; // Mặc định
+		if (StringUtils.isNotBlank(routeData.getComponent())) {
+			finalComponent = routeData.getComponent();
+		}
+		menu.setComponent(finalComponent);
+		
+		// Xử lý props
+		if (routeData.getProps() != null) {
 			try {
-				menu.setExtraMeta(objectMapper.writeValueAsString(routeData.getMeta()));
+				menu.setProps(objectMapper.writeValueAsString(routeData.getProps()));
 			} catch (JsonProcessingException e) {
-				log.error("Lỗi khi serialize meta cho menu '{}': {}", menu.getCode(), e.getMessage());
-				menu.setExtraMeta("{}");
+				log.error("Lỗi khi serialize props cho menu '{}': {}", menu.getCode(), e.getMessage());
+				menu.setProps(null);
 			}
+		} else {
+			menu.setProps(null);
+		}
+		
+		// Xử lý meta
+		if (routeData.getMeta() != null) {
+			RouterMetaData meta = routeData.getMeta();
+			menu.setName(meta.getTitle());
+			menu.setIcon(meta.getIcon());
+			menu.setIsHidden(Boolean.TRUE.equals(meta.getHideInMenu())); // `hidden` thường nằm ngoài meta
+			menu.setIsNoCache(Boolean.TRUE.equals(meta.getNoCache()));
+			menu.setIsAffix(Boolean.TRUE.equals(meta.getAffixTab()));
+			menu.setIsBreadcrumb(Boolean.TRUE.equals(meta.getHideInBreadcrumb()));
+			menu.setActiveMenu(meta.getActiveMenu());
+			menu.setLink(meta.getLink());
+		} else {
+			menu.setName(routeData.getName());
 		}
 	}
 	

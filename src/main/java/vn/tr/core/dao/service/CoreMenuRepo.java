@@ -27,4 +27,8 @@ public interface CoreMenuRepo extends JpaRepository<CoreMenu, Long>, JpaSpecific
 	
 	boolean existsByParentId(Long parentId);
 	
+	@Modifying(clearAutomatically = true)
+	@Query("UPDATE CoreMenu m SET m.deletedAt = CURRENT_TIMESTAMP WHERE m.appCode = :appCode")
+	void softDeleteAllByAppCode(String appCode);
+	
 }
