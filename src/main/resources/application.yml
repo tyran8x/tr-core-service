@@ -39,7 +39,7 @@ spring:
   # Cấu hình để Spring Boot đọc file .env (hữu ích cho môi trường local)
   config:
     import:
-      - "optional:configserver:http://10.49.41.112:8888"
+      - "optional:configserver:http://localhost:8888"
   messages:
     basename: i18n/messages
   servlet:
@@ -49,7 +49,7 @@ spring:
 
   # --- Datasource (PostgreSQL with HikariCP) ---
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://10.49.41.112:5432/core_service}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/core_service}
     username: ${SPRING_DATASOURCE_USERNAME:postgres} # BẮT BUỘC cung cấp qua env
     password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123} # BẮT BUỘC cung cấp qua env
     driver-class-name: org.postgresql.Driver
@@ -68,7 +68,7 @@ spring:
   # --- Redis (Lettuce Pool) ---
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:10.49.41.112}
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
       password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123} # BẮT BUỘC cung cấp qua env
       timeout: 10s
@@ -82,7 +82,7 @@ spring:
 
   # --- Kafka ---
   kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:10.49.41.112:9092}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     properties:
       security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
     producer:
@@ -111,7 +111,7 @@ spring:
   boot:
     admin:
       client:
-        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://10.49.41.112:9090}
+        url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9090}
 
 # ===================================================================
 # 3. SA-TOKEN: AUTHENTICATION & AUTHORIZATION
@@ -154,7 +154,7 @@ logging:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://10.49.41.112:8061/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8061/eureka/}
   instance:
     prefer-ip-address: true
 
@@ -239,4 +239,4 @@ api-decrypt:
 
 client:
   notification-service:
-    url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://10.49.41.112:8000/v1/notification}
+    url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://localhost:8000/v1/notification}

@@ -115,7 +115,7 @@ public class CoreAttachmentBusiness {
 			coreAttachment.setAppCode("");
 			coreAttachment.setFolder(coreAttachmentPathUploadTemp);
 			coreAttachment = coreAttachmentService.save(coreAttachment);
-			String code = coreAttachment.getId() + coreAttachment.getFileName() + coreAttachment.getNgayTao().toString();
+			String code = coreAttachment.getId() + coreAttachment.getFileName() + coreAttachment.getCreatedAt().toString();
 			code = DigestUtils.md5Hex(code).toUpperCase();
 			coreAttachment.setCode(code);
 			
@@ -265,7 +265,7 @@ public class CoreAttachmentBusiness {
 				coreAttachment.setAppCode("");
 				coreAttachment.setFolder(coreAttachmentPathUploadTemp);
 				coreAttachment = coreAttachmentService.save(coreAttachment);
-				String code = coreAttachment.getId() + coreAttachment.getFileName() + coreAttachment.getNgayTao().toString();
+				String code = coreAttachment.getId() + coreAttachment.getFileName() + coreAttachment.getCreatedAt().toString();
 				code = DigestUtils.md5Hex(code).toUpperCase();
 				coreAttachment.setCode(code);
 				

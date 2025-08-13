@@ -1,108 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- Các phần định nghĩa property và appender giữ nguyên... -->
-    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
+    <springProperty scope="context" name="springAppName" source="spring.application.name" defaultValue="app"/>
+    <springProperty scope="context" name="logPath" source="LOG_PATH" defaultValue="/opt/logs"/>
 
-    <springProperty scope="context" name="springAppName" source="spring.application.name" defaultValue="application"/>
-    <springProperty scope="context" name="logPath" source="logging.file.path" defaultValue="logs"/>
-    <springProperty scope="context" name="PID" source="PID" defaultValue="????-PID-NOT-FOUND"/>
+    <property name="log.pattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
-    <property name="CONSOLE_LOG_PATTERN"
-              value="%d{HH:mm:ss.SSS} %5p ${PID} --- [%15.15t] %-30.30logger{29} %-25.25C{1}.%M:%L : %m%n%ex"/>
-
-    <property name="FILE_LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${PID} --- [%15.15t] %-40.40logger{39} | %X{traceId:-},%X{spanId:-} | %m%n%ex"/>
-
-    <!-- ...Tất cả các định nghĩa <appender> giữ nguyên ở đây... -->
-    <!-- (CONSOLE, JSON_CONSOLE, FILE_INFO, FILE_ERROR, ASYNC_...) -->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- Console output -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <!-- Pattern này không có màu để tránh lỗi [clr] khi bootstrap -->
-            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
-            <charset>utf8</charset>
+            <pattern>${log.pattern}</pattern>
+            <charset>utf-8</charset>
         </encoder>
     </appender>
-    <!--    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">-->
-    <!--        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>-->
-    <!--    </appender>-->
-    <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${logPath}/${springAppName}/info.log</file>
-        <encoder>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-            <charset>utf8</charset>
-        </encoder>
+
+    <!-- File output for INFO -->
+    <appender name="file_info" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logPath}/${springAppName}/sys-info.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${logPath}/${springAppName}/info.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>30</maxHistory>
+            <fileNamePattern>${logPath}/${springAppName}/sys-info.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>60</maxHistory>
             <totalSizeCap>10GB</totalSizeCap>
         </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
         </filter>
+    </appender>
+
+    <!-- File output for ERROR -->
+    <appender name="file_error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logPath}/${springAppName}/sys-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${logPath}/${springAppName}/sys-error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>60</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
-            <onMatch>DENY</onMatch>
-            <onMismatch>NEUTRAL</onMismatch>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
         </filter>
     </appender>
-    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${logPath}/${springAppName}/error.log</file>
-        <encoder>
-            <pattern>${FILE_LOG_PATTERN}</pattern>
-            <charset>utf8</charset>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${logPath}/${springAppName}/error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-            <maxFileSize>100MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>5GB</totalSizeCap>
-        </rollingPolicy>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
-        </filter>
-    </appender>
-    <appender name="ASYNC_FILE_INFO" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="FILE_INFO"/>
-        <queueSize>1024</queueSize>
-        <discardingThreshold>20</discardingThreshold>
-        <includeCallerData>false</includeCallerData>
-    </appender>
-    <appender name="ASYNC_FILE_ERROR" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="FILE_ERROR"/>
-        <queueSize>512</queueSize>
+
+    <!-- Async appender for INFO -->
+    <appender name="async_info" class="ch.qos.logback.classic.AsyncAppender">
         <discardingThreshold>0</discardingThreshold>
+        <queueSize>512</queueSize>
         <includeCallerData>false</includeCallerData>
+        <appender-ref ref="file_info"/>
     </appender>
 
+    <!-- Async appender for ERROR -->
+    <appender name="async_error" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>512</queueSize>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="file_error"/>
+    </appender>
 
-    <!-- ====================================================== -->
-    <!--             LOGGERS & ROOT CONFIGURATION               -->
-    <!-- ====================================================== -->
-
-    <property name="FILE_APPENDERS" value="ASYNC_FILE_INFO, ASYNC_FILE_ERROR"/>
-
-    <!-- TỐI ƯU: Thêm khối <root> mặc định (fallback) -->
-    <!-- Cấu hình này sẽ được áp dụng trong giai đoạn bootstrap hoặc khi không có profile nào khớp. -->
+    <!-- Root logger -->
     <root level="INFO">
-        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="console"/>
+        <appender-ref ref="async_info"/>
+        <appender-ref ref="async_error"/>
     </root>
-
-    <!-- Cấu hình cho môi trường Development - Sẽ ghi đè lên cấu hình root mặc định -->
-    <springProfile name="local, dev, default">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="${FILE_APPENDERS}"/>
-        </root>
-    </springProfile>
-
-    <!-- Cấu hình cho môi trường Production - Sẽ ghi đè lên cấu hình root mặc định -->
-    <springProfile name="prod, staging, uat">
-        <root level="INFO">
-            <appender-ref ref="JSON_CONSOLE"/>
-            <appender-ref ref="${FILE_APPENDERS}"/>
-        </root>
-    </springProfile>
-
-
 </configuration>

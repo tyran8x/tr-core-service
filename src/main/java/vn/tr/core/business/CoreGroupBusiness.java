@@ -27,11 +27,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Lớp Business (Facade) điều phối các nghiệp vụ phức tạp liên quan đến Quản lý Nhóm (CoreGroup).
- * Mọi thao tác đều được thực hiện trong ngữ cảnh của một ứng dụng (appCodeContext) để đảm bảo phân quyền.
+ * Lớp Business (Facade) điều phối các nghiệp vụ phức tạp liên quan đến Quản lý Nhóm (CoreGroup). Mọi thao tác đều được thực hiện trong ngữ cảnh của
+ * một ứng dụng (appCodeContext) để đảm bảo phân quyền.
  *
  * @author tyran8x
- * @version 2.4 (Final with Javadoc & Custom Exceptions)
+ * @version 2.4 (Final with Javadoc and Custom Exceptions)
  */
 @Service
 @RequiredArgsConstructor
@@ -128,8 +128,7 @@ public class CoreGroupBusiness {
 	}
 	
 	/**
-	 * Xóa một nhóm duy nhất.
-	 * Ném ra exception ngay lập tức nếu có bất kỳ lỗi nào (Fail-Fast).
+	 * Xóa một nhóm duy nhất. Ném ra exception ngay lập tức nếu có bất kỳ lỗi nào (Fail-Fast).
 	 *
 	 * @param id             ID của nhóm cần xóa.
 	 * @param appCodeContext Ngữ cảnh ứng dụng để kiểm tra quyền.
