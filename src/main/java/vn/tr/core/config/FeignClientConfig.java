@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class FeignClientConfig {
 	
-	private static final long SYSTEM_LOGIN_ID = 99999;
+	private static final long SYSTEM_LOGIN_ID = 999994;
 	private static final Object LOCK = new Object();
 	private static volatile String cachedToken = null;
 	

@@ -108,9 +108,9 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
-	@Cacheable(value = "coreUser", key = "'username:' + #username.toLowerCase()")
+	//@Cacheable(value = "coreUser", key = "'username:' + #username.toLowerCase()")
 	public Optional<CoreUser> findFirstByUsernameIgnoreCase(String username) {
-		return coreUserRepo.findFirstByUsernameIgnoreCase(username);
+		return coreUserRepo.findByUsernameIgnoreCaseIncludingDeleted(username);
 	}
 	
 	@Override
