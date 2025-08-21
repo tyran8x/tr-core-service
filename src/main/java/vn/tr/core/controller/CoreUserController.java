@@ -177,7 +177,7 @@ public class CoreUserController {
 	 *
 	 * @return R.ok()
 	 */
-	@PatchMapping("/{username}/change-password")
+	@PostMapping("/{username}/change-password")
 	@Log(title = "Đổi mật khẩu Người dùng", businessType = BusinessType.UPDATE)
 	public R<Void> changePassword(@PathVariable String username, @Valid @RequestBody CoreUserChangePasswordData request, @AppCode String appCode) {
 		if (LoginHelper.isSuperAdmin() && (appCode == null || appCode.isBlank())) {
@@ -196,7 +196,7 @@ public class CoreUserController {
 	 *
 	 * @return R.ok()
 	 */
-	@PatchMapping("/{username}/update-status")
+	@PostMapping("/{username}/update-status")
 	@Log(title = "Cập nhật trạng thái Người dùng", businessType = BusinessType.UPDATE)
 	public R<Void> updateStatus(@PathVariable String username, @Valid @RequestBody CoreUserChangeStatusData request, @AppCode String appCode) {
 		if (LoginHelper.isSuperAdmin() && (appCode == null || appCode.isBlank())) {
