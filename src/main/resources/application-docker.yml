@@ -7,13 +7,26 @@ core:
       uploadtemp: ${CORE_ATTACHMENT_PATH_UPLOADTEMP:/opt/uploads/temp}
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://mcdt-postgres:5432/mcdt_core_service}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://10.198.7.33:5432/mcdt_core_service}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123}
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:10.198.7.27}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123} # BẮT BUỘC cung cấp qua env
+      timeout: 10s
+      ssl:
+        enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:false}
+      lettuce:
+        pool:
+          max-active: ${REDIS_POOL_MAX_ACTIVE:32}
+          max-idle: ${REDIS_POOL_MAX_IDLE:16}
+          min-idle: ${REDIS_POOL_MIN_IDLE:4}
 client:
   notification-service:
     url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://mcdt-gateway:8000/v1/notification}
