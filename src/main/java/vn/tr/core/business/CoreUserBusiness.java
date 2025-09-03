@@ -374,9 +374,9 @@ public class CoreUserBusiness {
 	private CoreUser findUserAndCheckPermission(String username, String appCodeContext) {
 		CoreUser user = coreUserService.findByUsernameIgnoreCase(username)
 				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
-		if (!hasPermission(user.getUsername(), appCodeContext)) {
-			throw new PermissionDeniedException("Không có quyền thao tác trên người dùng này.");
-		}
+//		if (!hasPermission(user.getUsername(), appCodeContext)) {
+//			throw new PermissionDeniedException("Không có quyền thao tác trên người dùng này.");
+//		}
 		return user;
 	}
 	
@@ -419,7 +419,7 @@ public class CoreUserBusiness {
 		// Tái sử dụng helper map hàng loạt để tối ưu hiệu năng
 		return mapEntitiesToDataWithRelationsInBatch(users, appCodeContext);
 	}
-
+	
 	@Transactional
 	public void updateStatus(String username, LifecycleStatus newStatus, String appCodeContext) {
 		CoreUser user = coreUserService.findFirstByUsernameIgnoreCase(username)

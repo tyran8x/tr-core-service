@@ -199,9 +199,9 @@ public class CoreUserController {
 	@PostMapping("/{username}/update-status")
 	@Log(title = "Cập nhật trạng thái Người dùng", businessType = BusinessType.UPDATE)
 	public R<Void> updateStatus(@PathVariable String username, @Valid @RequestBody CoreUserChangeStatusData request, @AppCode String appCode) {
-		if (LoginHelper.isSuperAdmin() && (appCode == null || appCode.isBlank())) {
-			throw new InvalidEntityException("Super Admin phải chỉ định 'appCode' qua query parameter khi cập nhật trạng thái.");
-		}
+//		if (LoginHelper.isSuperAdmin() && (appCode == null || appCode.isBlank())) {
+//			throw new InvalidEntityException("Super Admin phải chỉ định 'appCode' qua query parameter khi cập nhật trạng thái.");
+//		}
 		coreUserBusiness.updateStatus(username, request.getNewStatus(), appCode);
 		return R.ok();
 	}
