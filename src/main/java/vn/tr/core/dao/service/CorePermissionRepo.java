@@ -24,8 +24,6 @@ public interface CorePermissionRepo extends JpaRepository<CorePermission, Long>,
 	
 	boolean existsByNameIgnoreCaseAndAppCode(String name, @Nullable String appCode);
 	
-	// --- Query Methods ---
-	
 	/**
 	 * Tìm kiếm Permission theo code và appCode, BAO GỒM CẢ BẢN GHI ĐÃ BỊ XÓA MỀM.
 	 * Sắp xếp để ưu tiên bản ghi active và được cập nhật gần nhất.
@@ -42,18 +40,17 @@ public interface CorePermissionRepo extends JpaRepository<CorePermission, Long>,
 	
 	Set<String> findAllCodesByAppCode(String appCode);
 	
-	boolean existsByModuleId(Long moduleId); // Để kiểm tra ràng buộc xóa Module
+	boolean existsByModuleId(Long moduleId);
 	
-	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CorePermission p SET p.deletedAt = CURRENT_TIMESTAMP WHERE p.id IN :ids")
 	void softDeleteByIds(@Param("ids") Collection<Long> ids);
 	
 	@Query(
 			"""
-					SELECT DISTINCT rp.permissionCode FROM CoreUserRole ur
-					JOIN CoreRolePermission rp ON ur.appCode = rp.appCode AND ur.roleCode = rp.roleCode
-					WHERE ur.username = :username AND ur.appCode = :appCode
+						SELECT DISTINCT rp.permissionCode FROM CoreUserRole ur
+						JOIN CoreRolePermission rp ON ur.appCode = rp.appCode AND ur.roleCode = rp.roleCode
+						WHERE ur.username = :username AND ur.appCode = :appCode
 					"""
 	)
 	Set<String> findAllCodesByUsernameAndAppCode(@Param("username") String username, @Param("appCode") String appCode);
@@ -61,15 +58,5 @@ public interface CorePermissionRepo extends JpaRepository<CorePermission, Long>,
 	@Query("SELECT EXISTS(SELECT 1 FROM CoreUserRole ur WHERE ur.username = :username AND ur.appCode = 'SYSTEM' AND ur.roleCode = 'ROLE_SUPER_ADMIN')")
 	boolean isSuperAdmin(@Param("username") String username);
 	
-	/**
-	 * BỔ SUNG: Tìm tất cả các thực thể CorePermission dựa trên appCode và một danh sách các code.
-	 * Phương thức này rất quan trọng để AssociationSyncHelper có thể lấy các thực thể
-	 * liên quan trong một lần truy vấn duy nhất.
-	 *
-	 * @param appCode Mã ứng dụng.
-	 * @param codes   Collection các mã quyền hạn.
-	 *
-	 * @return Danh sách các thực thể CorePermission tìm thấy.
-	 */
 	List<CorePermission> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 }

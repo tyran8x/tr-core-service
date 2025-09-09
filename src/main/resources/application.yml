@@ -81,7 +81,7 @@ spring:
 
   # --- Kafka ---
   kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
     properties:
       security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
     producer:
@@ -176,7 +176,7 @@ core:
 user:
   password:
     maxRetryCount: ${USER_PASSWORD_MAX_RETRY:5}
-    lockTime: ${USER_PASSWORD_LOCK_TIME:10} # Đơn vị: phút
+    lockTime: ${USER_PASSWORD_LOCK_TIME:30} # Đơn vị: phút
 
 captcha:
   enable: ${CAPTCHA_ENABLED:true}

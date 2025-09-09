@@ -40,13 +40,6 @@ public interface CoreAppService {
 	
 	boolean existsById(Long id);
 	
-	/**
-	 * BỔ SUNG: Tìm tất cả các thực thể CoreApp dựa trên một danh sách các code.
-	 *
-	 * @param codes Collection các mã ứng dụng.
-	 *
-	 * @return Danh sách các thực thể CoreApp tìm thấy.
-	 */
 	List<CoreApp> findAllByCodeIn(Collection<String> codes);
 	
 }

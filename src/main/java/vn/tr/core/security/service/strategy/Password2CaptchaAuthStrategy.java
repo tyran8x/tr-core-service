@@ -22,7 +22,6 @@ public class Password2CaptchaAuthStrategy extends BasePasswordStrategy {
 	
 	private final CaptchaProperties captchaProperties;
 	
-	// Constructor sẽ gọi super() và inject thêm dependency riêng của nó
 	public Password2CaptchaAuthStrategy(CoreUserService coreUserService, CoreUserAppService coreUserAppService, CaptchaProperties captchaProperties) {
 		super(coreUserService, coreUserAppService);
 		this.captchaProperties = captchaProperties;

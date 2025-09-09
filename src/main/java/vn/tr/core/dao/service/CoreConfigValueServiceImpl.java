@@ -40,7 +40,7 @@ public class CoreConfigValueServiceImpl implements CoreConfigValueService {
 					.build();
 		} else {
 			// Trường hợp 2: Đã tồn tại, lấy bản ghi ưu tiên nhất
-			configValue = results.get(0);
+			configValue = results.getFirst();
 			if (results.size() > 1) {
 				log.warn("DỮ LIỆU TRÙNG LẶP: Tìm thấy {} bản ghi CoreConfigValue cho defId={}, scopeType={}, scopeValue={}. Sử dụng bản ghi ID={}",
 						results.size(), definitionId, scopeType, scopeValue, configValue.getId());

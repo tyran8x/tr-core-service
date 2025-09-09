@@ -58,3 +58,5 @@ logging:
     cn.dev33.satoken: DEBUG # Bật log DEBUG cho Sa-Token
     org.springframework.web: DEBUG # Xem chi tiết request/response
     org.hibernate.SQL: DEBUG # Xem câu lệnh SQL được tạo ra
+    org.apache.kafka: ERROR
+    org.springframework.kafka: ERROR

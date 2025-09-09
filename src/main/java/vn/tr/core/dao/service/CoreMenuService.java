@@ -35,9 +35,6 @@ public interface CoreMenuService {
 	
 	void saveAll(Iterable<CoreMenu> menus);
 	
-	/**
-	 * BỔ SUNG: Xóa mềm một danh sách các thực thể menu.
-	 */
 	void softDeleteAll(List<CoreMenu> menusToDelete);
 	
 	void softDeleteAllByAppCode(String appCode);

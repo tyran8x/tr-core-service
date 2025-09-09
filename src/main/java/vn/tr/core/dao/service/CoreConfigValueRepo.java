@@ -30,8 +30,7 @@ public interface CoreConfigValueRepo extends JpaRepository<CoreConfigValue, Long
 	 * @return Một danh sách các giá trị tìm thấy (để xử lý trường hợp trùng lặp).
 	 */
 	@Query(
-			"SELECT cv FROM CoreConfigValue cv WHERE cv.definitionId = :defId AND cv.scopeType = :scopeType AND cv.scopeValue = :scopeValue " +
-					"ORDER BY cv.deletedAt ASC NULLS FIRST, cv.updatedAt DESC"
+			"SELECT cv FROM CoreConfigValue cv WHERE cv.definitionId = :defId AND cv.scopeType = :scopeType AND cv.scopeValue = :scopeValue ORDER BY cv.deletedAt ASC NULLS FIRST, cv.updatedAt DESC"
 	)
 	List<CoreConfigValue> findByDefinitionAndScopeIncludingDeletedSorted(
 			@Param("defId") Long definitionId,

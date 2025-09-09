@@ -5,10 +5,7 @@ import vn.tr.core.dao.model.CorePermission;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreRolePermission;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public interface CoreRolePermissionService {
 	
@@ -38,5 +35,7 @@ public interface CoreRolePermissionService {
 	boolean isRoleInUse(CoreRole role);
 	
 	boolean isPermissionInUse(CorePermission permission);
+	
+	Map<String, Set<String>> findActivePermissionsForRoles(Set<String> roleCodes, String appCode);
 	
 }

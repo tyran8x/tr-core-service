@@ -96,8 +96,7 @@ public class CoreUserBusiness {
 				() -> coreUserService.findByUsernameIgnoreCaseIncludingDeleted(data.getUsername()),
 				() -> coreUserMapper.toEntity(data),
 				coreUserMapper::updateEntityFromData,
-				coreUserService.getRepository()
-		                                          );
+				coreUserService.getRepository());
 		
 		// Cập nhật mật khẩu nếu được cung cấp (chỉ khi tạo mới hoặc API đặc biệt)
 		if (data.getPassword() != null && !data.getPassword().isBlank()) {
@@ -192,7 +191,6 @@ public class CoreUserBusiness {
 	 * Map Entity sang DTO và tải các quan hệ liên quan.
 	 */
 	private CoreUserData mapEntityToDataWithRelations(CoreUser user, String appCodeContext) {
-		// Tái sử dụng logic của mapEntitiesToDataWithRelationsInBatch để tránh lặp code
 		return mapEntitiesToDataWithRelationsInBatch(List.of(user), appCodeContext).getFirst();
 	}
 	
@@ -211,9 +209,7 @@ public class CoreUserBusiness {
 					association.setUsername(context.username());
 					association.setAppCode(context.appCode());
 				},
-				CoreUserRole::setRoleCode,
-				coreUserRoleService.getRepository()
-		                                 );
+				CoreUserRole::setRoleCode, coreUserRoleService.getRepository());
 	}
 	
 	private void syncUserGroupsInApp(CoreUser user, String appCode, Set<String> groupCodes) {
@@ -221,7 +217,6 @@ public class CoreUserBusiness {
 		}
 		var ownerContext = new UserGroupContext(user.getUsername(), appCode);
 		
-		// **SỬA LỖI TẠI ĐÂY**
 		associationSyncHelper.synchronize(
 				ownerContext,
 				coreUserGroupService.findByUsernameAndAppCodeIncludingDeleted(user.getUsername(), appCode),
@@ -372,11 +367,10 @@ public class CoreUserBusiness {
 	}
 	
 	private CoreUser findUserAndCheckPermission(String username, String appCodeContext) {
-		CoreUser user = coreUserService.findByUsernameIgnoreCase(username)
-				.orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
-//		if (!hasPermission(user.getUsername(), appCodeContext)) {
-//			throw new PermissionDeniedException("Không có quyền thao tác trên người dùng này.");
-//		}
+		CoreUser user = coreUserService.findByUsernameIgnoreCase(username).orElseThrow(() -> new EntityNotFoundException(CoreUser.class, username));
+		if (!hasPermission(user.getUsername(), appCodeContext)) {
+			throw new PermissionDeniedException("Không có quyền thao tác trên người dùng này.");
+		}
 		return user;
 	}
 	

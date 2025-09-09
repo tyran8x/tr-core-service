@@ -27,9 +27,6 @@ public interface CoreContactService {
 	 */
 	void synchronizeContactsForOwnerInApp(String ownerType, String ownerValue, String appCode, Collection<CoreContactData> contactDataList);
 	
-	/**
-	 * Lấy danh sách liên hệ đang hoạt động cho một chủ sở hữu.
-	 */
 	List<CoreContact> findActiveByOwnerInApp(String ownerType, String ownerValue, String appCode);
 	
 }

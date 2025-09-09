@@ -53,14 +53,6 @@ public interface CorePermissionService {
 	
 	boolean existsByNameIgnoreCaseAndAppCode(String name, String appCode);
 	
-	/**
-	 * BỔ SUNG: Tìm tất cả các thực thể CorePermission dựa trên appCode và một danh sách các code.
-	 *
-	 * @param appCode Mã ứng dụng.
-	 * @param codes   Collection các mã quyền hạn.
-	 *
-	 * @return Danh sách các thực thể CorePermission tìm thấy.
-	 */
 	List<CorePermission> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 	
 }

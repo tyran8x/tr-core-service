@@ -22,12 +22,10 @@ import java.util.Optional;
 @Repository
 public interface CoreConfigDefinitionRepo extends JpaRepository<CoreConfigDefinition, Long>, JpaSpecificationExecutor<CoreConfigDefinition> {
 	
-	// --- Validation Methods ---
 	boolean existsByIdNotAndKeyIgnoreCaseAndAppCode(long id, String key, @Nullable String appCode);
 	
 	boolean existsByKeyIgnoreCaseAndAppCode(String key, @Nullable String appCode);
 	
-	// --- Query Methods ---
 	Optional<CoreConfigDefinition> findByKeyAndAppCode(String key, @Nullable String appCode);
 	
 	/**
@@ -40,13 +38,9 @@ public interface CoreConfigDefinitionRepo extends JpaRepository<CoreConfigDefini
 	 *
 	 * @return Một danh sách các CoreConfigDefinition tìm thấy, đã được sắp xếp.
 	 */
-	@Query(
-			"SELECT d FROM CoreConfigDefinition d WHERE d.key = :key AND d.appCode = :appCode " +
-					"ORDER BY d.deletedAt ASC NULLS FIRST, d.updatedAt DESC"
-	)
+	@Query("SELECT d FROM CoreConfigDefinition d WHERE d.key = :key AND d.appCode = :appCode ORDER BY d.deletedAt ASC NULLS FIRST, d.updatedAt DESC")
 	List<CoreConfigDefinition> findByKeyAndAppCodeIncludingDeletedSorted(@Param("key") String key, @Param("appCode") String appCode);
 	
-	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreConfigDefinition d SET d.deletedAt = CURRENT_TIMESTAMP WHERE d.id IN :ids")
 	void softDeleteByIds(@Param("ids") Collection<Long> ids);

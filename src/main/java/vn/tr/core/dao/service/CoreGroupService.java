@@ -35,20 +35,10 @@ public interface CoreGroupService {
 	
 	List<CoreGroup> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 	
-	/**
-	 * Tìm một nhóm theo code và appCode, bao gồm cả các bản ghi đã bị xóa mềm. Hứa hẹn trả về 0 hoặc 1 kết quả. Việc xử lý dữ liệu trùng lặp được
-	 * đóng gói bên trong implementation.
-	 *
-	 * @param code    Mã nhóm.
-	 * @param appCode Mã ứng dụng.
-	 *
-	 * @return Optional chứa nhóm ưu tiên nếu tìm thấy, hoặc Optional.empty() nếu không.
-	 */
 	Optional<CoreGroup> findByCodeAndAppCodeIncludingDeleted(String code, String appCode);
 	
 	JpaRepository<CoreGroup, Long> getRepository();
 	
-	// Các phương thức kiểm tra sự tồn tại
 	boolean existsByIdNotAndCodeIgnoreCaseAndAppCode(long id, String code, String appCode);
 	
 	boolean existsByIdNotAndNameIgnoreCaseAndAppCode(long id, String name, String appCode);
@@ -59,13 +49,5 @@ public interface CoreGroupService {
 	
 	boolean existsByIdAndAppCode(long id, String appCode);
 	
-	/**
-	 * BỔ SUNG: Lọc và trả về một Set các mã nhóm hợp lệ trong một ứng dụng cụ thể.
-	 *
-	 * @param appCode    Mã ứng dụng.
-	 * @param groupCodes Collection các mã nhóm cần kiểm tra.
-	 *
-	 * @return Một Set chứa các mã nhóm hợp lệ.
-	 */
 	Set<String> filterExistingGroupCodesInApp(String appCode, Collection<String> groupCodes);
 }

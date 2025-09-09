@@ -75,14 +75,6 @@ public class CoreGroupServiceImpl implements CoreGroupService {
 		return coreGroupRepo.findAllByAppCodeAndCodeIn(appCode, codes);
 	}
 	
-	/**
-	 * Tìm một nhóm theo code và appCode, bao gồm cả đã xóa mềm. Phương thức này được thiết kế để xử lý dữ liệu trùng lặp một cách uyển chuyển. Nó sẽ
-	 * ưu tiên trả về bản ghi đang hoạt động và được cập nhật gần nhất, đồng thời ghi log cảnh báo nếu phát hiện trùng lặp.
-	 *
-	 * @return Optional.empty() nếu không tìm thấy.
-	 *
-	 * @return Optional.of(group) nếu tìm thấy một hoặc nhiều bản ghi (sẽ chọn bản ghi ưu tiên).
-	 */
 	@Override
 	public Optional<CoreGroup> findByCodeAndAppCodeIncludingDeleted(String code, String appCode) {
 		List<CoreGroup> results = coreGroupRepo.findAllByCodeAndAppCodeIncludingDeletedSorted(code, appCode);

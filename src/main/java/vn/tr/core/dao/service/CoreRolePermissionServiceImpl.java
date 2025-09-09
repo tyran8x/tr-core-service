@@ -14,10 +14,8 @@ import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreRolePermission;
 import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -122,6 +120,17 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	@Override
 	public boolean isPermissionInUse(CorePermission permission) {
 		return coreRolePermissionRepo.existsByPermissionCodeAndAppCode(permission.getCode(), permission.getAppCode());
+	}
+	
+	@Override
+	public Map<String, Set<String>> findActivePermissionsForRoles(Set<String> roleCodes, String appCode) {
+		if (roleCodes.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		List<CoreRolePermission> assignments = coreRolePermissionRepo.findActiveByRoleCodesAndAppCode(roleCodes, appCode);
+		return assignments.stream()
+				.collect(Collectors.groupingBy(CoreRolePermission::getRoleCode,
+						Collectors.mapping(CoreRolePermission::getPermissionCode, Collectors.toSet())));
 	}
 	
 }

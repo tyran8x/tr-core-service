@@ -137,9 +137,6 @@ public class CorePermissionServiceImpl implements CorePermissionService {
 		return corePermissionRepo.existsByNameIgnoreCaseAndAppCode(name, appCode);
 	}
 	
-	/**
-	 * BỔ SUNG: Triển khai logic tìm kiếm.
-	 */
 	@Override
 	public List<CorePermission> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes) {
 		if (codes.isEmpty()) {

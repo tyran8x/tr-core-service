@@ -34,8 +34,10 @@ public interface CoreRolePermissionRepo extends JpaRepository<CoreRolePermission
 	@Query("SELECT rp.permissionCode FROM CoreRolePermission rp WHERE rp.roleCode IN :roleCodes AND rp.appCode = :appCode")
 	Set<String> findPermissionCodesByRoleCodesAndAppCode(@Param("roleCodes") Collection<String> roleCodes, @Param("appCode") String appCode);
 	
-	// --- Kiểm tra ràng buộc ---
 	boolean existsByRoleCodeAndAppCode(String roleCode, String appCode);
 	
 	boolean existsByPermissionCodeAndAppCode(String permissionCode, String appCode);
+	
+	@Query("SELECT crp FROM CoreRolePermission crp WHERE crp.appCode = :appCode AND crp.roleCode IN :roleCodes")
+	List<CoreRolePermission> findActiveByRoleCodesAndAppCode(@Param("roleCodes") Set<String> roleCodes, @Param("appCode") String appCode);
 }

@@ -20,23 +20,13 @@ import java.util.List;
 @Repository
 public interface CoreClientRepo extends JpaRepository<CoreClient, Long>, JpaSpecificationExecutor<CoreClient> {
 	
-	// --- Validation Methods ---
 	boolean existsByClientIdAndAppCode(String clientId, String appCode);
 	
 	boolean existsByIdNotAndClientIdAndAppCode(Long id, String clientId, String appCode);
 	
-	// --- Query Methods ---
-	
-	/**
-	 * Tìm kiếm Client theo clientId và appCode, BAO GỒM CẢ BẢN GHI ĐÃ BỊ XÓA MỀM.
-	 * Sắp xếp để ưu tiên bản ghi active và được cập nhật gần nhất.
-	 */
-	@Query(
-			"SELECT c FROM CoreClient c WHERE c.clientId = :clientId AND c.appCode = :appCode ORDER BY c.deletedAt ASC NULLS FIRST, c.updatedAt DESC"
-	)
+	@Query("SELECT c FROM CoreClient c WHERE c.clientId = :clientId AND c.appCode = :appCode ORDER BY c.deletedAt ASC NULLS FIRST, c.updatedAt DESC")
 	List<CoreClient> findByClientIdAndAppCodeIncludingDeletedSorted(@Param("clientId") String clientId, @Param("appCode") String appCode);
 	
-	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreClient c SET c.deletedAt = CURRENT_TIMESTAMP WHERE c.id IN :ids")
 	void softDeleteByIds(@Param("ids") Collection<Long> ids);

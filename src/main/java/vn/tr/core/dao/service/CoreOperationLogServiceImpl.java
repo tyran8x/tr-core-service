@@ -23,6 +23,7 @@ public class CoreOperationLogServiceImpl implements CoreOperationLogService {
 	public void recordOperationLog(OperationLogEvent operationLogEvent) {
 		CoreOperationLog coreOperationLog = new CoreOperationLog();
 		coreOperationLog.setDaXoa(false);
+		coreOperationLog.setUpdatedAt(null);
 		coreOperationLog.setId(operationLogEvent.getId());
 		coreOperationLog.setTitle(operationLogEvent.getTitle());
 		coreOperationLog.setIp(operationLogEvent.getIp());

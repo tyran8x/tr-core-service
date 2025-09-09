@@ -16,6 +16,7 @@ import vn.tr.common.core.enums.LoginType;
 import vn.tr.common.core.exception.ServiceException;
 import vn.tr.common.core.exception.user.UserException;
 import vn.tr.common.core.utils.MessageUtils;
+import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
@@ -58,6 +59,9 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 		
 		coreUserService.checkLogin(LoginType.PASSWORD, username, () -> !BCrypt.checkpw(password, coreUser.getHashedPassword()));
 		
+		if (StringUtils.isEmpty(appCode)) {
+			appCode = "SYSTEM";
+		}
 		CoreUserApp userAppAccess = coreUserAppService.findByUsernameAndAppCode(username, appCode)
 				.orElseThrow(() -> new UserException("user.app.access.denied"));
 		

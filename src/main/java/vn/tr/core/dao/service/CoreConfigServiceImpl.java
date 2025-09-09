@@ -36,12 +36,7 @@ public class CoreConfigServiceImpl implements CoreConfigService {
 		return getValue(key, scopeChain, String.class);
 	}
 	
-	/**
-	 * Phương thức lõi để lấy và chuyển đổi giá trị.
-	 */
 	private <T> Optional<T> getValue(String key, Map<ConfigScope, String> scopeChain, Class<T> targetType) {
-		// TODO: Implement caching mechanism here for performance
-		
 		String appCode = scopeChain.get(ConfigScope.APP);
 		Optional<CoreConfigDefinition> defOpt = coreConfigDefinitionService.findByKeyAndAppCode(key, appCode);
 		
@@ -57,23 +52,15 @@ public class CoreConfigServiceImpl implements CoreConfigService {
 				Optional<CoreConfigValue> valueOpt = coreConfigValueService.findActiveValue(def.getId(), scope.name(), scopeValue);
 				if (valueOpt.isPresent()) {
 					String rawValue = valueOpt.get().getValue();
-					return Optional.ofNullable(processAndConvertValue(rawValue, def, targetType));
+					return Optional.of(processAndConvertValue(rawValue, def, targetType));
 				}
 			}
 		}
 		
-		// Nếu không có giá trị nào được ghi đè, sử dụng giá trị mặc định
-		return Optional.ofNullable(processAndConvertValue(def.getDefaultValue(), def, targetType));
+		return Optional.of(processAndConvertValue(def.getDefaultValue(), def, targetType));
 	}
 	
-	/**
-	 * Helper để giải mã (nếu cần) và chuyển đổi kiểu dữ liệu.
-	 */
 	private <T> T processAndConvertValue(String rawValue, CoreConfigDefinition definition, Class<T> targetType) {
-		if (rawValue == null) {
-			return null;
-		}
-		
 		String processedValue = rawValue;
 		if (Boolean.TRUE.equals(definition.getIsEncrypted())) {
 			processedValue = EncryptUtils.encryptByBase64(rawValue);
@@ -89,7 +76,6 @@ public class CoreConfigServiceImpl implements CoreConfigService {
 			if (targetType.isAssignableFrom(Boolean.class)) {
 				return targetType.cast(Boolean.valueOf(processedValue));
 			}
-			// Mặc định coi là JSON
 			return objectMapper.readValue(processedValue, targetType);
 		} catch (Exception e) {
 			log.error("Không thể chuyển đổi giá trị '{}' sang kiểu {} cho key '{}'. Lỗi: {}", rawValue, targetType.getSimpleName(),
@@ -147,6 +133,6 @@ public class CoreConfigServiceImpl implements CoreConfigService {
 		log.info("Đã cập nhật cấu hình key='{}', scope='{}', scopeValue='{}'", key, scope, scopeValue);
 		
 		// 5. Cân nhắc xóa cache tại đây
-		// clearCache(key, scopeChain);
+		//clearCache(key, scopeChain);
 	}
 }

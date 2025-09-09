@@ -25,10 +25,7 @@ import vn.tr.core.data.criteria.CoreRoleSearchCriteria;
 import vn.tr.core.data.dto.CoreRoleData;
 import vn.tr.core.data.mapper.CoreRoleMapper;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -74,105 +71,9 @@ public class CoreRoleBusiness {
 				coreRoleService.getRepository());
 		role.setAppCode(appCodeContext);
 		CoreRole savedRole = coreRoleService.save(role);
+		
+		synchronizePermissionsForRole(savedRole.getId(), coreRoleData.getPermissionCodes(), appCodeContext);
 		return coreRoleMapper.toData(savedRole);
-	}
-	
-	/**
-	 * Cập nhật một vai trò trong ngữ cảnh của một ứng dụng.
-	 *
-	 * @param id             ID của vai trò cần cập nhật.
-	 * @param data           DTO chứa thông tin mới.
-	 * @param appCodeContext Mã của ứng dụng (để xác thực quyền).
-	 *
-	 * @return Dữ liệu của vai trò sau khi cập nhật.
-	 */
-	public CoreRoleData update(Long id, CoreRoleData data, String appCodeContext) {
-		CoreRole existing = coreRoleService.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException(CoreRole.class, id));
-		if (!existing.getAppCode().equals(appCodeContext)) {
-			throw new PermissionDeniedException("Không có quyền cập nhật vai trò thuộc ứng dụng khác.");
-		}
-		data.setAppCode(appCodeContext);
-		return upsertByCode(data, appCodeContext);
-	}
-	
-	/**
-	 * Xóa một vai trò duy nhất (xóa mềm).
-	 *
-	 * @param id             ID của vai trò cần xóa.
-	 * @param appCodeContext Ngữ cảnh ứng dụng để kiểm tra quyền.
-	 */
-	public void delete(Long id, String appCodeContext) {
-		CoreRole role = coreRoleService.findById(id)
-				.orElseThrow(() -> new EntityNotFoundException(CoreRole.class, id));
-		validateDeletable(role, appCodeContext);
-		coreRoleService.deleteByIds(List.of(id));
-	}
-	
-	private void validateDeletable(CoreRole role, String appCodeContext) {
-		if (!role.getAppCode().equals(appCodeContext)) {
-			throw new PermissionDeniedException(String.format("Không có quyền xóa vai trò '%s'.", role.getName()));
-		}
-		if (coreUserRoleService.isRoleInUse(role)) {
-			throw new DataConstraintViolationException(String.format("Không thể xóa vai trò '%s' vì đang có người dùng được gán.", role.getName()));
-		}
-		if (coreRolePermissionService.isRoleInUse(role)) {
-			throw new DataConstraintViolationException(
-					String.format("Không thể xóa vai trò '%s' vì đang có quyền hạn được gán vào.", role.getName()));
-		}
-	}
-	
-	/**
-	 * Xóa hàng loạt vai trò và trả về kết quả chi tiết cho từng item.
-	 *
-	 * @param ids            Collection các ID cần xóa.
-	 * @param appCodeContext Ngữ cảnh ứng dụng để kiểm tra quyền.
-	 *
-	 * @return Một đối tượng chứa danh sách các ID xóa thành công và thất bại.
-	 */
-	public BulkOperationResult<Long> bulkDelete(Collection<Long> ids, String appCodeContext) {
-		BulkOperationResult<Long> result = new BulkOperationResult<>();
-		if (ids == null || ids.isEmpty()) return result;
-		
-		List<CoreRole> rolesInDb = coreRoleService.findAllByIds(ids);
-		Map<Long, CoreRole> roleMap = rolesInDb.stream().collect(Collectors.toMap(CoreRole::getId, r -> r));
-		
-		for (Long id : ids) {
-			CoreRole role = roleMap.get(id);
-			if (role == null) {
-				result.addFailure(id, "Vai trò không tồn tại.");
-				continue;
-			}
-			try {
-				validateDeletable(role, appCodeContext);
-				result.addSuccess(id);
-			} catch (PermissionDeniedException | DataConstraintViolationException e) {
-				result.addFailure(id, e.getMessage());
-			} catch (Exception e) {
-				log.error("Lỗi không xác định khi kiểm tra xóa vai trò ID {}: {}", id, e.getMessage());
-				result.addFailure(id, "Lỗi hệ thống không xác định.");
-			}
-		}
-		if (!result.getSuccessfulItems().isEmpty()) {
-			coreRoleService.deleteByIds(result.getSuccessfulItems());
-		}
-		return result;
-	}
-	
-	/**
-	 * Tìm kiếm và trả về danh sách vai trò có phân trang.
-	 *
-	 * @param criteria       Các tiêu chí tìm kiếm.
-	 * @param appCodeContext Ngữ cảnh ứng dụng để lọc kết quả.
-	 *
-	 * @return Kết quả phân trang của danh sách vai trò.
-	 */
-	@Transactional(readOnly = true)
-	public PagedResult<CoreRoleData> findAll(CoreRoleSearchCriteria criteria, String appCodeContext) {
-		criteria.setAppCode(appCodeContext);
-		Pageable pageable = CoreUtils.getPageRequest(criteria);
-		Page<CoreRole> page = coreRoleService.findAll(criteria, pageable);
-		return PagedResult.from(page, coreRoleMapper::toData);
 	}
 	
 	/**
@@ -258,6 +159,116 @@ public class CoreRoleBusiness {
 		if (!role.getAppCode().equals(appCodeContext)) {
 			throw new PermissionDeniedException("Không có quyền xem vai trò thuộc ứng dụng khác.");
 		}
-		return coreRoleMapper.toData(role);
+		return mapEntityToDataWithRelations(role);
+	}
+	
+	private CoreRoleData mapEntityToDataWithRelations(CoreRole role) {
+		// 1. Ánh xạ các trường cơ bản
+		CoreRoleData data = coreRoleMapper.toData(role);
+		
+		// 2. Lấy và gán danh sách quyền hạn
+		Set<String> permissionCodes = coreRolePermissionService.findPermissionCodesByRoleCodesAndAppCode(
+				Collections.singletonList(role.getCode()), role.getAppCode());
+		data.setPermissionCodes(permissionCodes);
+		
+		return data;
+	}
+	
+	/**
+	 * Cập nhật một vai trò trong ngữ cảnh của một ứng dụng.
+	 *
+	 * @param id             ID của vai trò cần cập nhật.
+	 * @param data           DTO chứa thông tin mới.
+	 * @param appCodeContext Mã của ứng dụng (để xác thực quyền).
+	 *
+	 * @return Dữ liệu của vai trò sau khi cập nhật.
+	 */
+	public CoreRoleData update(Long id, CoreRoleData data, String appCodeContext) {
+		CoreRole existing = coreRoleService.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException(CoreRole.class, id));
+		if (!existing.getAppCode().equals(appCodeContext)) {
+			throw new PermissionDeniedException("Không có quyền cập nhật vai trò thuộc ứng dụng khác.");
+		}
+		data.setAppCode(appCodeContext);
+		return upsertByCode(data, appCodeContext);
+	}
+	
+	/**
+	 * Xóa một vai trò duy nhất (xóa mềm).
+	 *
+	 * @param id             ID của vai trò cần xóa.
+	 * @param appCodeContext Ngữ cảnh ứng dụng để kiểm tra quyền.
+	 */
+	public void delete(Long id, String appCodeContext) {
+		CoreRole role = coreRoleService.findById(id)
+				.orElseThrow(() -> new EntityNotFoundException(CoreRole.class, id));
+		validateDeletable(role, appCodeContext);
+		coreRoleService.deleteByIds(List.of(id));
+	}
+	
+	private void validateDeletable(CoreRole role, String appCodeContext) {
+		if (!role.getAppCode().equals(appCodeContext)) {
+			throw new PermissionDeniedException(String.format("Không có quyền xóa vai trò '%s'.", role.getName()));
+		}
+		if (coreUserRoleService.isRoleInUse(role)) {
+			throw new DataConstraintViolationException(String.format("Không thể xóa vai trò '%s' vì đang có người dùng được gán.", role.getName()));
+		}
+		if (coreRolePermissionService.isRoleInUse(role)) {
+			throw new DataConstraintViolationException(
+					String.format("Không thể xóa vai trò '%s' vì đang có quyền hạn được gán vào.", role.getName()));
+		}
+	}
+	
+	/**
+	 * Xóa hàng loạt vai trò và trả về kết quả chi tiết cho từng item.
+	 *
+	 * @param ids            Collection các ID cần xóa.
+	 * @param appCodeContext Ngữ cảnh ứng dụng để kiểm tra quyền.
+	 *
+	 * @return Một đối tượng chứa danh sách các ID xóa thành công và thất bại.
+	 */
+	public BulkOperationResult<Long> bulkDelete(Collection<Long> ids, String appCodeContext) {
+		BulkOperationResult<Long> result = new BulkOperationResult<>();
+		if (ids == null || ids.isEmpty()) return result;
+		
+		List<CoreRole> rolesInDb = coreRoleService.findAllByIds(ids);
+		Map<Long, CoreRole> roleMap = rolesInDb.stream().collect(Collectors.toMap(CoreRole::getId, r -> r));
+		
+		for (Long id : ids) {
+			CoreRole role = roleMap.get(id);
+			if (role == null) {
+				result.addFailure(id, "Vai trò không tồn tại.");
+				continue;
+			}
+			try {
+				validateDeletable(role, appCodeContext);
+				result.addSuccess(id);
+			} catch (PermissionDeniedException | DataConstraintViolationException e) {
+				result.addFailure(id, e.getMessage());
+			} catch (Exception e) {
+				log.error("Lỗi không xác định khi kiểm tra xóa vai trò ID {}: {}", id, e.getMessage());
+				result.addFailure(id, "Lỗi hệ thống không xác định.");
+			}
+		}
+		if (!result.getSuccessfulItems().isEmpty()) {
+			coreRoleService.deleteByIds(result.getSuccessfulItems());
+		}
+		return result;
+	}
+	
+	@Transactional(readOnly = true)
+	public PagedResult<CoreRoleData> findAll(CoreRoleSearchCriteria criteria, String appCodeContext) {
+		criteria.setAppCode(appCodeContext);
+		Pageable pageable = CoreUtils.getPageRequest(criteria);
+		Page<CoreRole> page = coreRoleService.findAll(criteria, pageable);
+		Set<String> roleCodesInPage = page.getContent().stream().map(CoreRole::getCode).collect(Collectors.toSet());
+		Map<String, Set<String>> permissionsMap = coreRolePermissionService.findActivePermissionsForRoles(roleCodesInPage, appCodeContext);
+		return PagedResult.from(page, role -> mapEntityToDataWithRelations(role, permissionsMap.getOrDefault(role.getCode(), Set.of())));
+	}
+	
+	private CoreRoleData mapEntityToDataWithRelations(CoreRole role, Set<String> permissions) {
+		CoreRoleData data = coreRoleMapper.toData(role);
+		data.setPermissionCodes(permissions);
+		return data;
 	}
 }

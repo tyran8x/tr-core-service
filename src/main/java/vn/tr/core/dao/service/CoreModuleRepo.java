@@ -27,19 +27,9 @@ public interface CoreModuleRepo extends JpaRepository<CoreModule, Long>, JpaSpec
 	
 	List<CoreModule> findAllByAppCode(String appCode);
 	
-	/**
-	 * Tìm kiếm Module theo code và appCode, BAO GỒM CẢ CÁC BẢN GHI ĐÃ BỊ XÓA MỀM. Kết quả được sắp xếp để ưu tiên bản ghi đang hoạt động và được cập
-	 * nhật gần nhất.
-	 *
-	 * @param code    Mã của module.
-	 * @param appCode Mã của ứng dụng.
-	 *
-	 * @return Một danh sách các CoreModule tìm thấy, đã được sắp xếp.
-	 */
 	@Query("SELECT m FROM CoreModule m WHERE m.code = :code AND m.appCode = :appCode ORDER BY m.deletedAt ASC NULLS FIRST, m.updatedAt DESC")
 	List<CoreModule> findAllByCodeAndAppCodeIncludingDeletedSorted(@Param("code") String code, @Param("appCode") String appCode);
 	
-	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreModule m SET m.deletedAt = CURRENT_TIMESTAMP WHERE m.id IN :ids")
 	void softDeleteByIds(@Param("ids") Collection<Long> ids);

@@ -20,7 +20,6 @@ import java.util.List;
 @Repository
 public interface CoreAppRepo extends JpaRepository<CoreApp, Long>, JpaSpecificationExecutor<CoreApp> {
 	
-	// --- Validation Methods ---
 	boolean existsByIdNotAndCodeIgnoreCase(long id, String code);
 	
 	boolean existsByIdNotAndNameIgnoreCase(long id, String name);
@@ -29,13 +28,11 @@ public interface CoreAppRepo extends JpaRepository<CoreApp, Long>, JpaSpecificat
 	
 	boolean existsByNameIgnoreCase(String name);
 	
-	// --- Query Methods ---
 	List<CoreApp> findAllByCodeIn(Collection<String> codes);
 	
 	@Query("SELECT a FROM CoreApp a WHERE a.code = :code ORDER BY a.deletedAt ASC NULLS FIRST, a.updatedAt DESC")
 	List<CoreApp> findAllByCodeIgnoreCaseIncludingDeletedSorted(@Param("code") String code);
 	
-	// --- Soft Deletion ---
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreApp a SET a.deletedAt = CURRENT_TIMESTAMP WHERE a.id IN :ids")
 	void softDeleteByIds(@Param("ids") Collection<Long> ids);

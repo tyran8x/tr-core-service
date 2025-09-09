@@ -44,9 +44,6 @@ public interface CoreModuleService {
 	
 	List<CoreModule> findAllByAppCode(String appCode);
 	
-	/**
-	 * BỔ SUNG: Lưu một danh sách các module.
-	 */
 	List<CoreModule> saveAll(Iterable<CoreModule> modules);
 	
 }
