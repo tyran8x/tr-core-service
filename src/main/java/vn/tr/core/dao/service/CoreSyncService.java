@@ -117,16 +117,19 @@ public class CoreSyncService {
 		Map<String, String> parentChildMap = new HashMap<>();
 		
 		// Pass 1: Tạo/Cập nhật thực thể
+		
 		processRoutesRecursively(standardRoutes, null, appCode, existingMenusMap, allMenusToUpsert, activeMenuCodes, parentChildMap);
+		log.info("allMenusToUpsert: {}", allMenusToUpsert.size());
 		coreMenuService.saveAll(allMenusToUpsert);
 		
 		// Pass 2: Cập nhật parentId
 		Map<String, CoreMenu> savedMenuMap = allMenusToUpsert.stream().collect(Collectors.toMap(CoreMenu::getCode, Function.identity()));
-		existingMenusMap.forEach(savedMenuMap::putIfAbsent); // Gộp cả các menu không thay đổi
+		existingMenusMap.forEach(savedMenuMap::putIfAbsent);
 		
 		List<CoreMenu> menusToUpdateParent = new ArrayList<>();
 		updateParentIdsRecursivelyPass2(standardRoutes, null, savedMenuMap, menusToUpdateParent);
 		if (!menusToUpdateParent.isEmpty()) {
+			log.info("allMenusToUpsert: {}", menusToUpdateParent.size());
 			coreMenuService.saveAll(menusToUpdateParent);
 		}
 		
@@ -138,6 +141,7 @@ public class CoreSyncService {
 				menusToDelete.add(existingMenu);
 			}
 		}
+		log.info("menusToDelete: {}", menusToDelete.size());
 		if (!menusToDelete.isEmpty()) {
 			coreMenuService.saveAll(menusToDelete);
 			log.info("Đã xóa mềm {} menu không còn tồn tại cho app '{}'.", menusToDelete.size(), appCode);
@@ -146,8 +150,8 @@ public class CoreSyncService {
 	}
 	
 	private void processRoutesRecursively(List<RouteRecordRawData> routes, @Nullable String parentCode, String appCode,
-			Map<String, CoreMenu> existingMenusMap, List<CoreMenu> allMenusToUpsert,
-			Set<String> activeMenuCodes, Map<String, String> parentChildMap) {
+			Map<String, CoreMenu> existingMenusMap, List<CoreMenu> allMenusToUpsert, Set<String> activeMenuCodes,
+			Map<String, String> parentChildMap) {
 		int order = 0;
 		for (RouteRecordRawData routeData : routes) {
 			String menuCode = routeData.getName();
@@ -221,6 +225,7 @@ public class CoreSyncService {
 			if (StringUtils.isBlank(menuCode)) continue;
 			
 			CoreMenu currentMenu = savedMenuMap.get(menuCode);
+			
 			if (currentMenu == null) continue;
 			
 			Long parentId = (parent != null) ? parent.getId() : null;
@@ -279,12 +284,18 @@ public class CoreSyncService {
 			RouterMetaData meta = routeData.getMeta();
 			menu.setName(meta.getTitle());
 			menu.setIcon(meta.getIcon());
-			menu.setIsHidden(Boolean.TRUE.equals(meta.getHideInMenu())); // `hidden` thường nằm ngoài meta
+			menu.setIsHidden(Boolean.TRUE.equals(meta.getHideInMenu()));
 			menu.setIsNoCache(Boolean.TRUE.equals(meta.getNoCache()));
 			menu.setIsAffix(Boolean.TRUE.equals(meta.getAffixTab()));
-			menu.setIsBreadcrumb(Boolean.TRUE.equals(meta.getHideInBreadcrumb()));
+			menu.setIsBreadcrumb(meta.getHideInBreadcrumb());
 			menu.setActiveMenu(meta.getActiveMenu());
 			menu.setLink(meta.getLink());
+			try {
+				menu.setExtraMeta(objectMapper.writeValueAsString(routeData.getMeta()));
+			} catch (JsonProcessingException e) {
+				log.error("Lỗi khi serialize getMeta cho menu '{}': {}", menu.getCode(), e.getMessage());
+				menu.setExtraMeta(null);
+			}
 		} else {
 			menu.setName(routeData.getName());
 		}

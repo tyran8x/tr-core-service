@@ -1,10 +1,12 @@
 package vn.tr.core.data.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +14,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class RouteRecordRawData {
 	
 	private String path;
@@ -19,6 +22,8 @@ public class RouteRecordRawData {
 	private String name;
 	
 	private String component;
+	
+	private Integer sortOrder;
 	
 	/**
 	 * Dành cho named views. Key là tên của router-view, value là tên/path component. Ví dụ: { "default": "MainComponent", "sidebar":
@@ -35,7 +40,7 @@ public class RouteRecordRawData {
 	
 	private RouterMetaData meta;
 	
-	private List<RouteRecordRawData> children;
+	private List<RouteRecordRawData> children = new ArrayList<>();
 	
 	private Object props;
 	

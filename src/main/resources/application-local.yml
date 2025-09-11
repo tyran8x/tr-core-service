@@ -9,7 +9,7 @@ server:
 spring:
   # Cấu hình kết nối DB cho môi trường local
   datasource:
-    url: jdbc:postgresql://10.49.41.112:5432/dev_core_service
+    url: jdbc:postgresql://10.49.41.112:5432/core_service
     username: postgres
     # Vẫn khuyến khích dùng biến môi trường cho local để tạo thói quen tốt
     password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123}

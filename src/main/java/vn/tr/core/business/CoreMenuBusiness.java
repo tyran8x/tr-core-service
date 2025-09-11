@@ -181,7 +181,7 @@ public class CoreMenuBusiness {
 		route.setPath(menu.getPath());
 		route.setComponent(menu.getComponent());
 		route.setRedirect(menu.getRedirect());
-		
+		route.setProps(menu.getProps());
 		RouterMetaData meta = new RouterMetaData();
 		if (menu.getExtraMeta() != null && !menu.getExtraMeta().isBlank()) {
 			try {

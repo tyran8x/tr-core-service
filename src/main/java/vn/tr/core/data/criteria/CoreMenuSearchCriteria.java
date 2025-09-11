@@ -11,6 +11,8 @@ import java.util.Set;
 @EqualsAndHashCode(callSuper = true)
 public class CoreMenuSearchCriteria extends BaseSearchCriteria {
 	
+	private String appCode;
+	
 	private Set<Long> ids;
 	
 	private String name;
