@@ -259,4 +259,10 @@ public class CoreUserController {
 	public void importTemplate(HttpServletResponse response) {
 		ExcelUtil.exportExcel(new ArrayList<>(), "User data", CoreUserImportData.class, response);
 	}
+	
+	@GetMapping(value = {"/email/{email}"})
+	public R<CoreUserData> findByEmail(@PathVariable("email") String email) {
+		CoreUserData coreUserData = coreUserBusiness.findByEmail(email);
+		return R.ok(coreUserData);
+	}
 }

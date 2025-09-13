@@ -446,4 +446,13 @@ public class CoreUserBusiness {
 		                                                                                  );
 		return coreWorkSpaceItemMapper.toData(savedItems);
 	}
+	
+	public CoreUserData findByEmail(String email) {
+		Optional<CoreUser> optionalCoreUser = coreUserService.findFirstByEmailIgnoreCase(email);
+		CoreUser coreUser = new CoreUser();
+		if (optionalCoreUser.isPresent()) {
+			coreUser = optionalCoreUser.get();
+		}
+		return mapEntityToDataWithRelations(coreUser, null);
+	}
 }
