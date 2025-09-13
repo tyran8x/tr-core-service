@@ -48,10 +48,10 @@ public class AuthController {
 		
 		Long userId = LoginHelper.getUserId();
 		scheduledExecutorService.schedule(() -> {
-			WebSocketMessageDto dto = new WebSocketMessageDto();
-			dto.setMessage("Tr-Pro-App");
-			dto.setSessionKeys(List.of(userId));
-			WebSocketUtils.publishMessage(dto);
+			WebSocketMessageDto webSocketMessageDto = new WebSocketMessageDto();
+			webSocketMessageDto.setMessage("Tr-Pro-App");
+			webSocketMessageDto.setSessionKeys(List.of(userId));
+			WebSocketUtils.publishMessage(webSocketMessageDto);
 		}, 3, TimeUnit.SECONDS);
 		return R.ok(loginResult);
 	}
