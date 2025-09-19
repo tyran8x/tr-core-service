@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-
 public class CoreUserImportListener extends AnalysisEventListener<CoreUserImportData> implements ExcelListener<CoreUserImportData> {
 	
 	private final CoreUserService coreUserService;
@@ -54,7 +53,7 @@ public class CoreUserImportListener extends AnalysisEventListener<CoreUserImport
 				user.setCreatedBy(operUsername);
 				coreUserService.save(user);
 				successNum++;
-				successMsg.append("<br/>").append(successNum).append("、账号 ").append(user.getUsername()).append(" 导入成功");
+				successMsg.append("<br/>").append(successNum).append(",account ").append(user.getUsername()).append(" Import successfully");
 			} else if (isUpdateSupport) {
 				CoreUser sysUser = optionalCoreUser.get();
 				CoreUser user = BeanUtil.toBean(coreUserImportData, CoreUser.class);
@@ -70,13 +69,13 @@ public class CoreUserImportListener extends AnalysisEventListener<CoreUserImport
 				failureNum++;
 				failureMsg.append("<br/>")
 						.append(failureNum)
-						.append("、account ")
+						.append(",account ")
 						.append(optionalCoreUser.get().getUsername())
 						.append(" Already exists");
 			}
 		} catch (Exception e) {
 			failureNum++;
-			String msg = "<br/>" + failureNum + "、account " + coreUserImportData.getUsername() + " Import failed：";
+			String msg = "<br/>" + failureNum + ",account " + coreUserImportData.getUsername() + " Import failed：";
 			failureMsg.append(msg).append(e.getMessage());
 			log.error(msg, e);
 		}
