@@ -1,5 +1,7 @@
 package vn.tr.core.controller;
 
+import cn.dev33.satoken.SaManager;
+import cn.dev33.satoken.stp.StpUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
@@ -83,6 +85,10 @@ public class CoreAttachmentController {
 	
 	@GetMapping(value = "/{id}")
 	public R<CoreAttachmentData> findById(@PathVariable("id") Long id) throws EntityNotFoundException {
+		if (StpUtil.isLogin()) {
+			System.out.println(" - Token Name: " + SaManager.getConfig().getTokenName());
+			System.out.println(" - Token Value: " + StpUtil.getTokenValue());
+		}
 		CoreAttachmentData coreAttachmentData = coreAttachmentBusiness.findById(id);
 		return R.ok(coreAttachmentData);
 	}
