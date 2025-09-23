@@ -53,7 +53,7 @@ sa-token:
 # Logging cho local
 logging:
   level:
-    root: INFO
+    root: DEBUG
     vn.tr: DEBUG # Bật log DEBUG cho code của bạn
     cn.dev33.satoken: DEBUG # Bật log DEBUG cho Sa-Token
     org.springframework.web: DEBUG # Xem chi tiết request/response

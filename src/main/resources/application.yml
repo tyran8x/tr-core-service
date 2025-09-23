@@ -19,6 +19,7 @@ server:
       worker: ${UNDERTOW_WORKER_THREADS:256}  # Số luồng xử lý tác vụ
     direct-buffers: true
     max-http-post-size: 100MB # Cho phép upload file lớn
+    decode-url: false
   # Tắt server một cách mượt mà, xử lý nốt các request đang chạy
   shutdown: graceful
   # Bật nén GZIP/Brotli để giảm băng thông
@@ -26,6 +27,8 @@ server:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css,image/svg+xml
     min-response-size: 2048 # Chỉ nén response > 2KBadmin-server
+
+
 
 # ===================================================================
 # 2. SPRING FRAMEWORK
