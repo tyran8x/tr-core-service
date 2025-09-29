@@ -104,11 +104,11 @@ spring:
 
   # --- Spring Security ---
   # Dùng để bảo vệ các endpoint quản trị (Actuator, DevOps Dashboard)
-  security:
-    user:
-      name: ${SECURITY_USER_NAME}       # BẮT BUỘC cung cấp qua env
-      password: ${SECURITY_USER_PASSWORD} # BẮT BUỘC cung cấp qua env
-      roles: ADMIN
+  #security:
+  #  user:
+  #    name: ${SECURITY_USER_NAME}       # BẮT BUỘC cung cấp qua env
+  #    password: ${SECURITY_USER_PASSWORD} # BẮT BUỘC cung cấp qua env
+  #    roles: ADMIN
 
   boot:
     admin:
