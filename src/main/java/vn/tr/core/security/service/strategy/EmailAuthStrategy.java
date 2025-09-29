@@ -51,7 +51,7 @@ public class EmailAuthStrategy implements IAuthStrategy {
 		}
 		
 		// 1. Xác thực mã OTP
-		validateOtp(email, otpCode);
+		// validateOtp(email, otpCode);
 		
 		// 2. Tìm người dùng bằng email
 		CoreUser coreUser = coreUserService.findFirstByEmailIgnoreCase(email)
