@@ -32,7 +32,7 @@ public class PermissionServiceImpl implements PermissionService {
 	@Override
 	@Transactional(readOnly = true)
 	public Set<String> getGroupCodes(Long userId, String appCode) {
-		log.debug("DB Fallback: Đang lấy nhóm cho userId {} trong app {}", userId, appCode);
+		log.info("DB Fallback: Đang lấy nhóm cho userId {} trong app {}", userId, appCode);
 		return coreUserService.findById(userId)
 				.map(CoreUser::getUsername)
 				.map(username -> coreUserGroupService.findActiveGroupCodesByUsernameAndAppCode(username, appCode))
@@ -45,11 +45,11 @@ public class PermissionServiceImpl implements PermissionService {
 	@Override
 	@Transactional(readOnly = true)
 	public Set<String> getPermissionCodes(Long userId, String appCode) {
-		log.debug("DB Fallback: Đang lấy quyền hạn cho userId {} trong app {}", userId, appCode);
+		log.info("DB Fallback: Đang lấy quyền hạn cho userId {} trong app {}", userId, appCode);
 		
 		// Bước 1: Lấy các vai trò của người dùng trong ứng dụng đó
 		Set<String> roleCodes = this.getRoleCodes(userId, appCode);
-		
+		log.info("DB Fallback: roleCodes {}", roleCodes);
 		if (roleCodes.isEmpty()) {
 			return Collections.emptySet();
 		}
