@@ -231,6 +231,7 @@ security:
     - /webhook/**
     - /p/**
     - /eureka/**
+    - /actuator/**
 
 api-decrypt:
   enabled: ${API_DECRYPT_ENABLED:false}
