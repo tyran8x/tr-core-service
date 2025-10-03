@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import vn.tr.common.core.constant.SecurityConstants;
 import vn.tr.core.dao.model.CoreRole;
 import vn.tr.core.dao.model.CoreUserRole;
 
@@ -86,5 +87,14 @@ public class CoreUserRoleServiceImpl implements CoreUserRoleService {
 			return false;
 		}
 		return coreUserRoleRepo.existsByRoleCodeAndAppCode(role.getCode(), role.getAppCode());
+	}
+	
+	@Override
+	public boolean isSuperAdmin(String username) {
+		if (username.isBlank()) {
+			return false;
+		}
+		return coreUserRoleRepo.existsByUsernameAndRoleCodeAndAppCode(username, SecurityConstants.ROLE_SUPER_ADMIN,
+				SecurityConstants.SYSTEM_APP_CODE);
 	}
 }

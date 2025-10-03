@@ -59,4 +59,6 @@ public interface CoreUserAppService {
 	 * @return true nếu đang được sử dụng, ngược lại false.
 	 */
 	boolean isUserTypeInUse(String userTypeCode);
+	
+	List<CoreUserApp> findActiveByUsername(String username);
 }

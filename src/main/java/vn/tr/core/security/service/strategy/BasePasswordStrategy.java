@@ -86,8 +86,6 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 		// Mặc định không làm gì
 	}
 	
-	// --- CÁC HOOK METHOD CHO LỚP CON OVERRIDE ---
-	
 	private SaLoginParameter createLoginParameter(CoreClientData coreClientData, LoginUser loginUser) {
 		SaLoginParameter saLoginParameter = new SaLoginParameter();
 		saLoginParameter.setDeviceType(coreClientData.getDeviceType());

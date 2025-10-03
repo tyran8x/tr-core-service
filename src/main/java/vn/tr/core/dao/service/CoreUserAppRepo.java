@@ -39,7 +39,8 @@ public interface CoreUserAppRepo extends JpaRepository<CoreUserApp, Long>, JpaSp
 	@Query("SELECT cua FROM CoreUserApp cua WHERE cua.username IN :usernames AND cua.status = 'ACTIVE'")
 	List<CoreUserApp> findActiveByUsernamesIn(@Param("usernames") Collection<String> usernames);
 	
-	// --- Các phương thức kiểm tra ràng buộc ---
+	@Query("SELECT cua FROM CoreUserApp cua WHERE cua.username = :username AND cua.status = 'ACTIVE'")
+	List<CoreUserApp> findActiveByUsername(@Param("username") String username);
 	
 	boolean existsByAppCode(String appCode);
 	

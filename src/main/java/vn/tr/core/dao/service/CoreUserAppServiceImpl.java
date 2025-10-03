@@ -85,10 +85,7 @@ public class CoreUserAppServiceImpl implements CoreUserAppService {
 		}
 		List<CoreUserApp> assignments = coreUserAppRepo.findActiveByUsernamesIn(usernames);
 		return assignments.stream()
-				.collect(Collectors.groupingBy(
-						CoreUserApp::getUsername,
-						Collectors.mapping(CoreUserApp::getAppCode, Collectors.toSet())
-				                              ));
+				.collect(Collectors.groupingBy(CoreUserApp::getUsername, Collectors.mapping(CoreUserApp::getAppCode, Collectors.toSet())));
 	}
 	
 	@Override
@@ -99,5 +96,10 @@ public class CoreUserAppServiceImpl implements CoreUserAppService {
 	@Override
 	public boolean isUserTypeInUse(String userTypeCode) {
 		return coreUserAppRepo.existsByUserTypeCode(userTypeCode);
+	}
+	
+	@Override
+	public List<CoreUserApp> findActiveByUsername(String username) {
+		return coreUserAppRepo.findActiveByUsername(username);
 	}
 }

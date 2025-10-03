@@ -52,4 +52,7 @@ public interface CoreUserRoleService {
 	 * @return true nếu đang được sử dụng, ngược lại false.
 	 */
 	boolean isRoleInUse(CoreRole role);
+	
+	boolean isSuperAdmin(String username);
+	
 }

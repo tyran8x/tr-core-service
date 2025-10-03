@@ -38,4 +38,6 @@ public interface CoreRolePermissionService {
 	
 	Map<String, Set<String>> findActivePermissionsForRoles(Set<String> roleCodes, String appCode);
 	
+	Set<String> findPermissionCodesByRoleCodes(Collection<String> roleCodes);
+	
 }

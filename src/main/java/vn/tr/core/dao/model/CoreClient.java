@@ -50,6 +50,9 @@ public class CoreClient extends BaseEntity implements Identifiable<Long> {
 	@ColumnDefault(value = "'604800'")
 	private Integer timeout;
 	
+	@Column(name = "is_secret_required")
+	private Boolean isSecretRequired;
+	
 	@Column(name = "app_code", length = 50)
 	private String appCode;
 	

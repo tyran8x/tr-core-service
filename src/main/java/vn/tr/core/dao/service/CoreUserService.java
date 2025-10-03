@@ -8,6 +8,7 @@ import vn.tr.common.core.enums.LoginType;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
+import vn.tr.core.data.dto.CoreClientData;
 
 import java.util.Collection;
 import java.util.List;
@@ -60,6 +61,12 @@ public interface CoreUserService {
 	Optional<CoreUser> findByUsernameIgnoreCase(String username);
 	
 	Optional<CoreUser> findByUsernameIgnoreCaseIncludingDeleted(String username);
+	
+	LoginUser buildLoginUserForSingleApp(CoreUser user, CoreClientData client, String appCode);
+	
+	LoginUser buildAggregatedLoginUser(CoreUser user, CoreClientData client);
+	
+	Optional<CoreUser> findByUsernameOrEmail(String identifier);
 	
 	JpaRepository<CoreUser, Long> getRepository();
 	

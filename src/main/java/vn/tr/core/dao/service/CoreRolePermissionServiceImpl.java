@@ -133,4 +133,12 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 						Collectors.mapping(CoreRolePermission::getPermissionCode, Collectors.toSet())));
 	}
 	
+	@Override
+	public Set<String> findPermissionCodesByRoleCodes(Collection<String> roleCodes) {
+		if (roleCodes == null || roleCodes.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return coreRolePermissionRepo.findPermissionCodesByRoleCodes(roleCodes);
+	}
+	
 }

@@ -27,6 +27,7 @@ import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
+import vn.tr.core.data.dto.CoreClientData;
 
 import java.time.Duration;
 import java.util.*;
@@ -41,6 +42,8 @@ public class CoreUserServiceImpl implements CoreUserService {
 	private final CorePermissionService corePermissionService;
 	private final CoreUserRoleService coreUserRoleService;
 	private final CoreUserGroupService coreUserGroupService;
+	private final CoreUserAppService coreUserAppService;
+	private final CoreRolePermissionService coreRolePermissionService;
 	@Value("${user.password.maxRetryCount}")
 	private Integer maxRetryCount;
 	@Value("${user.password.lockTime}")
@@ -129,18 +132,10 @@ public class CoreUserServiceImpl implements CoreUserService {
 		SpringUtils.context().publishEvent(loginInfoEvent);
 	}
 	
-	/**
-	 * Build a LoginUser object from CoreUser and CoreUserApp.
-	 *
-	 * @param coreUser      the user entity
-	 * @param userAppAccess the user's app access entity
-	 *
-	 * @return LoginUser object with permissions, groups, and roles
-	 */
 	@Override
 	public LoginUser buildLoginUser(CoreUser coreUser, CoreUserApp userAppAccess) {
 		LoginUser loginUser = new LoginUser();
-		loginUser.setUserId(coreUser.getId());
+		loginUser.setUserId(String.valueOf(coreUser.getId()));
 		loginUser.setUsername(coreUser.getUsername());
 		loginUser.setFullName(coreUser.getFullName());
 		loginUser.setUserType(userAppAccess.getUserTypeCode());
@@ -231,27 +226,65 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
+	public LoginUser buildLoginUserForSingleApp(CoreUser user, CoreClientData client, String appCode) {
+		CoreUserApp userAppAccess = coreUserAppService.findByUsernameAndAppCode(user.getUsername(), appCode)
+				.orElseThrow(() -> new UserException("user.app.access.denied", appCode));
+		checkUserAppStatus(userAppAccess);
+		
+		Set<String> roles = coreUserRoleService.findActiveRoleCodesByUsernameAndAppCode(user.getUsername(), appCode);
+		Set<String> groups = coreUserGroupService.findActiveGroupCodesByUsernameAndAppCode(user.getUsername(), appCode);
+		Set<String> permissions = roles.isEmpty()
+				? Collections.emptySet()
+				: coreRolePermissionService.findPermissionCodesByRoleCodesAndAppCode(roles, appCode);
+		
+		return createLoginUserObject(user, client, appCode, userAppAccess.getUserTypeCode(), roles, groups, permissions);
+	}
+	
+	private LoginUser createLoginUserObject(CoreUser user, CoreClientData clientData, String appCode, String userType, Set<String> roles,
+			Set<String> groups, Set<String> permissions) {
+		LoginUser loginUser = new LoginUser();
+		loginUser.setUserId(String.valueOf(user.getId()));
+		loginUser.setUsername(user.getUsername());
+		loginUser.setFullName(user.getFullName());
+		loginUser.setAppCode(appCode);
+		loginUser.setUserType(userType);
+		loginUser.setRoleCodes(roles);
+		loginUser.setGroupCodes(groups);
+		loginUser.setPermissionCodes(permissions);
+		loginUser.setClientKey(clientData.getClientKey());
+		loginUser.setDeviceType(clientData.getDeviceType());
+		return loginUser;
+	}
+	
+	@Override
+	public LoginUser buildAggregatedLoginUser(CoreUser user, CoreClientData client) {
+		List<CoreUserApp> accessibleApps = coreUserAppService.findActiveByUsername(user.getUsername());
+		if (accessibleApps.isEmpty()) {
+			throw new UserException("user.no.app.assigned");
+		}
+		
+		Set<String> allRoles = coreUserRoleService.findAllActiveRoleCodesByUsername(user.getUsername());
+		Set<String> allGroups = coreUserGroupService.findAllActiveGroupCodesByUsername(user.getUsername());
+		Set<String> allPermissions = allRoles.isEmpty()
+				? Collections.emptySet()
+				: coreRolePermissionService.findPermissionCodesByRoleCodes(allRoles);
+		
+		String representativeUserType = accessibleApps.getFirst().getUserTypeCode();
+		return createLoginUserObject(user, client, null, representativeUserType, allRoles, allGroups, allPermissions);
+	}
+	
+	@Override
+	@Transactional(readOnly = true)
+	public Optional<CoreUser> findByUsernameOrEmail(String identifier) {
+		if (identifier.isBlank()) {
+			return Optional.empty();
+		}
+		return coreUserRepo.findByUsernameOrEmailIgnoreCase(identifier);
+	}
+	
+	@Override
 	public JpaRepository<CoreUser, Long> getRepository() {
 		return this.coreUserRepo;
 	}
-
-//	@Override
-//	@Transactional
-//	public CoreUser findOrCreate(String username, String fullName, String email, String rawPassword) {
-//		// Chuẩn hóa username
-//		String normalizedUsername = username.toLowerCase();
-//
-//		return coreUserRepo.findFirstByUsernameIgnoreCase(normalizedUsername)
-//				.orElseGet(() -> {
-//					CoreUser newUser = new CoreUser();
-//					newUser.setUsername(normalizedUsername);
-//					newUser.setFullName(fullName);
-//					newUser.setEmail(email);
-//					newUser.setHashedPassword(BCrypt.hashpw(rawPassword));
-//					// Gán các giá trị mặc định khác nếu cần
-//					// Ví dụ: newUser.setUserType(...)
-//					return coreUserRepo.save(newUser);
-//				});
-//	}
-
+	
 }

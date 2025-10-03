@@ -1,14 +1,18 @@
 package vn.tr.core.business;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.core.exception.base.PermissionDeniedException;
+import vn.tr.common.core.exception.user.UserException;
+import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.jpa.helper.GenericUpsertHelper;
 import vn.tr.common.web.data.dto.BulkOperationResult;
 import vn.tr.common.web.utils.CoreUtils;
@@ -191,5 +195,41 @@ public class CoreClientBusiness {
 		Pageable pageable = CoreUtils.getPageRequest(criteria);
 		Page<CoreClient> page = coreClientService.findAll(criteria, pageable);
 		return PagedResult.from(page, coreClientMapper::toData);
+	}
+	
+	/**
+	 * Xác thực thông tin client.
+	 *
+	 * @param clientId     ID của client.
+	 * @param clientSecret Secret của client (có thể là null).
+	 * @param grantType    Loại grant type đang được yêu cầu.
+	 *
+	 * @return DTO của client nếu hợp lệ.
+	 *
+	 */
+	public CoreClientData validateClient(String clientId, String clientSecret, String grantType) {
+		if (StringUtils.isBlank(clientId)) {
+			throw new UserException("client.id.required");
+		}
+		
+		CoreClientData client = coreClientService.findByClientId(clientId)
+				.map(coreClientMapper::toData)
+				.orElseThrow(() -> new UserException("client.id.invalid"));
+		
+		if (client.getStatus() != LifecycleStatus.ACTIVE) {
+			throw new UserException("client.disabled");
+		}
+		
+		// Kiểm tra xem client có được phép sử dụng grant type này không
+		if (StringUtils.isNotBlank(client.getGrantType()) && !client.getGrantType().contains(grantType)) {
+			throw new UserException("client.grant_type.unsupported");
+		}
+		
+		// Một số client (public client) có thể không yêu cầu secret
+		if (Boolean.TRUE.equals(client.getIsSecretRequired()) && !BCrypt.checkpw(clientSecret, client.getClientSecret())) {
+			throw new UserException("client.secret.invalid");
+		}
+		
+		return client;
 	}
 }

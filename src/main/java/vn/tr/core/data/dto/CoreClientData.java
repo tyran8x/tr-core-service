@@ -43,6 +43,8 @@ public class CoreClientData {
 	
 	private Integer sortOrder;
 	
+	private Boolean isSecretRequired;
+	
 	private LifecycleStatus status;
 	// appCode được quản lý bởi backend, không nên nhận từ client
 	@JsonIgnore

@@ -36,4 +36,7 @@ public interface CoreUserRoleRepo extends JpaRepository<CoreUserRole, Long>, Jpa
 	
 	// --- Kiểm tra ràng buộc ---
 	boolean existsByRoleCodeAndAppCode(String roleCode, String appCode);
+	
+	boolean existsByUsernameAndRoleCodeAndAppCode(String username, String roleCode, String appCode);
+	
 }
