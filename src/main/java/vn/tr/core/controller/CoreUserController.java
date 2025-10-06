@@ -217,7 +217,7 @@ public class CoreUserController {
 		LoginUser loginUser = LoginHelper.getLoginUserOrThrow();
 		// Khi lấy thông tin cá nhân, ngữ cảnh appCode chính là appCode trong token (nếu có)
 		// Nếu là Super Admin, appCode là null, sẽ lấy toàn bộ thông tin
-		CoreUserData coreUserData = coreUserBusiness.findById(loginUser.getUserId(), loginUser.getAppCode());
+		CoreUserData coreUserData = coreUserBusiness.findById(Long.valueOf(loginUser.getUserId()), loginUser.getAppCode());
 		return R.ok(coreUserData);
 	}
 	

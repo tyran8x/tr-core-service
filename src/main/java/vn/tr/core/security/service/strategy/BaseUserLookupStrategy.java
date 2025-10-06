@@ -5,7 +5,9 @@ import vn.tr.common.core.domain.model.LoginBody;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.exception.user.UserException;
 import vn.tr.core.dao.model.CoreUser;
-import vn.tr.core.dao.service.*;
+import vn.tr.core.dao.service.CoreUserAppService;
+import vn.tr.core.dao.service.CoreUserRoleService;
+import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.LoginResult;
 import vn.tr.core.data.dto.CoreClientData;
 
@@ -20,9 +22,8 @@ import vn.tr.core.data.dto.CoreClientData;
 public abstract class BaseUserLookupStrategy extends AbstractAuthStrategy {
 	
 	protected BaseUserLookupStrategy(CoreUserService coreUserService, CoreUserAppService coreUserAppService,
-			CoreUserRoleService coreUserRoleService, CoreUserGroupService coreUserGroupService,
-			CoreRolePermissionService coreRolePermissionService) {
-		super(coreUserService, coreUserAppService, coreUserRoleService, coreUserGroupService, coreRolePermissionService);
+			CoreUserRoleService coreUserRoleService) {
+		super(coreUserService, coreUserAppService, coreUserRoleService);
 	}
 	
 	@Override

@@ -28,6 +28,8 @@ public interface CoreClientService {
 	
 	boolean existsByClientIdAndAppCode(String clientId, String appCode);
 	
+	Optional<CoreClient> findByClientId(String clientId);
+	
 	JpaRepository<CoreClient, Long> getRepository();
 	
 }

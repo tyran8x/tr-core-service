@@ -76,6 +76,11 @@ public class CoreClientServiceImpl implements CoreClientService {
 	}
 	
 	@Override
+	public Optional<CoreClient> findByClientId(String clientId) {
+		return coreClientRepo.findByClientId(clientId);
+	}
+	
+	@Override
 	public JpaRepository<CoreClient, Long> getRepository() {
 		return this.coreClientRepo;
 	}

@@ -4,15 +4,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.tr.common.core.domain.model.EmailLoginBody;
 import vn.tr.common.core.domain.model.LoginBody;
-import vn.tr.core.dao.service.*;
+import vn.tr.core.dao.service.CoreUserAppService;
+import vn.tr.core.dao.service.CoreUserRoleService;
+import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.security.service.IAuthStrategy;
 
 @Slf4j
 @Service("email" + IAuthStrategy.BASE_NAME)
 public class EmailAuthStrategy extends BaseUserLookupStrategy {
 	
-	public EmailAuthStrategy(CoreUserService a, CoreUserAppService b, CoreUserRoleService c, CoreUserGroupService d, CoreRolePermissionService e) {
-		super(a, b, c, d, e);
+	public EmailAuthStrategy(CoreUserService a, CoreUserAppService b, CoreUserRoleService c) {
+		super(a, b, c);
 	}
 	
 	@Override

@@ -10,6 +10,7 @@ import vn.tr.core.dao.model.CoreClient;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repository interface cho thực thể CoreClient.
@@ -30,4 +31,7 @@ public interface CoreClientRepo extends JpaRepository<CoreClient, Long>, JpaSpec
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE CoreClient c SET c.deletedAt = CURRENT_TIMESTAMP WHERE c.id IN :ids")
 	void softDeleteByIds(@Param("ids") Collection<Long> ids);
+	
+	Optional<CoreClient> findByClientId(String clientId);
+	
 }

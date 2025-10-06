@@ -25,8 +25,7 @@ public class DecryptController {
 	/**
 	 * 解密方法
 	 *
-	 * @param encryptedData
-	 * 		加密数据
+	 * @param encryptedData 加密数据
 	 *
 	 * @return 解密结果
 	 */
@@ -35,17 +34,16 @@ public class DecryptController {
 		try {
 			// 解密示例
 			String decryptedData = decryptData(encryptedData);
-			return R.ok("解密成功", decryptedData);
+			return R.ok("Decryption successfully", decryptedData);
 		} catch (Exception e) {
-			return R.fail("解密失败: " + e.getMessage());
+			return R.fail("Decryption failed: " + e.getMessage());
 		}
 	}
 	
 	/**
 	 * 解密数据
 	 *
-	 * @param encryptedData
-	 * 		加密数据
+	 * @param encryptedData 加密数据
 	 *
 	 * @return 解密后的数据
 	 */
