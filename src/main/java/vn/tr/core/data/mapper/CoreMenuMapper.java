@@ -10,6 +10,7 @@ import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.data.dto.CoreMenuData;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @Mapper(
@@ -22,6 +23,8 @@ public interface CoreMenuMapper {
 	Logger log = LoggerFactory.getLogger(CoreMenuMapper.class);
 	
 	CoreMenuData toData(CoreMenu entity);
+	
+	List<CoreMenuData> toData(List<CoreMenu> coreMenus);
 	
 	@Mapping(target = "id", ignore = true)
 	CoreMenu toEntity(CoreMenuData data);

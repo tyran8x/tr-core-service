@@ -45,18 +45,19 @@ public class CoreMenuController {
 		List<CoreMenuData> menuTree = coreMenuBusiness.getMenuTreeForApp(LoginHelper.getAppCode());
 		return R.ok(menuTree);
 	}
-	
-	@GetMapping("/flat-list")
-	@Log(title = "Lấy danh sách phẳng Menu", businessType = BusinessType.LIST, isSaveRequestData = false)
-	public R<List<CoreMenuData>> getFlatList(@RequestHeader(name = "X-App-Code") String appCode) {
-		List<CoreMenuData> menuList = coreMenuBusiness.getFlatListForApp(appCode);
-		return R.ok(menuList);
-	}
+
+//	@GetMapping("/flat-list")
+//	@Log(title = "Lấy danh sách phẳng Menu", businessType = BusinessType.LIST, isSaveRequestData = false)
+//	public R<List<CoreMenuData>> getFlatList(@RequestHeader(name = "X-App-Code") String appCode) {
+//		List<CoreMenuData> menuList = coreMenuBusiness.getFlatListForApp(appCode);
+//		return R.ok(menuList);
+//	}
 	
 	@GetMapping("/{id}")
 	@Log(title = "Lấy chi tiết Menu", businessType = BusinessType.DETAIL, isSaveRequestData = false)
 	public R<CoreMenuData> getById(@PathVariable Long id) {
-		CoreMenuData menuData = coreMenuBusiness.findById(id);
+		String appCodeContext = LoginHelper.getAppCode();
+		CoreMenuData menuData = coreMenuBusiness.findById(id, appCodeContext);
 		return R.ok(menuData);
 	}
 	
@@ -66,42 +67,47 @@ public class CoreMenuController {
 		if (deleteData.getIds() == null || deleteData.getIds().isEmpty()) {
 			return R.fail("Danh sách ID không được để trống.");
 		}
-		coreMenuBusiness.bulkDelete(deleteData.getIds());
+		String appCodeContext = LoginHelper.getAppCode();
+		coreMenuBusiness.bulkDelete(deleteData.getIds(), appCodeContext);
 		return R.ok();
 	}
 	
 	@GetMapping(value = {"/", ""})
 	@Log(title = "FindAll CoreMenu", businessType = BusinessType.FINDALL, isSaveRequestData = false)
 	public R<PagedResult<CoreMenuData>> findAll(CoreMenuSearchCriteria criteria) {
-		PagedResult<CoreMenuData> pageCoreMenuData = coreMenuBusiness.findAll(criteria);
+		String appCodeContext = LoginHelper.getAppCode();
+		PagedResult<CoreMenuData> pageCoreMenuData = coreMenuBusiness.findAll(criteria, appCodeContext);
 		return R.ok(pageCoreMenuData);
 	}
-	
-	@GetMapping(value = {"/list"})
-	@Log(title = "getAll CoreMenu", businessType = BusinessType.FINDALL, isSaveRequestData = false)
-	public R<List<CoreMenuData>> getAll(CoreMenuSearchCriteria criteria) {
-		List<CoreMenuData> coreMenuDatas = coreMenuBusiness.getAll(criteria);
-		return R.ok(coreMenuDatas);
-	}
+
+//	@GetMapping(value = {"/list"})
+//	@Log(title = "getAll CoreMenu", businessType = BusinessType.FINDALL, isSaveRequestData = false)
+//	public R<List<CoreMenuData>> getAll(CoreMenuSearchCriteria criteria) {
+//		List<CoreMenuData> coreMenuDatas = coreMenuBusiness.getAll(criteria);
+//		return R.ok(coreMenuDatas);
+//	}
 	
 	@PostMapping
 	@Log(title = "Tạo Menu", businessType = BusinessType.INSERT)
 	public R<CoreMenuData> create(@Valid @RequestBody CoreMenuData menuData) {
-		CoreMenuData createdMenu = coreMenuBusiness.create(menuData);
+		String appCodeContext = LoginHelper.getAppCode();
+		CoreMenuData createdMenu = coreMenuBusiness.create(menuData, appCodeContext);
 		return R.ok(createdMenu);
 	}
 	
 	@PutMapping("/{id}")
 	@Log(title = "Cập nhật Menu", businessType = BusinessType.UPDATE)
 	public R<CoreMenuData> update(@PathVariable Long id, @Valid @RequestBody CoreMenuData menuData) {
-		CoreMenuData updatedMenu = coreMenuBusiness.update(id, menuData);
+		String appCodeContext = LoginHelper.getAppCode();
+		CoreMenuData updatedMenu = coreMenuBusiness.update(id, menuData, appCodeContext);
 		return R.ok(updatedMenu);
 	}
 	
 	@DeleteMapping("/{id}")
 	@Log(title = "Xóa Menu", businessType = BusinessType.DELETE)
 	public R<Void> delete(@PathVariable Long id) {
-		coreMenuBusiness.delete(id);
+		String appCodeContext = LoginHelper.getAppCode();
+		coreMenuBusiness.delete(id, appCodeContext);
 		return R.ok("Xóa menu thành công.");
 	}
 	
