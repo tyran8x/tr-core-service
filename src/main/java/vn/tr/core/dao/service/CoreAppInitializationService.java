@@ -75,8 +75,8 @@ public class CoreAppInitializationService {
 		
 		// 3. Tạo các Vai trò (Role) toàn cục
 		// Tham số appCodeContext là null vì chúng ta đang thao tác trên app SYSTEM với quyền Super Admin
-		upsertRole("ROLE_SUPER_ADMIN", "Quản trị viên Cấp cao nhất", systemApp.getCode());
-		upsertRole("ROLE_USER", "Người dùng Cơ bản", systemApp.getCode());
+		upsertRole("ROLE_SUPER_ADMIN", systemApp.getCode(), "Quản trị viên Cấp cao nhất");
+		upsertRole("ROLE_USER", systemApp.getCode(), "Người dùng Cơ bản");
 		
 		// 4. Tạo và cấu hình tài khoản 'root'
 		CoreUserData rootUserData = CoreUserData.builder()

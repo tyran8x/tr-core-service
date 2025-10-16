@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.exception.base.DataConstraintViolationException;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.core.exception.base.PermissionDeniedException;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.utils.CoreUtils;
 import vn.tr.common.web.utils.PagedResult;
@@ -43,8 +42,6 @@ public class CoreMenuBusiness {
 	private final CoreMenuMapper coreMenuMapper;
 	private final ObjectMapper objectMapper;
 	private final CorePermissionService corePermissionService;
-	
-	//<editor-fold desc="Standard CRUD Operations">
 	
 	/**
 	 * Tạo mới một menu.
@@ -136,10 +133,6 @@ public class CoreMenuBusiness {
 		return PagedResult.from(pageCoreMenu, coreMenuMapper::toData);
 	}
 	
-	//</editor-fold>
-	
-	//<editor-fold desc="Tree and Route Operations">
-	
 	/**
 	 * Lấy toàn bộ cây menu cho một ứng dụng. Hữu ích cho màn hình quản lý menu.
 	 *
@@ -192,10 +185,6 @@ public class CoreMenuBusiness {
 		
 		return buildRouteRecordTree(accessibleRoutes, accessibleMenus);
 	}
-	
-	//</editor-fold>
-	
-	//<editor-fold desc="Private Helper Methods">
 	
 	private List<CoreMenuData> buildMenuDataTree(List<CoreMenuData> flatList) {
 		Map<Long, CoreMenuData> map = flatList.stream().collect(Collectors.toMap(CoreMenuData::getId, Function.identity()));
@@ -282,15 +271,8 @@ public class CoreMenuBusiness {
 		route.setPath(menu.getPath());
 		route.setComponent(menu.getComponent());
 		route.setRedirect(menu.getRedirect());
-		route.setSortOrder(menu.getSortOrder()); // Gán sortOrder
-		
-		if (StringUtils.isNotBlank(menu.getProps())) {
-			try {
-				route.setProps(objectMapper.readValue(menu.getProps(), Object.class));
-			} catch (JsonProcessingException e) {
-				log.warn("Không thể deserialize props cho menu: {}", menu.getCode());
-			}
-		}
+		route.setSortOrder(menu.getSortOrder());
+		route.setProps(menu.getProps());
 		
 		RouterMetaData meta = new RouterMetaData();
 		if (menu.getExtraMeta() != null && !menu.getExtraMeta().isBlank()) {
@@ -300,8 +282,6 @@ public class CoreMenuBusiness {
 				log.error("Lỗi deserialize extra_meta cho menu: {}", menu.getCode(), e);
 			}
 		}
-		
-		// Ghi đè các giá trị từ cột riêng lẻ (luôn là nguồn tin cậy nhất)
 		meta.setTitle(menu.getName());
 		meta.setIcon(menu.getIcon());
 		meta.setHideInMenu(menu.getIsHidden());
@@ -309,6 +289,4 @@ public class CoreMenuBusiness {
 		route.setMeta(meta);
 		return route;
 	}
-	
-	//</editor-fold>
 }
