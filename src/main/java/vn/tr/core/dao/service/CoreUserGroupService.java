@@ -24,6 +24,8 @@ public interface CoreUserGroupService {
 	
 	Set<String> findActiveGroupCodesByUsernameAndAppCode(String username, String appCode);
 	
+	Set<String> findActiveGroupCodesByUsernameAndAppCodes(String username, Set<String> appCodes);
+	
 	Set<String> findAllActiveGroupCodesByUsername(String username);
 	
 	/**

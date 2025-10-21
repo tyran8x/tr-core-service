@@ -23,7 +23,6 @@ import vn.tr.core.dao.service.CoreUserAppService;
 import vn.tr.core.dao.service.CoreUserRoleService;
 import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.LoginResult;
-import vn.tr.core.data.dto.CoreClientData;
 import vn.tr.core.security.service.IAuthStrategy;
 
 import java.util.Collections;
@@ -53,75 +52,70 @@ public abstract class AbstractAuthStrategy implements IAuthStrategy {
 	 * Nó nhận vào người dùng đã được xác thực và quyết định luồng xử lý tiếp theo.
 	 *
 	 * @param user          Thực thể CoreUser đã được xác thực thành công.
-	 * @param client        Dữ liệu của client đang thực hiện request.
 	 * @param targetAppCode Mã ứng dụng người dùng muốn đăng nhập vào (có thể là null).
 	 *
 	 * @return Kết quả đăng nhập chứa token.
 	 */
-	protected LoginResult processLogin(CoreUser user, CoreClientData client, @Nullable String targetAppCode) {
+	protected LoginResult processLogin(CoreUser user, @Nullable String targetAppCode) {
 		if (coreUserRoleService.isSuperAdmin(user.getUsername())) {
-			return performSuperAdminLogin(user, client);
+			return performSuperAdminLogin(user);
 		}
 		
 		// Người dùng thường đi theo luồng chuẩn
-		return performStandardUserLogin(user, client, targetAppCode);
+		return performStandardUserLogin(user, targetAppCode);
 	}
 	
-	private LoginResult performSuperAdminLogin(CoreUser user, CoreClientData client) {
+	private LoginResult performSuperAdminLogin(CoreUser user) {
 		log.info("Performing optimized login for Super Admin: {}", user.getUsername());
 		
-		LoginUser loginUser = buildSuperAdminLoginUser(user, client);
+		LoginUser loginUser = buildSuperAdminLoginUser(user);
 		
-		LoginHelper.login(loginUser, createLoginParameter(client, loginUser));
+		LoginHelper.login(loginUser, createLoginParameter(loginUser));
 		coreUserService.recordLoginInfo(user.getUsername(), Constants.LOGIN, "Super Admin login successful.");
-		return createLoginResult(client);
+		return createLoginResult();
 	}
 	
-	private LoginResult performStandardUserLogin(CoreUser user, CoreClientData client, @Nullable String targetAppCode) {
+	private LoginResult performStandardUserLogin(CoreUser user, @Nullable String targetAppCode) {
 		LoginUser loginUser;
 		if (StringUtils.isNotBlank(targetAppCode)) {
 			log.info("Performing login for user '{}' into specific app: {}", user.getUsername(), targetAppCode);
-			loginUser = coreUserService.buildLoginUserForSingleApp(user, client, targetAppCode);
+			loginUser = coreUserService.buildLoginUserForSingleApp(user, targetAppCode);
 		} else {
 			log.info("Performing aggregated login for user '{}' across all apps.", user.getUsername());
-			loginUser = coreUserService.buildAggregatedLoginUser(user, client);
+			loginUser = coreUserService.buildAggregatedLoginUser(user);
 		}
 		
-		LoginHelper.login(loginUser, createLoginParameter(client, loginUser));
+		LoginHelper.login(loginUser, createLoginParameter(loginUser));
 		coreUserService.recordLoginInfo(user.getUsername(), Constants.LOGIN, MessageUtils.message("user.login.success"));
-		return createLoginResult(client);
+		return createLoginResult();
 	}
 	
-	private LoginUser buildSuperAdminLoginUser(CoreUser user, CoreClientData client) {
+	private LoginUser buildSuperAdminLoginUser(CoreUser user) {
 		LoginUser loginUser = new LoginUser();
 		loginUser.setUserId(String.valueOf(user.getId()));
 		loginUser.setUsername(user.getUsername());
 		loginUser.setFullName(user.getFullName());
-		loginUser.setAppCode(SecurityConstants.SYSTEM_APP_CODE);
-		loginUser.setUserType("SUPER_ADMIN");
+		loginUser.setAppCodes(Set.of(SecurityConstants.SYSTEM_APP_CODE));
 		loginUser.setRoleCodes(Set.of(SecurityConstants.ROLE_SUPER_ADMIN));
-		loginUser.setPermissionCodes(Set.of("*")); // Quyền năng tối cao
+		loginUser.setPermissionCodes(Set.of("*"));
 		loginUser.setGroupCodes(Collections.emptySet());
-		loginUser.setClientKey(client.getClientKey());
-		loginUser.setDeviceType(client.getDeviceType());
 		return loginUser;
 	}
 	
-	private SaLoginParameter createLoginParameter(CoreClientData client, LoginUser loginUser) {
+	private SaLoginParameter createLoginParameter(LoginUser loginUser) {
 		return new SaLoginParameter()
-				.setDeviceType(client.getDeviceType())
-				.setTimeout(client.getTimeout())
-				.setActiveTimeout(client.getActiveTimeout())
+//				.setDeviceType(client.getDeviceType())
+//				.setTimeout(client.getTimeout())
+//				.setActiveTimeout(client.getActiveTimeout())
 				.setExtra(SecurityConstants.USER_ID, loginUser.getUserId())
 				.setExtra(SecurityConstants.USERNAME, loginUser.getUsername())
-				.setExtra(SecurityConstants.APP_CODE, loginUser.getAppCode());
+				.setExtra(SecurityConstants.APP_CODE, loginUser.getAppCodes());
 	}
 	
-	private LoginResult createLoginResult(CoreClientData client) {
+	private LoginResult createLoginResult() {
 		return LoginResult.builder()
 				.accessToken(StpUtil.getTokenValue())
 				.expireIn(StpUtil.getTokenTimeout())
-				.clientId(client.getClientId())
 				.tokenType(SecurityConstants.TOKEN_PREFIX.trim())
 				.build();
 	}
@@ -132,7 +126,7 @@ public abstract class AbstractAuthStrategy implements IAuthStrategy {
 	 */
 	@Override
 	@Transactional
-	public void performRegistration(RegisterBody registerBody, CoreClientData client) {
+	public void performRegistration(RegisterBody registerBody) {
 		preRegisterValidate(registerBody);
 		
 		String username = registerBody.getUsername();

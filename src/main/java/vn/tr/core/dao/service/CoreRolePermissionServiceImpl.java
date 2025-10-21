@@ -113,6 +113,14 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	}
 	
 	@Override
+	public Set<String> findPermissionCodesByRoleCodesAndAppCodes(Collection<String> roleCodes, Set<String> appCodes) {
+		if (roleCodes.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return coreRolePermissionRepo.findPermissionCodesByRoleCodesAndAppCodes(roleCodes, appCodes);
+	}
+	
+	@Override
 	public boolean isRoleInUse(CoreRole role) {
 		return coreRolePermissionRepo.existsByRoleCodeAndAppCode(role.getCode(), role.getAppCode());
 	}
@@ -135,7 +143,7 @@ public class CoreRolePermissionServiceImpl implements CoreRolePermissionService 
 	
 	@Override
 	public Set<String> findPermissionCodesByRoleCodes(Collection<String> roleCodes) {
-		if (roleCodes == null || roleCodes.isEmpty()) {
+		if (roleCodes.isEmpty()) {
 			return Collections.emptySet();
 		}
 		return coreRolePermissionRepo.findPermissionCodesByRoleCodes(roleCodes);

@@ -20,13 +20,14 @@ import java.util.Set;
 @Repository
 public interface CoreUserRoleRepo extends JpaRepository<CoreUserRole, Long>, JpaSpecificationExecutor<CoreUserRole> {
 	
-	// --- Hỗ trợ AssociationSyncHelper ---
 	@Query("SELECT cur FROM CoreUserRole cur WHERE cur.username = :username AND cur.appCode = :appCode")
 	List<CoreUserRole> findAllByUsernameAndAppCodeIncludingDeleted(@Param("username") String username, @Param("appCode") String appCode);
 	
-	// --- Truy vấn nghiệp vụ (chỉ lấy bản ghi active) ---
 	@Query("SELECT cur.roleCode FROM CoreUserRole cur WHERE cur.username = :username AND cur.appCode = :appCode")
 	Set<String> findActiveRoleCodesByUsernameAndAppCode(@Param("username") String username, @Param("appCode") String appCode);
+	
+	@Query("SELECT cur.roleCode FROM CoreUserRole cur WHERE cur.username = :username AND cur.appCode IN :appCodes")
+	Set<String> findActiveRoleCodesByUsernameAndAppCodes(@Param("username") String username, @Param("appCodes") Set<String> appCodes);
 	
 	@Query("SELECT cur.roleCode FROM CoreUserRole cur WHERE cur.username = :username")
 	Set<String> findAllActiveRoleCodesByUsername(@Param("username") String username);
@@ -34,7 +35,6 @@ public interface CoreUserRoleRepo extends JpaRepository<CoreUserRole, Long>, Jpa
 	@Query("SELECT cur FROM CoreUserRole cur WHERE cur.username IN :usernames AND cur.appCode = :appCode")
 	List<CoreUserRole> findActiveForUsersInApp(@Param("usernames") Collection<String> usernames, @Param("appCode") String appCode);
 	
-	// --- Kiểm tra ràng buộc ---
 	boolean existsByRoleCodeAndAppCode(String roleCode, String appCode);
 	
 	boolean existsByUsernameAndRoleCodeAndAppCode(String username, String roleCode, String appCode);

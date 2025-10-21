@@ -52,20 +52,15 @@ public class AuthController {
 		
 		// --- BƯỚC 1: Xác thực Client (Ứng dụng) ---
 		// Mọi yêu cầu xác thực đều phải đến từ một client hợp lệ.
-		CoreClientData client = coreClientBusiness.validateClient(
-				loginBody.getClientId(),
-				loginBody.getClientSecret(),
-				grantType
-		                                                         );
+		//CoreClientData client = coreClientBusiness.validateClient(loginBody.getClientId(), loginBody.getClientSecret(), grantType);
 		
 		// --- BƯỚC 2: Ủy quyền cho Strategy Pattern xử lý nghiệp vụ ---
 		// IAuthStrategy sẽ tìm bean phù hợp (vd: "passwordAuthStrategy") và thực thi.
-		LoginResult loginResult = IAuthStrategy.executeLogin(loginBody, client, appCode);
+		LoginResult loginResult = IAuthStrategy.executeLogin(loginBody, appCode);
 		
 		// --- BƯỚC 3: (Tùy chọn) Thực hiện các hành động sau khi đăng nhập thành công ---
 		// Ví dụ: Ghi log, gửi thông báo...
-		log.info("User '{}' logged in successfully via grant_type '{}' for client '{}'.",
-				LoginHelper.getUsername(), grantType, client.getClientId());
+		log.info("User '{}' logged in successfully via grant_type '{}'.", LoginHelper.getUsername(), grantType);
 		
 		return R.ok(loginResult);
 	}
@@ -87,7 +82,7 @@ public class AuthController {
 		                                                         );
 		
 		// Ủy quyền cho Strategy Pattern.
-		IAuthStrategy.executeRegister(registerBody, client);
+		IAuthStrategy.executeRegister(registerBody);
 		
 		return R.ok("Đăng ký thành công.");
 	}

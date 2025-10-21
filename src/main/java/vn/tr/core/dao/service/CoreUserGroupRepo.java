@@ -30,6 +30,9 @@ public interface CoreUserGroupRepo extends JpaRepository<CoreUserGroup, Long>, J
 	@Query("SELECT cug.groupCode FROM CoreUserGroup cug WHERE cug.username = :username AND cug.appCode = :appCode")
 	Set<String> findActiveGroupCodesByUsernameAndAppCode(@Param("username") String username, @Param("appCode") String appCode);
 	
+	@Query("SELECT cug.groupCode FROM CoreUserGroup cug WHERE cug.username = :username AND cug.appCode IN :appCodes")
+	Set<String> findActiveGroupCodesByUsernameAndAppCodes(@Param("username") String username, @Param("appCodes") Set<String> appCodes);
+	
 	@Query("SELECT cug.groupCode FROM CoreUserGroup cug WHERE cug.username = :username")
 	Set<String> findAllActiveGroupCodesByUsername(@Param("username") String username);
 	

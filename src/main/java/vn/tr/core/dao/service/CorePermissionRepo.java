@@ -28,10 +28,7 @@ public interface CorePermissionRepo extends JpaRepository<CorePermission, Long>,
 	 * Tìm kiếm Permission theo code và appCode, BAO GỒM CẢ BẢN GHI ĐÃ BỊ XÓA MỀM.
 	 * Sắp xếp để ưu tiên bản ghi active và được cập nhật gần nhất.
 	 */
-	@Query(
-			"SELECT p FROM CorePermission p WHERE p.code = :code AND p.appCode = :appCode " +
-					"ORDER BY p.deletedAt ASC NULLS FIRST, p.updatedAt DESC"
-	)
+	@Query("SELECT p FROM CorePermission p WHERE p.code = :code AND p.appCode = :appCode ORDER BY p.deletedAt ASC NULLS FIRST, p.updatedAt DESC")
 	List<CorePermission> findAllByCodeAndAppCodeIncludingDeletedSorted(@Param("code") String code, @Param("appCode") String appCode);
 	
 	List<CorePermission> findAllByAppCode(String appCode);
@@ -54,6 +51,15 @@ public interface CorePermissionRepo extends JpaRepository<CorePermission, Long>,
 					"""
 	)
 	Set<String> findAllCodesByUsernameAndAppCode(@Param("username") String username, @Param("appCode") String appCode);
+	
+	@Query(
+			"""
+						SELECT DISTINCT rp.permissionCode FROM CoreUserRole ur
+						JOIN CoreRolePermission rp ON ur.appCode = rp.appCode AND ur.roleCode = rp.roleCode
+						WHERE ur.username = :username AND ur.appCode IN :appCodes
+					"""
+	)
+	Set<String> findAllCodesByUsernameAndAppCodes(@Param("username") String username, @Param("appCodes") Set<String> appCodes);
 	
 	@Query("SELECT EXISTS(SELECT 1 FROM CoreUserRole ur WHERE ur.username = :username AND ur.appCode = 'SYSTEM' AND ur.roleCode = 'ROLE_SUPER_ADMIN')")
 	boolean isSuperAdmin(@Param("username") String username);

@@ -9,7 +9,6 @@ import vn.tr.core.dao.service.CoreUserAppService;
 import vn.tr.core.dao.service.CoreUserRoleService;
 import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.LoginResult;
-import vn.tr.core.data.dto.CoreClientData;
 
 /**
  * Lớp cha cho các chiến lược xác thực không dùng mật khẩu,
@@ -27,7 +26,7 @@ public abstract class BaseUserLookupStrategy extends AbstractAuthStrategy {
 	}
 	
 	@Override
-	public final LoginResult performLogin(LoginBody loginBody, CoreClientData client, String appCodeFromHeader) {
+	public final LoginResult performLogin(LoginBody loginBody, String appCodeFromHeader) {
 		// 1. Thực hiện các bước xác thực đặc thù của lớp con (vd: validate OTP, validate SSO token)
 		preLoginValidation(loginBody);
 		
@@ -41,7 +40,7 @@ public abstract class BaseUserLookupStrategy extends AbstractAuthStrategy {
 		String targetAppCode = getTargetAppCode(loginBody);
 		
 		// 5. Tái sử dụng logic chung để hoàn tất quá trình đăng nhập
-		return processLogin(user, client, targetAppCode);
+		return processLogin(user, targetAppCode);
 	}
 	
 	/**

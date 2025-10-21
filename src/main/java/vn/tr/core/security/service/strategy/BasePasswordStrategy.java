@@ -23,7 +23,6 @@ import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.dao.service.CoreUserAppService;
 import vn.tr.core.dao.service.CoreUserService;
 import vn.tr.core.data.LoginResult;
-import vn.tr.core.data.dto.CoreClientData;
 import vn.tr.core.security.service.IAuthStrategy;
 
 import java.util.Optional;
@@ -40,7 +39,7 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 	protected final CoreUserAppService coreUserAppService;
 	
 	@Override
-	public LoginResult performLogin(LoginBody loginBody, CoreClientData coreClientData, String appCode) {
+	public LoginResult performLogin(LoginBody loginBody, String appCode) {
 		if (!(loginBody instanceof PasswordLoginBody passwordBody)) {
 			throw new ServiceException("Dữ liệu không hợp lệ cho grant type password.");
 		}
@@ -59,24 +58,21 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 		
 		coreUserService.checkLogin(LoginType.PASSWORD, username, () -> !BCrypt.checkpw(password, coreUser.getHashedPassword()));
 		
-		if (StringUtils.isEmpty(appCode)) {
-			appCode = "SYSTEM";
+		if (StringUtils.isNotEmpty(appCode)) {
+			CoreUserApp userAppAccess = coreUserAppService.findByUsernameAndAppCode(username, appCode)
+					.orElseThrow(() -> new UserException("user.app.access.denied"));
+			
+			coreUserService.checkUserAppStatus(userAppAccess);
 		}
-		CoreUserApp userAppAccess = coreUserAppService.findByUsernameAndAppCode(username, appCode)
-				.orElseThrow(() -> new UserException("user.app.access.denied"));
 		
-		coreUserService.checkUserAppStatus(userAppAccess);
+		LoginUser loginUser = coreUserService.buildLoginUser(coreUser);
 		
-		LoginUser loginUser = coreUserService.buildLoginUser(coreUser, userAppAccess);
-		loginUser.setClientKey(coreClientData.getClientKey());
-		loginUser.setDeviceType(coreClientData.getDeviceType());
-		
-		SaLoginParameter saLoginParameter = createLoginParameter(coreClientData, loginUser);
+		SaLoginParameter saLoginParameter = createLoginParameter(loginUser);
 		saLoginParameter.setExtra(LoginHelper.APP_CODE, appCode);
 		
 		LoginHelper.login(loginUser, saLoginParameter);
 		
-		return createLoginResult(coreClientData);
+		return createLoginResult();
 	}
 	
 	/**
@@ -86,21 +82,20 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 		// Mặc định không làm gì
 	}
 	
-	private SaLoginParameter createLoginParameter(CoreClientData coreClientData, LoginUser loginUser) {
+	private SaLoginParameter createLoginParameter(LoginUser loginUser) {
 		SaLoginParameter saLoginParameter = new SaLoginParameter();
-		saLoginParameter.setDeviceType(coreClientData.getDeviceType());
-		saLoginParameter.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
-		saLoginParameter.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
-		saLoginParameter.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
+//		saLoginParameter.setDeviceType(coreClientData.getDeviceType());
+//		saLoginParameter.setTimeout(coreClientData.getTimeout() != null ? coreClientData.getTimeout() : 604800);
+//		saLoginParameter.setActiveTimeout(coreClientData.getActiveTimeout() != null ? coreClientData.getTimeout() : 3600);
+//		saLoginParameter.setExtra(LoginHelper.CLIENT_KEY, coreClientData.getClientId());
 		saLoginParameter.setExtra(LoginHelper.USER_KEY, loginUser.getUserId());
 		return saLoginParameter;
 	}
 	
-	private LoginResult createLoginResult(CoreClientData coreClientData) {
+	private LoginResult createLoginResult() {
 		LoginResult loginResult = new LoginResult();
 		loginResult.setAccessToken(StpUtil.getTokenValue());
 		loginResult.setExpireIn(StpUtil.getTokenTimeout());
-		loginResult.setClientId(coreClientData.getClientId());
 		loginResult.setTokenType(StpUtil.getTokenName());
 		return loginResult;
 	}
@@ -109,7 +104,7 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 	
 	@Override
 	@Transactional
-	public void performRegistration(RegisterBody registerBody, CoreClientData coreClientData) {
+	public void performRegistration(RegisterBody registerBody) {
 		// Bước tiền xử lý (ví dụ: validate captcha)
 		preRegisterValidate(registerBody);
 		

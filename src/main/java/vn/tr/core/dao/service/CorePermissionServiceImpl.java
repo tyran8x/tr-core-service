@@ -71,6 +71,11 @@ public class CorePermissionServiceImpl implements CorePermissionService {
 	}
 	
 	@Override
+	public Set<String> findAllCodesByUsernameAndAppCodes(String username, Set<String> appCodes) {
+		return corePermissionRepo.findAllCodesByUsernameAndAppCodes(username, appCodes);
+	}
+	
+	@Override
 	@Transactional(readOnly = true)
 	public boolean isSuperAdmin(String username) {
 		return corePermissionRepo.isSuperAdmin(username.toLowerCase());

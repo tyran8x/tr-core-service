@@ -27,7 +27,6 @@ import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
-import vn.tr.core.data.dto.CoreClientData;
 
 import java.time.Duration;
 import java.util.*;
@@ -132,17 +131,26 @@ public class CoreUserServiceImpl implements CoreUserService {
 		SpringUtils.context().publishEvent(loginInfoEvent);
 	}
 	
+	// Trong lớp service chịu trách nhiệm đăng nhập
 	@Override
-	public LoginUser buildLoginUser(CoreUser coreUser, CoreUserApp userAppAccess) {
+	public LoginUser buildLoginUser(CoreUser coreUser) {
 		LoginUser loginUser = new LoginUser();
 		loginUser.setUserId(String.valueOf(coreUser.getId()));
 		loginUser.setUsername(coreUser.getUsername());
 		loginUser.setFullName(coreUser.getFullName());
-		loginUser.setUserType(userAppAccess.getUserTypeCode());
-		loginUser.setPermissionCodes(corePermissionService.findAllCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
-		loginUser.setGroupCodes(coreUserGroupService.findActiveGroupCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
-		loginUser.setRoleCodes(coreUserRoleService.findActiveRoleCodesByUsernameAndAppCode(coreUser.getUsername(), userAppAccess.getAppCode()));
-		log.info("LoginUser: {}", loginUser);
+		
+		// Lấy và lưu trữ appCodes vì nó cần thiết cho các lần tải sau
+		Set<String> appCodes = coreUserAppService.findActiveAppCodesByUsername(coreUser.getUsername());
+		loginUser.setAppCodes(appCodes);
+		
+		// KHÔNG TẢI TRƯỚC QUYỀN HẠN, VAI TRÒ, NHÓM
+		// loginUser.setPermissionCodes(...);
+		// loginUser.setGroupCodes(...);
+		// loginUser.setRoleCodes(...);
+		
+		// Cờ `permissionsLoaded` mặc định là `false`, không cần set.
+		
+		log.info("Built lightweight LoginUser (permissions will be loaded on demand): {}", loginUser);
 		return loginUser;
 	}
 	
@@ -226,7 +234,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 	}
 	
 	@Override
-	public LoginUser buildLoginUserForSingleApp(CoreUser user, CoreClientData client, String appCode) {
+	public LoginUser buildLoginUserForSingleApp(CoreUser user, String appCode) {
 		CoreUserApp userAppAccess = coreUserAppService.findByUsernameAndAppCode(user.getUsername(), appCode)
 				.orElseThrow(() -> new UserException("user.app.access.denied", appCode));
 		checkUserAppStatus(userAppAccess);
@@ -237,27 +245,24 @@ public class CoreUserServiceImpl implements CoreUserService {
 				? Collections.emptySet()
 				: coreRolePermissionService.findPermissionCodesByRoleCodesAndAppCode(roles, appCode);
 		
-		return createLoginUserObject(user, client, appCode, userAppAccess.getUserTypeCode(), roles, groups, permissions);
+		return createLoginUserObject(user, appCode, roles, groups, permissions);
 	}
 	
-	private LoginUser createLoginUserObject(CoreUser user, CoreClientData clientData, String appCode, String userType, Set<String> roles,
+	private LoginUser createLoginUserObject(CoreUser user, String appCode, Set<String> roles,
 			Set<String> groups, Set<String> permissions) {
 		LoginUser loginUser = new LoginUser();
 		loginUser.setUserId(String.valueOf(user.getId()));
 		loginUser.setUsername(user.getUsername());
 		loginUser.setFullName(user.getFullName());
-		loginUser.setAppCode(appCode);
-		loginUser.setUserType(userType);
+		loginUser.setAppCodes(Set.of(appCode));
 		loginUser.setRoleCodes(roles);
 		loginUser.setGroupCodes(groups);
 		loginUser.setPermissionCodes(permissions);
-		loginUser.setClientKey(clientData.getClientKey());
-		loginUser.setDeviceType(clientData.getDeviceType());
 		return loginUser;
 	}
 	
 	@Override
-	public LoginUser buildAggregatedLoginUser(CoreUser user, CoreClientData client) {
+	public LoginUser buildAggregatedLoginUser(CoreUser user) {
 		List<CoreUserApp> accessibleApps = coreUserAppService.findActiveByUsername(user.getUsername());
 		if (accessibleApps.isEmpty()) {
 			throw new UserException("user.no.app.assigned");
@@ -269,8 +274,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 				? Collections.emptySet()
 				: coreRolePermissionService.findPermissionCodesByRoleCodes(allRoles);
 		
-		String representativeUserType = accessibleApps.getFirst().getUserTypeCode();
-		return createLoginUserObject(user, client, null, representativeUserType, allRoles, allGroups, allPermissions);
+		return createLoginUserObject(user, null, allRoles, allGroups, allPermissions);
 	}
 	
 	@Override

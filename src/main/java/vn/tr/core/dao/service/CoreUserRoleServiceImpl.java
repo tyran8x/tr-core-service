@@ -54,6 +54,14 @@ public class CoreUserRoleServiceImpl implements CoreUserRoleService {
 	}
 	
 	@Override
+	public Set<String> findActiveRoleCodesByUsernameAndAppCodes(String username, Set<String> appCodes) {
+		if (username.isBlank() || appCodes.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return coreUserRoleRepo.findActiveRoleCodesByUsernameAndAppCodes(username, appCodes);
+	}
+	
+	@Override
 	public Set<String> findAllActiveRoleCodesByUsername(String username) {
 		if (username.isBlank()) {
 			return Collections.emptySet();

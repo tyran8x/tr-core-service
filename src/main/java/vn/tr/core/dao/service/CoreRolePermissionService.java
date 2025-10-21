@@ -31,6 +31,8 @@ public interface CoreRolePermissionService {
 	// --- Truy vấn nghiệp vụ ---
 	Set<String> findPermissionCodesByRoleCodesAndAppCode(Collection<String> roleCodes, String appCode);
 	
+	Set<String> findPermissionCodesByRoleCodesAndAppCodes(Collection<String> roleCodes, Set<String> appCodes);
+	
 	// --- Kiểm tra ràng buộc ---
 	boolean isRoleInUse(CoreRole role);
 	

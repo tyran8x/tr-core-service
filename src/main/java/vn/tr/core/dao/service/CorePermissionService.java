@@ -31,6 +31,8 @@ public interface CorePermissionService {
 	
 	Set<String> findAllCodesByUsernameAndAppCode(String username, String appCode);
 	
+	Set<String> findAllCodesByUsernameAndAppCodes(String username, Set<String> appCodes);
+	
 	boolean isSuperAdmin(String username);
 	
 	void deleteByIds(Collection<Long> ids);

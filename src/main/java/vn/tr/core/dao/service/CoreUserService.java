@@ -8,7 +8,6 @@ import vn.tr.common.core.enums.LoginType;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
 import vn.tr.core.data.criteria.CoreUserSearchCriteria;
-import vn.tr.core.data.dto.CoreClientData;
 
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +45,7 @@ public interface CoreUserService {
 	
 	void recordLoginInfo(String userName, String status, String message);
 	
-	LoginUser buildLoginUser(CoreUser user, CoreUserApp userAppAccess);
+	LoginUser buildLoginUser(CoreUser user);
 	
 	void checkUserAppStatus(CoreUserApp coreUserApp);
 	
@@ -62,9 +61,9 @@ public interface CoreUserService {
 	
 	Optional<CoreUser> findByUsernameIgnoreCaseIncludingDeleted(String username);
 	
-	LoginUser buildLoginUserForSingleApp(CoreUser user, CoreClientData client, String appCode);
+	LoginUser buildLoginUserForSingleApp(CoreUser user, String appCode);
 	
-	LoginUser buildAggregatedLoginUser(CoreUser user, CoreClientData client);
+	LoginUser buildAggregatedLoginUser(CoreUser user);
 	
 	Optional<CoreUser> findByUsernameOrEmail(String identifier);
 	

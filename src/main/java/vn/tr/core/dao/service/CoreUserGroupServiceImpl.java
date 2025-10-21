@@ -57,6 +57,14 @@ public class CoreUserGroupServiceImpl implements CoreUserGroupService {
 	}
 	
 	@Override
+	public Set<String> findActiveGroupCodesByUsernameAndAppCodes(String username, Set<String> appCodes) {
+		if (username.isBlank() || appCodes.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return coreUserGroupRepo.findActiveGroupCodesByUsernameAndAppCodes(username, appCodes);
+	}
+	
+	@Override
 	public Set<String> findAllActiveGroupCodesByUsername(String username) {
 		if (username.isBlank()) {
 			return Collections.emptySet();

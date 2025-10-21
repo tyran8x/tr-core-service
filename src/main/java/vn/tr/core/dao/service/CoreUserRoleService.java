@@ -30,6 +30,8 @@ public interface CoreUserRoleService {
 	// --- Truy vấn nghiệp vụ ---
 	Set<String> findActiveRoleCodesByUsernameAndAppCode(String username, String appCode);
 	
+	Set<String> findActiveRoleCodesByUsernameAndAppCodes(String username, Set<String> appCodes);
+	
 	Set<String> findAllActiveRoleCodesByUsername(String username);
 	
 	/**
