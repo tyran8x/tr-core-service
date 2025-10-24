@@ -142,7 +142,8 @@ public class CoreUserServiceImpl implements CoreUserService {
 		// Lấy và lưu trữ appCodes vì nó cần thiết cho các lần tải sau
 		Set<String> appCodes = coreUserAppService.findActiveAppCodesByUsername(coreUser.getUsername());
 		loginUser.setAppCodes(appCodes);
-		
+		Set<String> roleCodes = coreUserRoleService.findAllActiveRoleCodesByUsername(coreUser.getUsername());
+		loginUser.setRoleCodes(roleCodes);
 		// KHÔNG TẢI TRƯỚC QUYỀN HẠN, VAI TRÒ, NHÓM
 		// loginUser.setPermissionCodes(...);
 		// loginUser.setGroupCodes(...);
