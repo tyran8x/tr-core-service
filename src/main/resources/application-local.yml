@@ -53,10 +53,10 @@ sa-token:
 # Logging cho local
 logging:
   level:
-    root: DEBUG
-    vn.tr: DEBUG # Bật log DEBUG cho code của bạn
+    root: INFO
+    vn.tr: INFO # Bật log DEBUG cho code của bạn
     cn.dev33.satoken: DEBUG # Bật log DEBUG cho Sa-Token
-    org.springframework.web: DEBUG # Xem chi tiết request/response
+    org.springframework.web: INFO # Xem chi tiết request/response
     org.hibernate.SQL: DEBUG # Xem câu lệnh SQL được tạo ra
     org.apache.kafka: ERROR
     org.springframework.kafka: ERROR

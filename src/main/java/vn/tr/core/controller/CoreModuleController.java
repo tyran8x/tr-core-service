@@ -2,6 +2,7 @@ package vn.tr.core.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.domain.R;
@@ -26,6 +27,7 @@ import vn.tr.core.data.validator.CoreModuleValidator;
 @RestController
 @RequestMapping("/modules")
 @RequiredArgsConstructor
+@Slf4j
 public class CoreModuleController {
 	
 	private final CoreModuleBusiness coreModuleBusiness;
@@ -126,6 +128,7 @@ public class CoreModuleController {
 	@Log(title = "Tìm kiếm Module (phân trang)", businessType = BusinessType.FINDALL)
 	public R<PagedResult<CoreModuleData>> findAll(CoreModuleSearchCriteria criteria) {
 		String appCodeContext = LoginHelper.getAppCode();
+		log.info("CoreModuleSearchCriteria: {}", criteria.getSearch());
 		return R.ok(coreModuleBusiness.findAll(criteria, appCodeContext));
 	}
 }

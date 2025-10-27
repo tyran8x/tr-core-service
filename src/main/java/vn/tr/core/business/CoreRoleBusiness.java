@@ -156,6 +156,8 @@ public class CoreRoleBusiness {
 	public CoreRoleData findById(Long id, String appCodeContext) {
 		CoreRole role = coreRoleService.findById(id)
 				.orElseThrow(() -> new EntityNotFoundException(CoreRole.class, id));
+		log.info("role: {} - appCode: {}", role.getAppCode(), appCodeContext);
+		
 		if (!role.getAppCode().equals(appCodeContext)) {
 			throw new PermissionDeniedException("Không có quyền xem vai trò thuộc ứng dụng khác.");
 		}
