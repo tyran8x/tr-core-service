@@ -138,7 +138,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, prometheus, metrics, logfile
+        include: '*' #health, info, prometheus, metrics, logfile
   endpoint:
     health:
       show-details: when_authorized

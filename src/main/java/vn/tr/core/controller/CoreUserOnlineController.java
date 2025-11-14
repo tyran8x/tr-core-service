@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import vn.tr.common.core.constant.CacheConstants;
 import vn.tr.common.core.domain.R;
-import vn.tr.common.core.domain.data.UserOnlineDTO;
+import vn.tr.common.core.domain.dto.UserOnlineDTO;
 import vn.tr.common.core.utils.StreamUtils;
 import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.log.annotation.Log;
@@ -44,7 +44,7 @@ public class CoreUserOnlineController extends BaseController {
 		if (StringUtils.isNotEmpty(ipaddr) && StringUtils.isNotEmpty(userName)) {
 			userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
 							StringUtils.equals(ipaddr, userOnline.getIpaddr()) &&
-									StringUtils.equals(userName, userOnline.getUsername())
+									StringUtils.equals(userName, userOnline.getUserName())
 			                                      );
 		} else if (StringUtils.isNotEmpty(ipaddr)) {
 			userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
@@ -52,7 +52,7 @@ public class CoreUserOnlineController extends BaseController {
 			                                      );
 		} else if (StringUtils.isNotEmpty(userName)) {
 			userOnlineDTOList = StreamUtils.filter(userOnlineDTOList, userOnline ->
-							StringUtils.equals(userName, userOnline.getUsername())
+							StringUtils.equals(userName, userOnline.getUserName())
 			                                      );
 		}
 		Collections.reverse(userOnlineDTOList);

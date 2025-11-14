@@ -7,7 +7,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
-import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.service.CoreAppService;
 import vn.tr.core.data.dto.CoreAppData;
 
@@ -37,12 +36,6 @@ public class CoreAppValidator implements Validator {
 		}
 		
 		CoreAppData data = (CoreAppData) target;
-		
-		String appCode = LoginHelper.getAppCode();
-//		if (appCode == null) {
-//			errors.reject(ERROR_APP_ID_NOT_FOUND, "Không thể xác định ứng dụng hiện tại.");
-//			return;
-//		}
 		
 		if (StrUtil.isNotBlank(data.getCode()) && isDuplicate(data.getId(), data.getCode(), true)) {
 			errors.rejectValue("code", ERROR_CODE_DUPLICATE, "Mã đã tồn tại.");

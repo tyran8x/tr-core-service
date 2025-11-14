@@ -56,7 +56,18 @@ spring:
       time-to-live: 3600000
       cache-null-values: true
       enable-statistics: false
-
+  boot:
+    admin:
+      client:
+        enabled: true
+        url: http://localhost:9090
+        instance:
+          service-host-type: IP
+          metadata:
+            username: ${spring.boot.admin.client.username}
+            userpassword: ${spring.boot.admin.client.password}
+        username: admin
+        password: DnictPro@123
 captcha:
   enable: true
   type: CHAR

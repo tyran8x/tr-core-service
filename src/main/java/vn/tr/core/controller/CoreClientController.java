@@ -71,7 +71,7 @@ public class CoreClientController {
 			return appCodeFromDto;
 		} else {
 			// Đối với App Admin, luôn sử dụng appCode từ token đã được xác thực của họ.
-			return LoginHelper.getAppCodeOrThrow();
+			return null;
 		}
 	}
 	

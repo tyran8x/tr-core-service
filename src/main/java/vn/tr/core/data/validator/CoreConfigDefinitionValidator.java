@@ -55,7 +55,7 @@ public class CoreConfigDefinitionValidator implements Validator {
 			appCodeContext = data.getAppCode();
 		} else {
 			// Đối với App Admin, luôn sử dụng appCode từ token để đảm bảo an toàn.
-			appCodeContext = LoginHelper.getAppCodeOrThrow();
+			appCodeContext = LoginHelper.getAppCode();
 		}
 		
 		// Kiểm tra sự trùng lặp của 'key'
@@ -67,8 +67,7 @@ public class CoreConfigDefinitionValidator implements Validator {
 				isDuplicate = definitionService.existsByIdNotAndKeyIgnoreCaseAndAppCode(
 						data.getId(),
 						data.getKey(),
-						appCodeContext
-				                                                                       );
+						appCodeContext);
 			} else {
 				// Trường hợp TẠO MỚI: Kiểm tra xem 'key' đã tồn tại trong app hay chưa.
 				isDuplicate = definitionService.existsByKeyIgnoreCaseAndAppCode(
