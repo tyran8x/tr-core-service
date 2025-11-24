@@ -1,20 +1,10 @@
 server:
-  port: 8989
-  servlet:
-    context-path: /
   undertow:
     max-http-post-size: -1
     buffer-size: 512
-    direct-buffers: true
     threads:
       io: 8
-      worker: 256
   shutdown: immediate
-eureka:
-  client:
-    register-with-eureka: true
-    serviceUrl:
-      defaultZone: http://localhost:8061/eureka
 core:
   attachment:
     host:
@@ -22,69 +12,30 @@ core:
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/core_sys_service
-    username: postgres
     password: SgtvtPro@123
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        order_by:
-          default_null_ordering: last
   jackson:
     serialization:
       FAIL_ON_EMPTY_BEANS: false
       WRITE_DATES_AS_TIMESTAMPS: false
   data:
     redis:
-      host: localhost
-      port: 6379
       password: 'SgtvtPro@123'
-      timeout: 10s
       lettuce:
         pool:
           max-active: 8
           max-wait: -1
           max-idle: 8
           min-idle: 0
-      ssl:
-        enabled: false
   cache:
     type: redis
     redis:
       time-to-live: 3600000
       cache-null-values: true
       enable-statistics: false
-
-  servlet:
-    multipart:
-      max-file-size: 100MB
-      max-request-size: 100MB
-
-captcha:
-  enable: true
-  type: CHAR
-  category: CIRCLE
-  numberLength: 1
-  charLength: 4
-
 redisson:
   keyPrefix: 'tr'
-  threads: 4
-  nettyThreads: 8
   singleServerConfig:
     clientName: ${app.name}
-    connectionMinimumIdleSize: 8
-    connectionPoolSize: 32
-    idleConnectionTimeout: 10000
-    timeout: 3000
-    subscriptionConnectionPoolSize: 50
-
 error:
   handling:
     exception-logging: WITH_STACKTRACE
-
-client:
-  notification-service:
-    url: http://localhost:8000/v1/notification

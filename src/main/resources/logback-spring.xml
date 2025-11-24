@@ -3,7 +3,15 @@
     <springProperty scope="context" name="springAppName" source="spring.application.name" defaultValue="app"/>
     <springProperty scope="context" name="logPath" source="LOG_PATH" defaultValue="/opt/logs"/>
 
-    <property name="log.pattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+    <!-- Optimize JUL performance -->
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
+    <!-- Graceful shutdown -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
+
+    <!-- Colorized log pattern with trace IDs -->
+    <property name="log.pattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta([%thread]) %cyan(%logger{36}) %yellow(%X{traceId:-} %X{spanId:-}) - %msg%n"/>
 
     <!-- Console output -->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
@@ -56,7 +64,7 @@
     <!-- Async appender for INFO -->
     <appender name="async_info" class="ch.qos.logback.classic.AsyncAppender">
         <discardingThreshold>0</discardingThreshold>
-        <queueSize>512</queueSize>
+        <queueSize>1024</queueSize>
         <includeCallerData>false</includeCallerData>
         <appender-ref ref="file_info"/>
     </appender>
@@ -64,7 +72,7 @@
     <!-- Async appender for ERROR -->
     <appender name="async_error" class="ch.qos.logback.classic.AsyncAppender">
         <discardingThreshold>0</discardingThreshold>
-        <queueSize>512</queueSize>
+        <queueSize>1024</queueSize>
         <includeCallerData>false</includeCallerData>
         <appender-ref ref="file_error"/>
     </appender>

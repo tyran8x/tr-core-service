@@ -1,62 +1,37 @@
 # ===================================================================
 # LOCAL OVERRIDE CONFIGURATION
 # ===================================================================
-# Kích hoạt profile này bằng cách đặt biến môi trường SPRING_PROFILES_ACTIVE=local
-
-server:
-  port: 8989
-
 spring:
-  # Cấu hình kết nối DB cho môi trường local
   datasource:
     url: jdbc:postgresql://10.49.41.112:5432/core_service
-    username: postgres
-    # Vẫn khuyến khích dùng biến môi trường cho local để tạo thói quen tốt
-    password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
-  # Cấu hình JPA cho local, 'validate' an toàn hơn 'update'
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-  # Cấu hình Redis cho local
   data:
     redis:
       host: 10.49.41.112
-      port: 6379
-      password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123}
-  # Cấu hình user bảo mật cho local
   security:
     user:
       name: admin
-      password: "{noop}localpassword" # {noop} để không cần mã hóa password
+      password: "{noop}localpassword"
   cloud:
     config:
-      enabled: false # Tắt Spring Cloud Config
+      enabled: false
   boot:
     admin:
       client:
-        enabled: false # Tắt Spring Boot Admin Client
-# Vô hiệu hóa Eureka client khi chạy local
+        enabled: false
 eureka:
   client:
     enabled: false
-
-# Sa-Token cấu hình cho local debugging
 sa-token:
-  # Bật log chi tiết để dễ dàng debug
   is-log: true
-  jwt-secret-key: ${JWT_SECRET_KEY:DnictPro@123} # Dùng key khác cho local
-
-# Logging cho local
 logging:
   level:
     root: INFO
-    vn.tr: INFO # Bật log DEBUG cho code của bạn
-    cn.dev33.satoken: DEBUG # Bật log DEBUG cho Sa-Token
-    org.springframework.web: INFO # Xem chi tiết request/response
-    org.hibernate.SQL: DEBUG # Xem câu lệnh SQL được tạo ra
+    vn.tr: INFO
+    cn.dev33.satoken: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
     org.apache.kafka: ERROR
     org.springframework.kafka: ERROR

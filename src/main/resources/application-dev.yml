@@ -1,55 +1,31 @@
 server:
-  port: 8989
-  servlet:
-    context-path: /
   undertow:
     max-http-post-size: -1
     buffer-size: 512
-    direct-buffers: true
     threads:
       io: 8
-      worker: 256
   shutdown: immediate
-eureka:
-  client:
-    register-with-eureka: true
-    serviceUrl:
-      defaultZone: http://localhost:8061/eureka
 core:
   attachment:
     host:
       download: 'https://api.dnict.vn/v2/core'
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/core_service
-    username: postgres
-    password: DnictPro@123
   jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
     properties:
       hibernate:
-        order_by:
-          default_null_ordering: last
+        format_sql: true
   jackson:
     serialization:
       FAIL_ON_EMPTY_BEANS: false
       WRITE_DATES_AS_TIMESTAMPS: false
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: 'DnictPro@123'
-      timeout: 10s
       lettuce:
         pool:
           max-active: 8
           max-wait: -1
           max-idle: 8
           min-idle: 0
-      ssl:
-        enabled: false
   cache:
     type: redis
     redis:
@@ -68,25 +44,13 @@ spring:
             userpassword: ${spring.boot.admin.client.password}
         username: admin
         password: DnictPro@123
-captcha:
-  enable: true
-  type: CHAR
-  category: CIRCLE
-  numberLength: 1
-  charLength: 4
-
+logging:
+  level:
+    vn.tr: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 redisson:
   keyPrefix: 'tr'
-  threads: 4
-  nettyThreads: 8
   singleServerConfig:
     clientName: ${app.name}
-    connectionMinimumIdleSize: 8
-    connectionPoolSize: 32
-    idleConnectionTimeout: 10000
-    timeout: 3000
-    subscriptionConnectionPoolSize: 50
-
-client:
-  notification-service:
-    url: http://localhost:8000/v1/notification

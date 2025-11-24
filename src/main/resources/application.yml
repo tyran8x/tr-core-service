@@ -29,9 +29,7 @@ server:
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css,image/svg+xml
-    min-response-size: 2048 # Chỉ nén response > 2KBadmin-server
-
-
+    min-response-size: 2048 # Chỉ nén response > 2KB
 
 # ===================================================================
 # 2. SPRING FRAMEWORK
@@ -51,6 +49,17 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
+  
+  # Tắt Open-in-View để tránh giữ kết nối DB lâu trong quá trình render view (Performance)
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        # Sắp xếp NULLs xuống cuối
+        order_by.default_null_ordering: last
 
   # --- Datasource (PostgreSQL with HikariCP) ---
   datasource:
@@ -66,10 +75,9 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+      keepalive-time: 30000 # Giữ kết nối sống, tránh bị firewall cắt
+      auto-commit: true
+
   # --- Redis (Lettuce Pool) ---
   data:
     redis:
@@ -93,6 +101,8 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      retries: 3
+      acks: all
     consumer:
       group-id: ${spring.application.name} # Sử dụng tên ứng dụng làm group-id
       auto-offset-reset: latest
@@ -104,6 +114,7 @@ spring:
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
     listener:
       missing-topics-fatal: false
+      concurrency: 3 # Tăng khả năng xử lý song song
 
   # --- Spring Security ---
   # Dùng để bảo vệ các endpoint quản trị (Actuator, DevOps Dashboard)
@@ -117,6 +128,8 @@ spring:
     admin:
       client:
         url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9090}
+        instance:
+          prefer-ip: true
 
 # ===================================================================
 # 3. SA-TOKEN: AUTHENTICATION & AUTHORIZATION
@@ -139,16 +152,28 @@ management:
     web:
       exposure:
         include: '*' #health, info, prometheus, metrics, logfile
+      base-path: /actuator
+      path-mapping:
+        prometheus: metrics/prometheus
   endpoint:
     health:
       show-details: when_authorized
       probes:
         enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
 
 logging:
   level:
     vn.tr: ${LOGGING_LEVEL_VN_TR:INFO}
     org.springframework: ${LOGGING_LEVEL_SPRINGFRAMEWORK:WARN}
+    com.zaxxer.hikari: WARN
   config: classpath:logback-spring.xml
   file:
     name: ${LOG_PATH:/opt/logs}/${spring.application.name:tr-core-service}/sys-info.log
@@ -160,8 +185,12 @@ eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8061/eureka/}
+    registry-fetch-interval-seconds: 10
+    disable-delta: true
   instance:
     prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
 
 # ===================================================================
 # 6. APPLICATION SPECIFIC CONFIGURATION
