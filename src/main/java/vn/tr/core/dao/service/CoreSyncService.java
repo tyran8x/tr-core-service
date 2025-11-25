@@ -79,14 +79,14 @@ public class CoreSyncService {
 			
 			// Nếu không có exception nào được ném ra, có nghĩa là quá trình chuyển đổi thành công.
 			// => Đây là định dạng chuẩn.
-			log.debug("Phát hiện định dạng router chuẩn (Trial Deserialization thành công).");
+			log.info("Phát hiện định dạng router chuẩn (Trial Deserialization thành công).");
 			return false; // **Không phải** legacy
 			
 		} catch (IllegalArgumentException e) {
 			// Nếu `convertValue` ném ra exception (ví dụ: do có các trường không mong muốn
 			// như 'alwaysShow', hoặc kiểu dữ liệu không khớp), chúng ta bắt nó.
 			// => Đây là định dạng cũ (legacy).
-			log.debug("Trial Deserialization sang định dạng chuẩn thất bại. Giả định đây là định dạng legacy. Lỗi: {}", e.getMessage());
+			log.info("Trial Deserialization sang định dạng chuẩn thất bại. Giả định đây là định dạng legacy. Lỗi: {}", e.getMessage());
 			return true; // **Là** legacy
 		}
 	}
@@ -97,7 +97,7 @@ public class CoreSyncService {
 	private void syncStandardRoutes(String appCode, List<RouteRecordRawData> standardRoutes) {
 		long start = System.currentTimeMillis();
 		if (standardRoutes.isEmpty()) {
-			log.warn("Danh sách routes chuẩn trống cho app '{}'. Xóa tất cả menu liên quan.", appCode);
+			log.info("Danh sách routes chuẩn trống cho app '{}'. Xóa tất cả menu liên quan.", appCode);
 			coreMenuService.softDeleteAllByAppCode(appCode);
 			return;
 		}

@@ -45,13 +45,13 @@ public class CoreAppInitializationService {
 		log.info("Bắt đầu quá trình khởi tạo dữ liệu hệ thống...");
 		
 		initializeSystemDefaults();
-		
-		initializeSpecificApp(
-				"syt",
-				"Hệ thống Sở Y Tế",
-				Map.of("ROLE_SYT_DOCTOR", "Bác sĩ", "ROLE_SYT_NURSE", "Điều dưỡng"),
-				"syt_admin"
-		                     );
+
+//		initializeSpecificApp(
+//				"sct",
+//				"Hệ thống Sở Y Tế",
+//				Map.of("ROLE_SYT_DOCTOR", "Bác sĩ", "ROLE_SYT_NURSE", "Điều dưỡng"),
+//				"sct_admin"
+//		                     );
 		
 		log.info("Hoàn tất quá trình khởi tạo dữ liệu.");
 	}
@@ -83,7 +83,7 @@ public class CoreAppInitializationService {
 				.username("root")
 				.fullName("Root Super Admin")
 				.email("root@system.local")
-				.password("Admin@123")
+				.password("Abc@123")
 				.status(LifecycleStatus.ACTIVE)
 				.userTypeCode(UserType.INTERNAL.getCode())
 				.apps(Set.of("SYSTEM")) // Gán vào app SYSTEM
@@ -92,6 +92,19 @@ public class CoreAppInitializationService {
 		
 		// Gọi đến CoreUserBusiness.create. Tầng Business sẽ lo toàn bộ việc đồng bộ hóa.
 		coreUserBusiness.create(rootUserData, null); // appCodeContext là null vì là Super Admin
+	}
+	
+	private void upsertUserType(String appCodeContext, String code, String name) {
+		CoreUserTypeData data = CoreUserTypeData.builder().code(code).name(name).status(LifecycleStatus.ACTIVE).build();
+		coreUserTypeBusiness.create(data, appCodeContext);
+	}
+	
+	// --- Private Helper Methods for Upserting ---
+	
+	private void upsertRole(String appCodeContext, String code, String name) {
+		log.info("AppCode: {}, code: {}, name : {}", appCodeContext, code, name);
+		CoreRoleData data = CoreRoleData.builder().code(code).name(name).status(LifecycleStatus.ACTIVE).appCode(appCodeContext).build();
+		coreRoleBusiness.create(data, appCodeContext);
 	}
 	
 	/**
@@ -119,7 +132,7 @@ public class CoreAppInitializationService {
 				.username(adminUsername)
 				.fullName("Admin " + coreAppData.getName())
 				.email(adminUsername + "@system.local")
-				.password("Admin@123")
+				.password("Abc@123")
 				.status(LifecycleStatus.ACTIVE)
 				.userTypeCode(UserType.INTERNAL.getCode())
 				.apps(Set.of(coreAppData.getCode()))
@@ -128,18 +141,5 @@ public class CoreAppInitializationService {
 		
 		// Gọi CoreUserBusiness.create. Super Admin (context null) đang tạo user cho một app cụ thể.
 		coreUserBusiness.create(appAdminData, null);
-	}
-	
-	// --- Private Helper Methods for Upserting ---
-	
-	private void upsertUserType(String appCodeContext, String code, String name) {
-		CoreUserTypeData data = CoreUserTypeData.builder().code(code).name(name).status(LifecycleStatus.ACTIVE).build();
-		coreUserTypeBusiness.create(data, appCodeContext);
-	}
-	
-	private void upsertRole(String appCodeContext, String code, String name) {
-		log.info("AppCode: {}, code: {}, name : {}", appCodeContext, code, name);
-		CoreRoleData data = CoreRoleData.builder().code(code).name(name).status(LifecycleStatus.ACTIVE).appCode(appCodeContext).build();
-		coreRoleBusiness.create(data, appCodeContext);
 	}
 }
