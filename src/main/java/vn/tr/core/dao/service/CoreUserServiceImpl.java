@@ -145,7 +145,7 @@ public class CoreUserServiceImpl implements CoreUserService {
 		Set<String> roleCodes = coreUserRoleService.findAllActiveRoleCodesByUsername(coreUser.getUsername());
 		loginUser.setRoleCodes(roleCodes);
 		// KHÔNG TẢI TRƯỚC QUYỀN HẠN, VAI TRÒ, NHÓM
-		// loginUser.setPermissionCodes(...);
+		loginUser.setPermissionCodes(coreRolePermissionService.findPermissionCodesByRoleCodesAndAppCodes(roleCodes, appCodes));
 		// loginUser.setGroupCodes(...);
 		// loginUser.setRoleCodes(...);
 		

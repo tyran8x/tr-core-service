@@ -21,7 +21,7 @@ public class RouteRecordRawData {
 	
 	private String name;
 	
-	private String component;
+	private Object component;
 	
 	private Integer sortOrder;
 	

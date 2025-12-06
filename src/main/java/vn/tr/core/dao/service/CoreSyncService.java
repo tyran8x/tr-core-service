@@ -70,24 +70,41 @@ public class CoreSyncService {
 			return false;
 		}
 		
-		Object firstRoute = ((List<?>) routesAsObject).getFirst();
+		Object firstRouteObj = ((List<?>) routesAsObject).getFirst();
+		log.info("Checking format for first route: {}", firstRouteObj);
 		
 		try {
-			// **THỬ** chuyển đổi đối tượng đầu tiên thành DTO chuẩn (RouteRecordRawData).
-			// Chúng ta không quan tâm đến kết quả, chỉ quan tâm nó có thành công hay không.
-			objectMapper.convertValue(firstRoute, RouteRecordRawData.class);
+			// 1. Thử chuyển đổi sang DTO chuẩn
+			RouteRecordRawData standardDto = objectMapper.convertValue(firstRouteObj, RouteRecordRawData.class);
 			
-			// Nếu không có exception nào được ném ra, có nghĩa là quá trình chuyển đổi thành công.
-			// => Đây là định dạng chuẩn.
-			log.info("Phát hiện định dạng router chuẩn (Trial Deserialization thành công).");
-			return false; // **Không phải** legacy
+			// 2. Kiểm tra Logic ("Sanity Check")
+			// Đặc điểm nhận dạng Vue 2 (Legacy): component là một Map phức tạp (chứa _compiled, __file...)
+			// Đặc điểm nhận dạng Chuẩn mới: component thường là String (hoặc null cho route cha)
+			
+			Object component = standardDto.getComponent();
+			if (component instanceof Map<?, ?> compMap) {
+				if (compMap.containsKey("_compiled") || compMap.containsKey("__file")) {
+					log.info("Phát hiện component là Vue Object phức tạp -> Đây là định dạng LEGACY.");
+					return true;
+				}
+			}
+			
+			// Kiểm tra thêm: DTO chuẩn thường không có các trường như 'alwaysShow' ở cấp cao nhất
+			// (Jackson đã bỏ qua chúng, nhưng nếu chúng ta convert ngược lại từ Map nguồn...)
+			// Cách tốt nhất là kiểm tra trực tiếp trên Map nguồn:
+			if (firstRouteObj instanceof Map<?, ?> sourceMap) {
+				if (sourceMap.containsKey("alwaysShow") || sourceMap.containsKey("hidden")) {
+					log.info("Phát hiện trường 'alwaysShow'/'hidden' ở cấp cao nhất -> Đây là định dạng LEGACY.");
+					return true;
+				}
+			}
+			
+			log.info("Cấu trúc dữ liệu khớp với định dạng CHUẨN.");
+			return false; // Là chuẩn
 			
 		} catch (IllegalArgumentException e) {
-			// Nếu `convertValue` ném ra exception (ví dụ: do có các trường không mong muốn
-			// như 'alwaysShow', hoặc kiểu dữ liệu không khớp), chúng ta bắt nó.
-			// => Đây là định dạng cũ (legacy).
-			log.info("Trial Deserialization sang định dạng chuẩn thất bại. Giả định đây là định dạng legacy. Lỗi: {}", e.getMessage());
-			return true; // **Là** legacy
+			log.info("Convert thất bại. Giả định là định dạng LEGACY. Lỗi: {}", e.getMessage());
+			return true;
 		}
 	}
 	
@@ -262,8 +279,8 @@ public class CoreSyncService {
 		
 		// Xử lý component với logic ưu tiên
 		String finalComponent = "Layout"; // Mặc định
-		if (StringUtils.isNotBlank(routeData.getComponent())) {
-			finalComponent = routeData.getComponent();
+		if (Objects.nonNull(routeData.getComponent())) {
+			finalComponent = routeData.getComponent().toString();
 		}
 		menu.setComponent(finalComponent);
 		

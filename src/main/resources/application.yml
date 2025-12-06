@@ -49,7 +49,7 @@ spring:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
-  
+
   # Tắt Open-in-View để tránh giữ kết nối DB lâu trong quá trình render view (Performance)
   jpa:
     open-in-view: false
@@ -128,8 +128,6 @@ spring:
     admin:
       client:
         url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9090}
-        instance:
-          prefer-ip: true
 
 # ===================================================================
 # 3. SA-TOKEN: AUTHENTICATION & AUTHORIZATION
@@ -160,8 +158,6 @@ management:
       show-details: when_authorized
       probes:
         enabled: true
-    prometheus:
-      enabled: true
   metrics:
     tags:
       application: ${spring.application.name}
