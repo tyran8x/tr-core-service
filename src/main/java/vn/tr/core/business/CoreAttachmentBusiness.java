@@ -40,24 +40,6 @@ public class CoreAttachmentBusiness {
 	@Value("${core.attachment.path.uploadtemp}")
 	private String coreAttachmentPathUploadTemp;
 	
-	private CoreAttachmentData convertToCoreAttachmentData(CoreAttachment coreAttachment) {
-		CoreAttachmentData coreAttachmentData = new CoreAttachmentData();
-		coreAttachmentData.setId(coreAttachment.getId());
-		coreAttachmentData.setAppCode(coreAttachment.getAppCode());
-		coreAttachmentData.setBase64(coreAttachment.getBase64());
-		coreAttachmentData.setCode(coreAttachment.getCode());
-		coreAttachmentData.setFileName(coreAttachment.getFileName());
-		coreAttachmentData.setFolder(coreAttachment.getFolder());
-		coreAttachmentData.setLink(coreAttachment.getLink());
-		coreAttachmentData.setMime(coreAttachment.getMime());
-		coreAttachmentData.setMonth(coreAttachment.getMonth());
-		coreAttachmentData.setObjectId(coreAttachment.getObjectId());
-		coreAttachmentData.setSize(coreAttachment.getSize());
-		coreAttachmentData.setType(coreAttachment.getType());
-		coreAttachmentData.setYear(coreAttachment.getYear());
-		return coreAttachmentData;
-	}
-	
 	public Long copyAttachment(Long id, String appCode, Long objectId) {
 		
 		Optional<CoreAttachment> optional = coreAttachmentService.findByIdAndDaXoaFalse(id);
@@ -96,6 +78,7 @@ public class CoreAttachmentBusiness {
 	
 	public CoreAttachment doUpload(MultipartFile uploadfile) {
 		String fileName = uploadfile.getOriginalFilename();
+		log.info("fileName {}", uploadfile.getOriginalFilename());
 		CoreAttachment coreAttachment = new CoreAttachment();
 		BufferedOutputStream stream = null;
 		Path path = Paths.get(coreAttachmentPathUploadTemp);
@@ -361,6 +344,24 @@ public class CoreAttachmentBusiness {
 		coreAttachment.setType(coreAttachmentData.getType());
 		coreAttachment = coreAttachmentService.save(coreAttachment);
 		return convertToCoreAttachmentData(coreAttachment);
+	}
+	
+	private CoreAttachmentData convertToCoreAttachmentData(CoreAttachment coreAttachment) {
+		CoreAttachmentData coreAttachmentData = new CoreAttachmentData();
+		coreAttachmentData.setId(coreAttachment.getId());
+		coreAttachmentData.setAppCode(coreAttachment.getAppCode());
+		coreAttachmentData.setBase64(coreAttachment.getBase64());
+		coreAttachmentData.setCode(coreAttachment.getCode());
+		coreAttachmentData.setFileName(coreAttachment.getFileName());
+		coreAttachmentData.setFolder(coreAttachment.getFolder());
+		coreAttachmentData.setLink(coreAttachment.getLink());
+		coreAttachmentData.setMime(coreAttachment.getMime());
+		coreAttachmentData.setMonth(coreAttachment.getMonth());
+		coreAttachmentData.setObjectId(coreAttachment.getObjectId());
+		coreAttachmentData.setSize(coreAttachment.getSize());
+		coreAttachmentData.setType(coreAttachment.getType());
+		coreAttachmentData.setYear(coreAttachment.getYear());
+		return coreAttachmentData;
 	}
 	
 	public CoreAttachmentData findById(Long id) throws EntityNotFoundException {

@@ -28,10 +28,10 @@ sa-token:
   is-log: true
 logging:
   level:
-    root: INFO
+    root: ERROR
     vn.tr: INFO
     cn.dev33.satoken: DEBUG
-    org.springframework.web: INFO
-    org.hibernate.SQL: DEBUG
+    org.springframework.web: ERROR
+    org.hibernate.SQL: ERROR
     org.apache.kafka: ERROR
     org.springframework.kafka: ERROR

@@ -103,6 +103,11 @@ public class CoreRoleServiceImpl implements CoreRoleService {
 	}
 	
 	@Override
+	public JpaRepository<CoreRole, Long> getRepository() {
+		return this.coreRoleRepo;
+	}
+	
+	@Override
 	public Set<String> filterExistingRoleCodesInApp(String appCode, Collection<String> roleCodes) {
 		if (roleCodes.isEmpty()) {
 			return Collections.emptySet();
@@ -119,8 +124,8 @@ public class CoreRoleServiceImpl implements CoreRoleService {
 	}
 	
 	@Override
-	public JpaRepository<CoreRole, Long> getRepository() {
-		return this.coreRoleRepo;
+	public Optional<CoreRole> findByCodeAndAppCode(String code, String appCode) {
+		return coreRoleRepo.findByCodeAndAppCode(code, appCode);
 	}
 	
 }

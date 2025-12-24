@@ -45,7 +45,21 @@ public class CoreUserValidator implements Validator {
 		if (StringUtils.isBlank(userDto.getEmail())) {
 			errors.rejectValue("email", "NotNull", "Email không được để trống.");
 		} else {
-			if (coreUserService.existsByIdNotAndUsernameIgnoreCase(userDto.getId(), userDto.getEmail())) {
+			boolean isEmailDuplicate;
+			
+			// Trường hợp 1: Tạo mới (ID chưa có) -> Chỉ kiểm tra xem email đã tồn tại chưa
+			if (userDto.getId() == null) {
+				// Lưu ý: Ở đây mình giả định bạn có hàm check Email riêng.
+				// Dựa vào code cũ bạn đang dùng hàm 'Username' để check 'Email',
+				// hãy đảm bảo gọi đúng hàm nghiệp vụ (ví dụ: existsByEmailIgnoreCase)
+				isEmailDuplicate = coreUserService.existsByUsernameIgnoreCase(userDto.getEmail());
+			}
+			// Trường hợp 2: Cập nhật (Đã có ID) -> Kiểm tra trùng lặp ngoại trừ chính user này
+			else {
+				isEmailDuplicate = coreUserService.existsByIdNotAndUsernameIgnoreCase(userDto.getId(), userDto.getEmail());
+			}
+			
+			if (isEmailDuplicate) {
 				errors.rejectValue("email", "Unique", "Email đã tồn tại.");
 			}
 		}

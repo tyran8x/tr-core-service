@@ -139,4 +139,11 @@ public class CoreRoleController {
 		CoreRoleData updatedRole = coreRoleBusiness.synchronizePermissionsForRole(roleId, permissionCodes, appCodeContext);
 		return R.ok(updatedRole);
 	}
+	
+	@GetMapping("/code/{code}")
+	@Log(title = "Lấy chi tiết Vai trò theo mã", businessType = BusinessType.DETAIL)
+	public R<CoreRoleData> findByCode(@PathVariable String code) {
+		String appCodeContext = LoginHelper.getAppCode();
+		return R.ok(coreRoleBusiness.findByCode(code, appCodeContext));
+	}
 }

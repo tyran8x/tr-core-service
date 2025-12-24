@@ -431,8 +431,7 @@ public class CoreUserBusiness {
 		List<CoreWorkSpaceItem> items = coreWorkSpaceItemService.findActiveWorkspaceByOwner(
 				CoreUser.class.getSimpleName(),
 				username,
-				appCodeContext
-		                                                                                   );
+				appCodeContext);
 		return coreWorkSpaceItemMapper.toData(items);
 	}
 	
@@ -442,8 +441,7 @@ public class CoreUserBusiness {
 				CoreUser.class.getSimpleName(),
 				username,
 				appCodeContext,
-				items
-		                                                                                  );
+				items);
 		return coreWorkSpaceItemMapper.toData(savedItems);
 	}
 	

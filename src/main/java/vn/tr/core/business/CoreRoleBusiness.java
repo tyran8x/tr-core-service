@@ -273,4 +273,16 @@ public class CoreRoleBusiness {
 		data.setPermissionCodes(permissions);
 		return data;
 	}
+	
+	@Transactional(readOnly = true)
+	public CoreRoleData findByCode(String code, String appCodeContext) {
+		CoreRole role = coreRoleService.findByCodeAndAppCode(code, appCodeContext)
+				.orElseThrow(() -> new EntityNotFoundException(CoreRole.class, code));
+		
+		// Logic kiểm tra quyền đã được tích hợp sẵn:
+		// findByCodeAndAppCode chỉ tìm trong appCodeContext, nên không cần check lại.
+		// Nếu role tồn tại nhưng ở app khác, phương thức trên sẽ trả về empty -> EntityNotFoundException.
+		
+		return coreRoleMapper.toData(role);
+	}
 }

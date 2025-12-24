@@ -63,4 +63,6 @@ public interface CoreRoleService {
 	 */
 	List<CoreRole> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
 	
+	Optional<CoreRole> findByCodeAndAppCode(String code, String appCode);
+	
 }

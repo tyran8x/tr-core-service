@@ -11,6 +11,7 @@ import vn.tr.core.dao.model.CoreRole;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Repository
@@ -65,5 +66,7 @@ public interface CoreRoleRepo extends JpaRepository<CoreRole, Long>, JpaSpecific
 	 * @return Danh sách các thực thể CoreRole tìm thấy.
 	 */
 	List<CoreRole> findAllByAppCodeAndCodeIn(String appCode, Collection<String> codes);
+	
+	Optional<CoreRole> findByCodeAndAppCode(String code, String appCode);
 	
 }
