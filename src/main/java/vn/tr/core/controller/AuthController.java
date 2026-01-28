@@ -1,5 +1,6 @@
 package vn.tr.core.controller;
 
+import cn.hutool.core.util.StrUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +10,6 @@ import vn.tr.common.core.domain.model.LoginBody;
 import vn.tr.common.core.domain.model.LoginUser;
 import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.exception.ServiceException;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.common.web.annotation.AppCode;
 import vn.tr.core.business.CoreClientBusiness;
@@ -19,8 +19,7 @@ import vn.tr.core.data.dto.CoreClientData;
 import vn.tr.core.security.service.IAuthStrategy;
 
 /**
- * Controller trung tâm cho các nghiệp vụ Xác thực (Authentication).
- * Đóng vai trò là Token Endpoint, xử lý các luồng đăng nhập, đăng ký và đăng xuất.
+ * Controller trung tâm cho các nghiệp vụ Xác thực (Authentication). Đóng vai trò là Token Endpoint, xử lý các luồng đăng nhập, đăng ký và đăng xuất.
  *
  * @author tyran8x
  * @version 3.0
@@ -35,8 +34,7 @@ public class AuthController {
 	private final CoreUserService coreUserService;
 	
 	/**
-	 * Endpoint đăng nhập chính.
-	 * Hỗ trợ nhiều loại hình đăng nhập (grant types) thông qua Strategy Pattern.
+	 * Endpoint đăng nhập chính. Hỗ trợ nhiều loại hình đăng nhập (grant types) thông qua Strategy Pattern.
 	 *
 	 * @param loginBody DTO chứa thông tin đăng nhập, bao gồm grant_type, username/password, clientId/clientSecret.
 	 * @param appCode   Ngữ cảnh ứng dụng, được tự động điền bởi @AppCode Argument Resolver.
@@ -46,7 +44,7 @@ public class AuthController {
 	@PostMapping("/login")
 	public R<LoginResult> login(@Valid @RequestBody LoginBody loginBody, @AppCode String appCode) {
 		String grantType = loginBody.getGrantType();
-		if (StringUtils.isBlank(grantType)) {
+		if (StrUtil.isBlank(grantType)) {
 			throw new ServiceException("grant_type là bắt buộc.");
 		}
 		
@@ -88,8 +86,7 @@ public class AuthController {
 	}
 	
 	/**
-	 * Endpoint đăng xuất.
-	 * Vô hiệu hóa token của người dùng hiện tại.
+	 * Endpoint đăng xuất. Vô hiệu hóa token của người dùng hiện tại.
 	 *
 	 * @return R.ok()
 	 */

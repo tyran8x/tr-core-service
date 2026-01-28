@@ -1,23 +1,13 @@
-server:
-  undertow:
-    max-http-post-size: -1
-    buffer-size: 512
-    threads:
-      io: 8
-  shutdown: immediate
 core:
   attachment:
     host:
-      download: 'https://api.dnict.vn/v2/core'
+      download: "https://api.dnict.vn/v2/core"
+
 spring:
   jpa:
     properties:
       hibernate:
         format_sql: true
-  jackson:
-    serialization:
-      FAIL_ON_EMPTY_BEANS: false
-      WRITE_DATES_AS_TIMESTAMPS: false
   data:
     redis:
       lettuce:
@@ -26,12 +16,6 @@ spring:
           max-wait: -1
           max-idle: 8
           min-idle: 0
-  cache:
-    type: redis
-    redis:
-      time-to-live: 3600000
-      cache-null-values: true
-      enable-statistics: false
   boot:
     admin:
       client:
@@ -44,13 +28,10 @@ spring:
             userpassword: ${spring.boot.admin.client.password}
         username: admin
         password: DnictPro@123
+
 logging:
   level:
     vn.tr: DEBUG
     org.springframework.web: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-redisson:
-  keyPrefix: 'tr'
-  singleServerConfig:
-    clientName: ${app.name}

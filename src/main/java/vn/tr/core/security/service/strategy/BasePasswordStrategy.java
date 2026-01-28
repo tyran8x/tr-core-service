@@ -2,6 +2,7 @@ package vn.tr.core.security.service.strategy;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.stp.parameter.SaLoginParameter;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,6 @@ import vn.tr.common.core.enums.LoginType;
 import vn.tr.common.core.exception.ServiceException;
 import vn.tr.common.core.exception.user.UserException;
 import vn.tr.common.core.utils.MessageUtils;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
@@ -58,7 +58,7 @@ public abstract class BasePasswordStrategy implements IAuthStrategy {
 		
 		coreUserService.checkLogin(LoginType.PASSWORD, username, () -> !BCrypt.checkpw(password, coreUser.getHashedPassword()));
 		
-		if (StringUtils.isNotEmpty(appCode)) {
+		if (StrUtil.isNotEmpty(appCode)) {
 			CoreUserApp userAppAccess = coreUserAppService.findByUsernameAndAppCode(username, appCode)
 					.orElseThrow(() -> new UserException("user.app.access.denied"));
 			

@@ -2,11 +2,11 @@ package vn.tr.core.security.service.strategy;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.stp.parameter.SaLoginParameter;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 import vn.tr.common.core.constant.Constants;
 import vn.tr.common.core.constant.SecurityConstants;
@@ -15,7 +15,6 @@ import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.exception.user.UserException;
 import vn.tr.common.core.utils.MessageUtils;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.satoken.utils.LoginHelper;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
@@ -29,12 +28,8 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Lớp cha trừu tượng cho TẤT CẢ các chiến lược xác thực.
- * Chứa logic chung và đã được tối ưu cho:
- * - Phân luồng đăng nhập (Super Admin vs. Người dùng thường).
- * - Xây dựng đối tượng LoginUser (cho 1 app hoặc tổng hợp).
- * - Tương tác với Sa-Token để tạo token.
- * - Xử lý nghiệp vụ đăng ký người dùng.
+ * Lớp cha trừu tượng cho TẤT CẢ các chiến lược xác thực. Chứa logic chung và đã được tối ưu cho: - Phân luồng đăng nhập (Super Admin vs. Người dùng
+ * thường). - Xây dựng đối tượng LoginUser (cho 1 app hoặc tổng hợp). - Tương tác với Sa-Token để tạo token. - Xử lý nghiệp vụ đăng ký người dùng.
  *
  * @author tyran8x
  * @version 3.0
@@ -48,15 +43,14 @@ public abstract class AbstractAuthStrategy implements IAuthStrategy {
 	protected final CoreUserRoleService coreUserRoleService;
 	
 	/**
-	 * Phương thức điều phối luồng đăng nhập chính.
-	 * Nó nhận vào người dùng đã được xác thực và quyết định luồng xử lý tiếp theo.
+	 * Phương thức điều phối luồng đăng nhập chính. Nó nhận vào người dùng đã được xác thực và quyết định luồng xử lý tiếp theo.
 	 *
 	 * @param user          Thực thể CoreUser đã được xác thực thành công.
 	 * @param targetAppCode Mã ứng dụng người dùng muốn đăng nhập vào (có thể là null).
 	 *
 	 * @return Kết quả đăng nhập chứa token.
 	 */
-	protected LoginResult processLogin(CoreUser user, @Nullable String targetAppCode) {
+	protected LoginResult processLogin(CoreUser user, String targetAppCode) {
 		if (coreUserRoleService.isSuperAdmin(user.getUsername())) {
 			return performSuperAdminLogin(user);
 		}
@@ -75,9 +69,9 @@ public abstract class AbstractAuthStrategy implements IAuthStrategy {
 		return createLoginResult();
 	}
 	
-	private LoginResult performStandardUserLogin(CoreUser user, @Nullable String targetAppCode) {
+	private LoginResult performStandardUserLogin(CoreUser user, String targetAppCode) {
 		LoginUser loginUser;
-		if (StringUtils.isNotBlank(targetAppCode)) {
+		if (StrUtil.isNotBlank(targetAppCode)) {
 			log.info("Performing login for user '{}' into specific app: {}", user.getUsername(), targetAppCode);
 			loginUser = coreUserService.buildLoginUserForSingleApp(user, targetAppCode);
 		} else {
@@ -121,8 +115,7 @@ public abstract class AbstractAuthStrategy implements IAuthStrategy {
 	}
 	
 	/**
-	 * Xử lý nghiệp vụ đăng ký người dùng mới.
-	 * Lớp con có thể gọi hook `preRegisterValidate` để kiểm tra captcha hoặc các điều kiện khác.
+	 * Xử lý nghiệp vụ đăng ký người dùng mới. Lớp con có thể gọi hook `preRegisterValidate` để kiểm tra captcha hoặc các điều kiện khác.
 	 */
 	@Override
 	@Transactional
@@ -133,13 +126,13 @@ public abstract class AbstractAuthStrategy implements IAuthStrategy {
 		String password = registerBody.getPassword();
 		String appCode = registerBody.getAppCode();
 		
-		if (StringUtils.isBlank(appCode)) {
+		if (StrUtil.isBlank(appCode)) {
 			throw new UserException("register.appcode.required");
 		}
 		if (coreUserService.existsByUsernameIgnoreCase(username)) {
 			throw new UserException("user.register.username.exists", username);
 		}
-		if (StringUtils.isNotBlank(registerBody.getEmail()) && coreUserService.existsByEmailIgnoreCase(registerBody.getEmail())) {
+		if (StrUtil.isNotBlank(registerBody.getEmail()) && coreUserService.existsByEmailIgnoreCase(registerBody.getEmail())) {
 			throw new UserException("user.register.email.exists", registerBody.getEmail());
 		}
 		
@@ -154,7 +147,7 @@ public abstract class AbstractAuthStrategy implements IAuthStrategy {
 		CoreUserApp firstAccess = new CoreUserApp();
 		firstAccess.setUsername(username);
 		firstAccess.setAppCode(appCode);
-		firstAccess.setUserTypeCode(StringUtils.defaultIfBlank(registerBody.getUserTypeCode(), "EXTERNAL"));
+		firstAccess.setUserTypeCode(StrUtil.emptyToDefault(registerBody.getUserTypeCode(), "EXTERNAL"));
 		firstAccess.setStatus(LifecycleStatus.ACTIVE);
 		coreUserAppService.save(firstAccess);
 		

@@ -1,12 +1,12 @@
 package vn.tr.core.dao.service;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.core.dao.model.CoreMenu;
 import vn.tr.core.data.criteria.CoreMenuSearchCriteria;
 
@@ -136,7 +136,7 @@ public class CoreMenuServiceImpl implements CoreMenuService {
 	@Override
 	@Transactional
 	public void softDeleteAllByAppCode(String appCode) {
-		if (StringUtils.isBlank(appCode)) {
+		if (StrUtil.isBlank(appCode)) {
 			log.warn("Yêu cầu xóa mềm menu nhưng appCode bị trống. Thao tác bị hủy bỏ.");
 			return;
 		}

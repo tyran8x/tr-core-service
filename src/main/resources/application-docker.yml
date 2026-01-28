@@ -1,16 +1,16 @@
 core:
   attachment:
     host:
-      download: ${CORE_ATTACHMENT_HOST_DOWNLOAD:https://mcdtqa.danang.gov.vn/api/v2/core}
+      download: ${CORE_ATTACHMENT_HOST_DOWNLOAD:https://mcdtegov.danang.gov.vn/api/v2/core}
     path:
       upload: ${CORE_ATTACHMENT_PATH_UPLOAD:/opt/uploads}
       uploadtemp: ${CORE_ATTACHMENT_PATH_UPLOADTEMP:/opt/uploads/temp}
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://10.198.7.33:5432/mcdt_core_service}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://10.198.8.27:5432/mcdt_core_service}
   data:
     redis:
-      host: ${SPRING_DATA_REDIS_HOST:10.198.7.27}
+      host: ${SPRING_DATA_REDIS_HOST:10.198.8.27}
 client:
   notification-service:
     url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://mcdt-gateway:8000/v1/notification}

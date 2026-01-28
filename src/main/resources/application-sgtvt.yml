@@ -1,41 +1,11 @@
-server:
-  undertow:
-    max-http-post-size: -1
-    buffer-size: 512
-    threads:
-      io: 8
-  shutdown: immediate
 core:
   attachment:
     host:
-      download: 'https://csdlgtvt.danang.gov.vn:8080/v2/core'
+      download: "https://csdlgtvt.danang.gov.vn:8080/v2/core"
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/core_sys_service
     password: SgtvtPro@123
-  jackson:
-    serialization:
-      FAIL_ON_EMPTY_BEANS: false
-      WRITE_DATES_AS_TIMESTAMPS: false
   data:
     redis:
-      password: 'SgtvtPro@123'
-      lettuce:
-        pool:
-          max-active: 8
-          max-wait: -1
-          max-idle: 8
-          min-idle: 0
-  cache:
-    type: redis
-    redis:
-      time-to-live: 3600000
-      cache-null-values: true
-      enable-statistics: false
-redisson:
-  keyPrefix: 'tr'
-  singleServerConfig:
-    clientName: ${app.name}
-error:
-  handling:
-    exception-logging: WITH_STACKTRACE
+      password: "SgtvtPro@123"

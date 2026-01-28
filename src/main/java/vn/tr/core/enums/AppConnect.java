@@ -1,8 +1,8 @@
 package vn.tr.core.enums;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import vn.tr.common.core.utils.StringUtils;
 
 @Getter
 @AllArgsConstructor
@@ -18,7 +18,7 @@ public enum AppConnect {
 	
 	public static AppConnect getAppConnect(String str) {
 		for (AppConnect value : values()) {
-			if (StringUtils.contains(str, value.getAppConnect())) {
+			if (StrUtil.contains(str, value.getAppConnect())) {
 				return value;
 			}
 		}

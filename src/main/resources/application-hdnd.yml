@@ -1,40 +1,23 @@
-server:
-  undertow:
-    max-http-post-size: -1
-    buffer-size: 512
-    threads:
-      io: 8
 core:
   attachment:
     host:
-      download: 'http://49.156.54.41:8000/v2/core'
+      download: "http://49.156.54.41:8000/v2/core"
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/core_sys_service
     password: HdndPro@123
-  jackson:
-    serialization:
-      FAIL_ON_EMPTY_BEANS: false
-      WRITE_DATES_AS_TIMESTAMPS: false
   data:
     redis:
-      password: 'HdndPro@123'
+      password: "HdndPro@123"
       lettuce:
         pool:
           max-active: 8
           max-wait: -1
           max-idle: 8
           min-idle: 0
-  cache:
-    type: redis
-    redis:
-      time-to-live: 3600000
-      cache-null-values: true
-      enable-statistics: false
+
 redisson:
-  keyPrefix: 'tr'
+  keyPrefix: "tr"
   singleServerConfig:
     clientName: ${app.name}
-error:
-  handling:
-    exception-logging: WITH_STACKTRACE

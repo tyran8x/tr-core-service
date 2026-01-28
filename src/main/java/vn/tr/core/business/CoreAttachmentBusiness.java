@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,13 +31,9 @@ import java.util.*;
 @Slf4j
 @RequiredArgsConstructor
 public class CoreAttachmentBusiness {
+	
 	private final CoreAttachmentService coreAttachmentService;
-	@Value("${core.attachment.host.download}")
-	private String coreAttachmentHostDownload;
-	@Value("${core.attachment.path.upload}")
-	private String coreAttachmentPathUpload;
-	@Value("${core.attachment.path.uploadtemp}")
-	private String coreAttachmentPathUploadTemp;
+	private final vn.tr.core.config.CoreProperties coreProperties;
 	
 	public Long copyAttachment(Long id, String appCode, Long objectId) {
 		
@@ -52,7 +47,7 @@ public class CoreAttachmentBusiness {
 			newCoreAttachment.setFileName(coreAttachment.getFileName());
 			newCoreAttachment.setSize(coreAttachment.getSize());
 			newCoreAttachment.setMime(coreAttachment.getMime());
-			newCoreAttachment.setFolder(coreAttachmentPathUploadTemp);
+			newCoreAttachment.setFolder(coreProperties.getAttachment().getPath().getUploadtemp());
 			newCoreAttachment.setAppCode(appCode);
 			newCoreAttachment.setObjectId(objectId);
 			String code = coreAttachment.getId() + coreAttachment.getFileName() + LocalDate.now();
@@ -81,7 +76,7 @@ public class CoreAttachmentBusiness {
 		log.info("fileName {}", uploadfile.getOriginalFilename());
 		CoreAttachment coreAttachment = new CoreAttachment();
 		BufferedOutputStream stream = null;
-		Path path = Paths.get(coreAttachmentPathUploadTemp);
+		Path path = Paths.get(coreProperties.getAttachment().getPath().getUploadtemp());
 		if (StringUtils.isNotBlank(fileName)) {
 			int month;
 			Calendar cal = Calendar.getInstance();
@@ -96,19 +91,19 @@ public class CoreAttachmentBusiness {
 			coreAttachment.setSize(uploadfile.getSize());
 			coreAttachment.setMime(uploadfile.getContentType());
 			coreAttachment.setAppCode("");
-			coreAttachment.setFolder(coreAttachmentPathUploadTemp);
+			coreAttachment.setFolder(coreProperties.getAttachment().getPath().getUploadtemp());
 			coreAttachment = coreAttachmentService.save(coreAttachment);
 			String code = coreAttachment.getId() + coreAttachment.getFileName() + coreAttachment.getCreatedAt().toString();
 			code = DigestUtils.md5Hex(code).toUpperCase();
 			coreAttachment.setCode(code);
 			
-			String link = coreAttachmentHostDownload + "/attachment/download/" + coreAttachment.getCode();
+			String link = coreProperties.getAttachment().getHost().getDownload() + "/attachment/download/" + coreAttachment.getCode();
 			coreAttachment.setLink(link);
 			
 			// base64
 			StringBuilder base64Image = new StringBuilder("data:").append(uploadfile.getContentType()).append(";base64,");
-			if (uploadfile.getContentType() != null && "image/jpeg".contains(uploadfile.getContentType()) ||
-					"image/png".contains(uploadfile.getContentType())) {
+			if (uploadfile.getContentType() != null && "image/jpeg".contains(uploadfile.getContentType())
+					|| "image/png".contains(uploadfile.getContentType())) {
 				try {
 					base64Image.append(Base64.getEncoder().encodeToString(uploadfile.getBytes()));
 				} catch (IOException e1) {
@@ -117,7 +112,7 @@ public class CoreAttachmentBusiness {
 			}
 			coreAttachment.setBase64(base64Image.toString());
 			coreAttachment = coreAttachmentService.save(coreAttachment);
-			String filepath = Paths.get(coreAttachmentPathUploadTemp, code).toString();
+			String filepath = Paths.get(coreProperties.getAttachment().getPath().getUploadtemp(), code).toString();
 			// Save the file locally
 			try {
 				Files.createDirectories(path);
@@ -167,7 +162,7 @@ public class CoreAttachmentBusiness {
 					newCoreAttachment.setFileName(fileNameSigned);
 					newCoreAttachment.setSize(coreAttachment.getSize());
 					newCoreAttachment.setMime(coreAttachment.getMime());
-					newCoreAttachment.setFolder(coreAttachmentPathUploadTemp);
+					newCoreAttachment.setFolder(coreProperties.getAttachment().getPath().getUploadtemp());
 					newCoreAttachment.setAppCode(coreAttachment.getAppCode());
 					newCoreAttachment.setObjectId(coreAttachment.getObjectId());
 					newCoreAttachment.setType(coreAttachment.getType());
@@ -178,7 +173,7 @@ public class CoreAttachmentBusiness {
 					
 					newCoreAttachment = coreAttachmentService.saveAndCopy(coreAttachment, newCoreAttachment);
 					
-					String filepath = Paths.get(coreAttachmentPathUploadTemp, code).toString();
+					String filepath = Paths.get(coreProperties.getAttachment().getPath().getUploadtemp(), code).toString();
 					// Save the file locally
 					try {
 						JSONObject jsonKySo = new JSONObject();
@@ -227,7 +222,7 @@ public class CoreAttachmentBusiness {
 			String fileName = uploadfile.getOriginalFilename();
 			CoreAttachment coreAttachment = new CoreAttachment();
 			BufferedOutputStream stream = null;
-			Path path = Paths.get(coreAttachmentPathUploadTemp);
+			Path path = Paths.get(coreProperties.getAttachment().getPath().getUploadtemp());
 			if (StringUtils.isNotBlank(fileName)) {
 				int month;
 				Calendar cal = Calendar.getInstance();
@@ -246,19 +241,19 @@ public class CoreAttachmentBusiness {
 				coreAttachment.setSize(uploadfile.getSize());
 				coreAttachment.setMime(uploadfile.getContentType());
 				coreAttachment.setAppCode("");
-				coreAttachment.setFolder(coreAttachmentPathUploadTemp);
+				coreAttachment.setFolder(coreProperties.getAttachment().getPath().getUploadtemp());
 				coreAttachment = coreAttachmentService.save(coreAttachment);
 				String code = coreAttachment.getId() + coreAttachment.getFileName() + coreAttachment.getCreatedAt().toString();
 				code = DigestUtils.md5Hex(code).toUpperCase();
 				coreAttachment.setCode(code);
 				
-				String link = coreAttachmentHostDownload + "/attachment/download/" + coreAttachment.getCode();
+				String link = coreProperties.getAttachment().getHost().getDownload() + "/attachment/download/" + coreAttachment.getCode();
 				coreAttachment.setLink(link);
 				
 				// base64
 				StringBuilder base64Image = new StringBuilder("data:").append(uploadfile.getContentType()).append(";base64,");
-				if (uploadfile.getContentType() != null && "image/jpeg".contains(uploadfile.getContentType()) ||
-						"image/png".contains(uploadfile.getContentType())) {
+				if (uploadfile.getContentType() != null && "image/jpeg".contains(uploadfile.getContentType())
+						|| "image/png".contains(uploadfile.getContentType())) {
 					try {
 						base64Image.append(Base64.getEncoder().encodeToString(uploadfile.getBytes()));
 					} catch (IOException e1) {
@@ -267,7 +262,7 @@ public class CoreAttachmentBusiness {
 				}
 				coreAttachment.setBase64(base64Image.toString());
 				coreAttachment = coreAttachmentService.save(coreAttachment);
-				String filepath = Paths.get(coreAttachmentPathUploadTemp, code).toString();
+				String filepath = Paths.get(coreProperties.getAttachment().getPath().getUploadtemp(), code).toString();
 				// Save the file locally
 				try {
 					JSONObject jsonKySo = new JSONObject();

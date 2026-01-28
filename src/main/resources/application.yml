@@ -1,48 +1,35 @@
 # ===================================================================
 # TR-CORE-SERVICE: CẤU HÌNH CƠ SỞ (BASE CONFIGURATION)
-# Phù hợp cho môi trường Production.
-# Các giá trị nhạy cảm và thay đổi theo môi trường được cung cấp qua
-# biến môi trường (ví dụ: Docker, Kubernetes) hoặc file .env (cho local).
 # ===================================================================
 
-# ===================================================================
+# -------------------------------------------------------------------
 # 1. SERVER CONFIGURATION
-# ===================================================================
-vn:
-  tr:
-    app-code: core
+# -------------------------------------------------------------------
 server:
   port: 8989
+  shutdown: graceful
   servlet:
     context-path: /
-  # Sử dụng Undertow cho hiệu suất cao trong môi trường non-blocking
-  undertow:
-    threads:
-      io: ${UNDERTOW_IO_THREADS:16}        # Số luồng I/O nên tương đương số lõi CPU
-      worker: ${UNDERTOW_WORKER_THREADS:256}  # Số luồng xử lý tác vụ
-    direct-buffers: true
-    max-http-post-size: 100MB # Cho phép upload file lớn
-    decode-url: false
-  # Tắt server một cách mượt mà, xử lý nốt các request đang chạy
-  shutdown: graceful
-  # Bật nén GZIP/Brotli để giảm băng thông
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript,text/css,image/svg+xml
-    min-response-size: 2048 # Chỉ nén response > 2KB
+    min-response-size: 2048
 
-# ===================================================================
+# -------------------------------------------------------------------
 # 2. SPRING FRAMEWORK
-# ===================================================================
+# -------------------------------------------------------------------
 spring:
   application:
     name: tr-core-service
-  # Kích hoạt profile theo biến môi trường. Mặc định là 'prod' để an toàn.
-  #profiles:
-  #  active: ${SPRING_PROFILES_ACTIVE:prod}
-  # Cấu hình để Spring Boot đọc file .env (hữu ích cho môi trường local)
   config:
     import: "optional:configserver:${SPRING_CLOUD_CONFIG_URI:http://localhost:8888}"
+  jackson:
+    serialization:
+      FAIL_ON_EMPTY_BEANS: false
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: false
+    default-property-inclusion: non_null
+    time-zone: Asia/Ho_Chi_Minh
   messages:
     basename: i18n/messages
   servlet:
@@ -50,7 +37,7 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
-  # Tắt Open-in-View để tránh giữ kết nối DB lâu trong quá trình render view (Performance)
+  # --- JPA & Datasource ---
   jpa:
     open-in-view: false
     hibernate:
@@ -58,14 +45,14 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        # Sắp xếp NULLs xuống cuối
-        order_by.default_null_ordering: last
+        order_by:
+          default_null_ordering: last
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-  # --- Datasource (PostgreSQL with HikariCP) ---
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/core_service}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres} # BẮT BUỘC cung cấp qua env
-    password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123} # BẮT BUỘC cung cấp qua env
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:DnictPro@123}
     driver-class-name: org.postgresql.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
@@ -75,15 +62,15 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-      keepalive-time: 30000 # Giữ kết nối sống, tránh bị firewall cắt
+      keepalive-time: 30000
       auto-commit: true
 
-  # --- Redis (Lettuce Pool) ---
+  # --- Redis (Lettuce) ---
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}
       port: ${SPRING_DATA_REDIS_PORT:6379}
-      password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123} # BẮT BUỘC cung cấp qua env
+      password: ${SPRING_DATA_REDIS_PASSWORD:DnictPro@123}
       timeout: 10s
       ssl:
         enabled: ${SPRING_DATA_REDIS_SSL_ENABLED:false}
@@ -93,63 +80,54 @@ spring:
           max-idle: ${REDIS_POOL_MAX_IDLE:16}
           min-idle: ${REDIS_POOL_MIN_IDLE:4}
 
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+      cache-null-values: true
+      enable-statistics: false
+
   # --- Kafka ---
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
     properties:
-      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+      security:
+        protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       retries: 3
       acks: all
     consumer:
-      group-id: ${spring.application.name} # Sử dụng tên ứng dụng làm group-id
+      group-id: ${spring.application.name}
       auto-offset-reset: latest
       key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
-        spring.json.trusted.packages: '*'
+        spring.json.trusted.packages: "*"
         spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
     listener:
       missing-topics-fatal: false
-      concurrency: 3 # Tăng khả năng xử lý song song
+      concurrency: 3
 
-  # --- Spring Security ---
-  # Dùng để bảo vệ các endpoint quản trị (Actuator, DevOps Dashboard)
-  #security:
-  #  user:
-  #    name: ${SECURITY_USER_NAME}       # BẮT BUỘC cung cấp qua env
-  #    password: ${SECURITY_USER_PASSWORD} # BẮT BUỘC cung cấp qua env
-  #    roles: ADMIN
-
+  # --- Boot Admin ---
   boot:
     admin:
       client:
         url: ${SPRING_BOOT_ADMIN_CLIENT_URL:http://localhost:9090}
 
-# ===================================================================
-# 3. SA-TOKEN: AUTHENTICATION & AUTHORIZATION
-# ===================================================================
-sa-token:
-  token-name: X-Token
-  timeout: 604800
-  active-timeout: 259200
-  is-concurrent: true
-  is-share: true
-  token-style: jwt
-  jwt-secret-key: ${JWT_SECRET_KEY:DnictPro@123} # BẮT BUỘC cung cấp qua env, không có giá trị mặc định
-  is-log: false
-
-# ===================================================================
-# 4. MANAGEMENT & OBSERVABILITY
-# ===================================================================
+# -------------------------------------------------------------------
+# 3. MANAGEMENT & OBSERVABILITY
+# -------------------------------------------------------------------
 management:
   endpoints:
+    jmx:
+      exposure:
+        include: "*"
     web:
       exposure:
-        include: '*' #health, info, prometheus, metrics, logfile
+        include: "*"
       base-path: /actuator
       path-mapping:
         prometheus: metrics/prometheus
@@ -163,20 +141,26 @@ management:
       application: ${spring.application.name}
     distribution:
       percentiles-histogram:
-        http.server.requests: true
+        http:
+          server:
+            requests: true
 
 logging:
   level:
-    vn.tr: ${LOGGING_LEVEL_VN_TR:INFO}
-    org.springframework: ${LOGGING_LEVEL_SPRINGFRAMEWORK:WARN}
-    com.zaxxer.hikari: WARN
+    vn:
+      tr: ${LOGGING_LEVEL_VN_TR:INFO}
+    org:
+      springframework: ${LOGGING_LEVEL_SPRINGFRAMEWORK:WARN}
+    com:
+      zaxxer:
+        hikari: WARN
   config: classpath:logback-spring.xml
   file:
-    name: ${LOG_PATH:/opt/logs}/${spring.application.name:tr-core-service}/sys-info.log
+    path: ${LOG_PATH:/opt/logs}
 
-# ===================================================================
-# 5. MICROSERVICE INFRASTRUCTURE
-# ===================================================================
+# -------------------------------------------------------------------
+# 4. MICROSERVICE INFRASTRUCTURE
+# -------------------------------------------------------------------
 eureka:
   client:
     service-url:
@@ -188,12 +172,41 @@ eureka:
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
 
-# ===================================================================
-# 6. APPLICATION SPECIFIC CONFIGURATION
-# ===================================================================
+# -------------------------------------------------------------------
+# 5. LIBRARIES & INTEGRATIONS
+# -------------------------------------------------------------------
+sa-token:
+  token-name: X-Token
+  timeout: 604800
+  active-timeout: 259200
+  is-concurrent: true
+  is-share: true
+  token-style: jwt
+  jwt-secret-key: ${JWT_SECRET_KEY:DnictPro@123}
+  is-log: false
+
+redisson:
+  keyPrefix: ${REDISSON_KEY_PREFIX:${spring.application.name}}
+  threads: ${REDISSON_THREADS:4}
+  nettyThreads: ${REDISSON_NETTY_THREADS:8}
+  singleServerConfig:
+    clientName: ${spring.application.name}
+    connectionMinimumIdleSize: ${REDISSON_POOL_MIN_IDLE:8}
+    connectionPoolSize: ${REDISSON_POOL_MAX_SIZE:32}
+    idleConnectionTimeout: ${REDISSON_IDLE_TIMEOUT:10000}
+    timeout: ${REDISSON_CMD_TIMEOUT:3000}
+    subscriptionConnectionPoolSize: ${REDISSON_SUB_POOL_SIZE:50}
+
+# -------------------------------------------------------------------
+# 6. BUSINESS & APP CONFIG
+# -------------------------------------------------------------------
+vn:
+  tr:
+    app-code: core
+
 app:
   name: Tr-Pro-App
-  version: '@project.version@' # Lấy phiên bản từ Maven/Gradle
+  version: "@project.version@"
   copyrightYear: 2025
 
 core:
@@ -207,7 +220,7 @@ core:
 user:
   password:
     maxRetryCount: ${USER_PASSWORD_MAX_RETRY:5}
-    lockTime: ${USER_PASSWORD_LOCK_TIME:30} # Đơn vị: phút
+    lockTime: ${USER_PASSWORD_LOCK_TIME:30}
 
 captcha:
   enable: ${CAPTCHA_ENABLED:true}
@@ -216,28 +229,12 @@ captcha:
   numberLength: 1
   charLength: 4
 
-redisson:
-  keyPrefix: ${REDISSON_KEY_PREFIX:${spring.application.name}} # Tiền tố key Redisson
-  threads: ${REDISSON_THREADS:4}
-  nettyThreads: ${REDISSON_NETTY_THREADS:8}
-  singleServerConfig:
-    clientName: ${spring.application.name}
-    connectionMinimumIdleSize: ${REDISSON_POOL_MIN_IDLE:8}
-    connectionPoolSize: ${REDISSON_POOL_MAX_SIZE:32}
-    idleConnectionTimeout: ${REDISSON_IDLE_TIMEOUT:10000}
-    timeout: ${REDISSON_CMD_TIMEOUT:3000}
-    subscriptionConnectionPoolSize: ${REDISSON_SUB_POOL_SIZE:50}
-
 websocket:
   enabled: ${WEBSOCKET_ENABLED:true}
   path: /resource/websocket
-  # BẮT BUỘC: Cấu hình chính xác tên miền frontend của bạn để tránh tấn công CSRF/CORS
   allowedOrigins: ${WEBSOCKET_ALLOWED_ORIGINS}
 
 security:
-  # Các đường dẫn này sẽ được bỏ qua bởi Sa-Token Interceptor.
-  # Lưu ý: /actuator/** và /sa-token/devops đã được gỡ bỏ khỏi đây
-  # vì chúng sẽ được bảo vệ bởi Spring Security.
   excludes:
     - /css/**
     - /js/**
@@ -264,10 +261,13 @@ security:
 api-decrypt:
   enabled: ${API_DECRYPT_ENABLED:false}
   headerFlag: encrypt-key
-  # BÍ MẬT: Các key này phải được cung cấp qua biến môi trường.
   publicKey: ${API_DECRYPT_PUBLIC_KEY}
   privateKey: ${API_DECRYPT_PRIVATE_KEY}
 
 client:
   notification-service:
     url: ${CLIENT_NOTIFICATION_SERVICE_URL:http://localhost:8000/v1/notification}
+
+error:
+  handling:
+    exception-logging: WITH_STACKTRACE

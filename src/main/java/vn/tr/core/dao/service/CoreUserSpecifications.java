@@ -1,11 +1,11 @@
 package vn.tr.core.dao.service;
 
+import cn.hutool.core.util.StrUtil;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.jpa.helper.CriteriaBuilderHelper;
 import vn.tr.core.dao.model.CoreUser;
 import vn.tr.core.dao.model.CoreUserApp;
@@ -32,7 +32,7 @@ public class CoreUserSpecifications {
 	
 	private static Predicate createUserAppExistsPredicate(CriteriaQuery<?> query, CriteriaBuilder cb, Root<CoreUser> root,
 			CoreUserSearchCriteria criteria) {
-		if (StringUtils.isNotEmpty(criteria.getAppCode())) {
+		if (StrUtil.isNotEmpty(criteria.getAppCode())) {
 			return CriteriaBuilderHelper.createExists(query, cb, root, CoreUserApp.class, (subRoot, parentRoot, subCb) -> {
 				Predicate joinCond = subCb.equal(subRoot.get(CoreUserApp_.username), parentRoot.get(CoreUser_.username));
 				return CriteriaBuilderHelper.and(subCb, joinCond);

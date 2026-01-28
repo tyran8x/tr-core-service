@@ -5,6 +5,7 @@ import cn.hutool.captcha.AbstractCaptcha;
 import cn.hutool.captcha.generator.CodeGenerator;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,6 @@ import vn.tr.common.core.constant.Constants;
 import vn.tr.common.core.constant.GlobalConstants;
 import vn.tr.common.core.domain.R;
 import vn.tr.common.core.utils.SpringUtils;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.core.utils.reflect.ReflectUtils;
 import vn.tr.common.mail.config.properties.MailProperties;
 import vn.tr.common.mail.utils.MailUtils;
@@ -39,10 +39,10 @@ import java.time.Duration;
 @RestController
 @RequestMapping("/auth/captcha")
 public class CaptchaController {
-
+	
 	private final CaptchaProperties captchaProperties;
 	private final MailProperties mailProperties;
-
+	
 	@RateLimiter(key = "#email", time = 61, count = 1)
 	@GetMapping("/resource/email/code")
 	public R<Void> emailCode(@NotBlank(message = "{user.email.not.blank}") String email) {
@@ -62,14 +62,14 @@ public class CaptchaController {
 		}
 		return R.ok();
 	}
-
+	
 	@RateLimiter(time = 61, count = 10, limitType = LimitType.IP)
 	//	@PreAuthorize("@ss.hasPerm('sys:captcha:code')")
 	@GetMapping("/code")
 	public R<CaptchaResult> getCode() {
 		CaptchaResult captchaResult = new CaptchaResult();
 		boolean captchaEnabled = captchaProperties.getEnable();
-		captchaResult.setIsEnable(Boolean.TRUE.equals(captchaEnabled));
+		captchaResult.setIsEnable(captchaEnabled);
 		if (!captchaEnabled) {
 			return R.ok(captchaResult);
 		}
@@ -85,7 +85,7 @@ public class CaptchaController {
 		String code = captcha.getCode();
 		if (isMath) {
 			ExpressionParser parser = new SpelExpressionParser();
-			Expression exp = parser.parseExpression(StringUtils.remove(code, "="));
+			Expression exp = parser.parseExpression(StrUtil.replace(code, "=", ""));
 			code = exp.getValue(String.class);
 		}
 		RedisUtils.setCacheObject(verifyKey, code, Duration.ofMinutes(Constants.CAPTCHA_EXPIRATION));
@@ -93,5 +93,5 @@ public class CaptchaController {
 		captchaResult.setBase64(captcha.getImageBase64());
 		return R.ok(captchaResult);
 	}
-
+	
 }

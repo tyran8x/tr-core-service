@@ -1,11 +1,11 @@
 package vn.tr.core.adapter;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.core.data.dto.MetaData;
 import vn.tr.core.data.dto.RouteRecordRawData;
 import vn.tr.core.data.dto.RouterData;
@@ -17,8 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Adapter chịu trách nhiệm chuyển đổi cấu trúc dữ liệu router cũ (Vue 2)
- * sang cấu trúc dữ liệu chuẩn (RouteRecordRawData) để đồng bộ hóa.
+ * Adapter chịu trách nhiệm chuyển đổi cấu trúc dữ liệu router cũ (Vue 2) sang cấu trúc dữ liệu chuẩn (RouteRecordRawData) để đồng bộ hóa.
  *
  * @author tyran8x
  * @version 2.0
@@ -71,8 +70,7 @@ public class LegacyRouteAdapter {
 	}
 	
 	/**
-	 * Helper chứa logic nghiệp vụ để xác định giá trị cuối cùng cho trường 'component',
-	 * dựa trên cấu trúc thực tế của Vue 2 router.
+	 * Helper chứa logic nghiệp vụ để xác định giá trị cuối cùng cho trường 'component', dựa trên cấu trúc thực tế của Vue 2 router.
 	 *
 	 * @param legacyRoute Route ở định dạng cũ.
 	 *
@@ -86,7 +84,7 @@ public class LegacyRouteAdapter {
 		
 		// **QUY TẮC 1: ƯU TIÊN CAO NHẤT - Lấy component từ META**
 		// Hầu hết các trang chức năng (route lá) sẽ rơi vào trường hợp này.
-		if (legacyMeta != null && StringUtils.isNotBlank(legacyMeta.getComponent())) {
+		if (legacyMeta != null && StrUtil.isNotBlank(legacyMeta.getComponent())) {
 			return legacyMeta.getComponent();
 		}
 		

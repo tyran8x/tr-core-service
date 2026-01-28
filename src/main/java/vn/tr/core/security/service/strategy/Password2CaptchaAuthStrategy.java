@@ -1,5 +1,6 @@
 package vn.tr.core.security.service.strategy;
 
+import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.tr.common.core.constant.Constants;
@@ -9,7 +10,6 @@ import vn.tr.common.core.domain.model.RegisterBody;
 import vn.tr.common.core.exception.user.CaptchaException;
 import vn.tr.common.core.exception.user.CaptchaExpireException;
 import vn.tr.common.core.utils.MessageUtils;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.redis.utils.RedisUtils;
 import vn.tr.common.web.config.properties.CaptchaProperties;
 import vn.tr.core.dao.service.CoreUserAppService;
@@ -44,7 +44,7 @@ public class Password2CaptchaAuthStrategy extends BasePasswordStrategy {
 	}
 	
 	private void validateCaptcha(String username, String code, String uuid) {
-		String verifyKey = GlobalConstants.CAPTCHA_CODE_KEY + StringUtils.blankToDefault(uuid, "");
+		String verifyKey = GlobalConstants.CAPTCHA_CODE_KEY + StrUtil.blankToDefault(uuid, "");
 		String captcha = RedisUtils.getCacheObject(verifyKey);
 		RedisUtils.deleteObject(verifyKey);
 		if (captcha == null) {

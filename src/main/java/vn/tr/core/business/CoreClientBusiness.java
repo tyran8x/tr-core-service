@@ -1,6 +1,7 @@
 package vn.tr.core.business;
 
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,6 @@ import vn.tr.common.core.enums.LifecycleStatus;
 import vn.tr.common.core.exception.base.EntityNotFoundException;
 import vn.tr.common.core.exception.base.PermissionDeniedException;
 import vn.tr.common.core.exception.user.UserException;
-import vn.tr.common.core.utils.StringUtils;
 import vn.tr.common.jpa.helper.GenericUpsertHelper;
 import vn.tr.common.web.data.dto.BulkOperationResult;
 import vn.tr.common.web.utils.CoreUtils;
@@ -29,8 +29,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Lớp Business (Facade) điều phối các nghiệp vụ phức tạp liên quan đến Quản lý Client (CoreClient).
- * Mọi thao tác đều được thực hiện trong ngữ cảnh của một ứng dụng (appCodeContext).
+ * Lớp Business (Facade) điều phối các nghiệp vụ phức tạp liên quan đến Quản lý Client (CoreClient). Mọi thao tác đều được thực hiện trong ngữ cảnh
+ * của một ứng dụng (appCodeContext).
  *
  * @author tyran8x
  * @version 2.0
@@ -46,8 +46,7 @@ public class CoreClientBusiness {
 	private final GenericUpsertHelper genericUpsertHelper;
 	
 	/**
-	 * Tạo mới một client trong ngữ cảnh của một ứng dụng.
-	 * Tự động tạo clientId, clientKey, clientSecret nếu chưa có.
+	 * Tạo mới một client trong ngữ cảnh của một ứng dụng. Tự động tạo clientId, clientKey, clientSecret nếu chưa có.
 	 *
 	 * @param data           DTO chứa thông tin client.
 	 * @param appCodeContext Mã của ứng dụng mà client thuộc về.
@@ -208,7 +207,7 @@ public class CoreClientBusiness {
 	 *
 	 */
 	public CoreClientData validateClient(String clientId, String clientSecret, String grantType) {
-		if (StringUtils.isBlank(clientId)) {
+		if (StrUtil.isBlank(clientId)) {
 			throw new UserException("client.id.required");
 		}
 		
@@ -221,7 +220,7 @@ public class CoreClientBusiness {
 		}
 		
 		// Kiểm tra xem client có được phép sử dụng grant type này không
-		if (StringUtils.isNotBlank(client.getGrantType()) && !client.getGrantType().contains(grantType)) {
+		if (StrUtil.isNotBlank(client.getGrantType()) && !client.getGrantType().contains(grantType)) {
 			throw new UserException("client.grant_type.unsupported");
 		}
 		

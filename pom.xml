@@ -5,18 +5,17 @@
     <parent>
         <groupId>io.github.tyran8x</groupId>
         <artifactId>tr-pro-app</artifactId>
-        <version>1.0.15</version>
+        <version>2.0.0</version>
         <relativePath/>
     </parent>
 
     <artifactId>tr-core-service</artifactId>
     <packaging>jar</packaging>
-    <version>${revision}</version>
     <name>tr-core-service</name>
     <description>Core Service</description>
 
     <properties>
-        <revision>1.0.15</revision>
+        <revision>2.0.0</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>21</java.version>
@@ -155,8 +154,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-freemarker</artifactId>
         </dependency>
-
-
+        
         <dependency>
             <groupId>io.github.linpeilie</groupId>
             <artifactId>mapstruct-plus-spring-boot-starter</artifactId>
@@ -166,7 +164,7 @@
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-processor</artifactId>
-            <version>7.0.6.Final</version>
+            <version>${hibernate-processor.version}</version>
         </dependency>
 
     </dependencies>
@@ -209,8 +207,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <release>21</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -220,7 +217,7 @@
                         <path>
                             <groupId>org.hibernate.orm</groupId>
                             <artifactId>hibernate-processor</artifactId>
-                            <version>7.0.6.Final</version>
+                            <version>${hibernate-processor.version}</version>
                         </path>
                         <path>
                             <groupId>org.mapstruct</groupId>

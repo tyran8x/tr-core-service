@@ -1,6 +1,5 @@
 package vn.tr.core.data.validator;
 
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
@@ -22,12 +21,12 @@ public class CoreClientValidator implements Validator {
 	private final CoreClientService coreClientService;
 	
 	@Override
-	public boolean supports(@NonNull Class<?> clazz) {
+	public boolean supports(Class<?> clazz) {
 		return CoreClientData.class.isAssignableFrom(clazz);
 	}
 	
 	@Override
-	public void validate(@NonNull Object target, @NonNull Errors errors) {
+	public void validate(Object target, Errors errors) {
 		CoreClientData data = (CoreClientData) target;
 		
 		// Ngữ cảnh ứng dụng được lấy từ token
